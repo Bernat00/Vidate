@@ -1,14 +1,20 @@
 openapi: 3.0.3
+
 info:
   title: Video Dating App API
-  description: API documentation for a video dating application MVP.
   version: 1.0.0
+  description: >
+    REST API for the Video Dating App MVP.
+    Real-time features (messages, video calls, matches) use WebSockets and are excluded here.
+
 servers:
   - url: /api
+
 security:
   - bearerAuth: []
 
 components:
+
   securitySchemes:
     bearerAuth:
       type: http
@@ -16,6 +22,10 @@ components:
       bearerFormat: JWT
 
   schemas:
+
+    # ======================
+    # USER (ACCOUNT TABLE)
+    # ======================
     UserAccount:
       type: object
       properties:
@@ -25,66 +35,122 @@ components:
         email:
           type: string
           format: email
-      required:
-        - email
+        email_verified:
+          type: boolean
+        is_enabled:
+          type: boolean
+        role:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_login_at:
+          type: string
+          format: date-time
 
+    # ======================
+    # LANGUAGE TABLE
+    # ======================
+    Language:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+
+    # ======================
+    # RELIGION TABLE
+    # ======================
+    Religion:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    # ======================
+    # PROFILE TABLE
+    # ======================
     UserProfile:
       type: object
       properties:
-        full_name:
+        user_id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+        middle_name:
+          type: string
+          nullable: true
+        last_name:
           type: string
         birthdate:
           type: string
           format: date
         gender:
           type: string
-        interested_in:
-          type: array
-          items:
-            type: string
-        profile_picture:
+        avatar_url:
           type: string
           format: uri
-        smoking_habits:
-          type: string
+        is_smoker:
+          type: boolean
+        wants_children:
+          type: boolean
+        language:
+          $ref: "#/components/schemas/Language"
         religion:
-          type: string
-        children_plans:
-          type: string
-        interests:
-          type: array
-          items:
-            type: string
-      required:
-        - full_name
-        - birthdate
-        - gender
-        - interested_in
-        - profile_picture
+          $ref: "#/components/schemas/Religion"
 
-    Message:
+    # ======================
+    # PROFILE UPDATE REQUEST
+    # ======================
+    ProfileUpdateRequest:
       type: object
       properties:
-        id:
+        first_name:
           type: string
-          format: uuid
-        sender_id:
+        middle_name:
           type: string
-          format: uuid
-        receiver_id:
+          nullable: true
+        last_name:
           type: string
-          format: uuid
-        content:
+        birthdate:
           type: string
-        timestamp:
+          format: date
+        gender:
           type: string
-          format: date-time
-      required:
-        - sender_id
-        - receiver_id
-        - content
-        - timestamp
+        avatar_url:
+          type: string
+          format: uri
+        is_smoker:
+          type: boolean
+        wants_children:
+          type: boolean
+        language_id:
+          type: integer
+        religion_id:
+          type: integer
 
+    # ======================
+    # SETTINGS UPDATE REQUEST
+    # ======================
+    SettingsUpdateRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    # ======================
+    # AUTH SCHEMAS
+    # ======================
     RegisterRequest:
       type: object
       properties:
@@ -94,56 +160,7 @@ components:
         password:
           type: string
           format: password
-      required:
-        - email
-        - password
-      example:
-        email: user@example.com
-        password: strongpassword123
-
-    ProfileRequest:
-      type: object
-      properties:
-        full_name:
-          type: string
-        birthdate:
-          type: string
-          format: date
-        gender:
-          type: string
-        interested_in:
-          type: array
-          items:
-            type: string
-        profile_picture:
-          type: string
-          format: uri
-        smoking_habits:
-          type: string
-        religion:
-          type: string
-        children_plans:
-          type: string
-        interests:
-          type: array
-          items:
-            type: string
-      required:
-        - full_name
-        - birthdate
-        - gender
-        - interested_in
-        - profile_picture
-      example:
-        full_name: John Doe
-        birthdate: 1995-06-15
-        gender: male
-        interested_in: [female]
-        profile_picture: https://example.com/pic.jpg
-        smoking_habits: non-smoker
-        religion: atheist
-        children_plans: yes
-        interests: [music, hiking, movies]
+      required: [email, password]
 
     LoginRequest:
       type: object
@@ -154,146 +171,219 @@ components:
         password:
           type: string
           format: password
-      required:
-        - email
-        - password
-      example:
-        email: user@example.com
-        password: strongpassword123
+        stay_logged_in:
+          type: boolean
+          description: >
+            If true, the server issues a long-lived JWT. If false or omitted,
+            a short-lived JWT is issued.
+      required: [email, password]
 
     LoginResponse:
       type: object
       properties:
-        token:
+        access_token:
           type: string
-          description: JWT token to use for authenticated requests
-      example:
-        token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Lifetime of token in seconds
 
+    EmailVerificationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    # ======================
+    # ERROR RESPONSE
+    # ======================
     ErrorResponse:
       type: object
       properties:
         error:
           type: string
-      example:
-        error: Invalid credentials
+
+  responses:
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
 
 paths:
 
-  /register:
-    post:
-      summary: Register a new account (email + password)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
-      responses:
-        '201':
-          description: Account created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserAccount'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+  # ============================================================
+  #                       AUTH ENDPOINTS
+  # ============================================================
 
-  /login:
+  /auth/register:
     post:
-      summary: User login
+      summary: Register a new account
+      tags: [Auth]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/RegisterRequest"
       responses:
-        '200':
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAccount"
+        "400":
+          description: Invalid input
+
+  /auth/login:
+    post:
+      summary: Login and receive a JWT
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
           description: Login successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '401':
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
           description: Invalid credentials
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
-  /logout:
+  /auth/logout:
     post:
-      summary: Logout the authenticated user
+      summary: Logout
+      tags: [Auth]
       security:
         - bearerAuth: []
       responses:
-        '200':
-          description: Logout successful
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Logged out
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /profile:
+  /auth/send-verification:
     post:
-      summary: Create or update the user profile
+      summary: Send verification email to authenticated user
+      tags: [Auth]
       security:
         - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfileRequest'
       responses:
-        '200':
-          description: Profile created/updated successfully
+        "200":
+          description: Verification email sent
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/EmailVerificationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/verify-email:
+    get:
+      summary: Verify email using a token
+      tags: [Auth]
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Email verified
+        "400":
+          description: Invalid or expired token
+
+  # ============================================================
+  #                          /me
+  # ============================================================
 
   /me:
     get:
       summary: Get authenticated user's profile
+      tags: [Me]
       security:
         - bearerAuth: []
       responses:
-        '200':
-          description: User profile
+        "200":
+          description: Profile returned
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '401':
-          description: Unauthorized
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    patch:
+      summary: Update authenticated user's profile
+      tags: [Me]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdateRequest"
+      responses:
+        "200":
+          description: Profile updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Invalid input
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============================================================
+  #                         SETTINGS
+  # ============================================================
 
   /settings:
+    get:
+      summary: Get account-level settings
+      tags: [Settings]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Account settings returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAccount"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
     patch:
-      summary: Update user account settings (email/password)
+      summary: Update email or password
+      tags: [Settings]
       security:
         - bearerAuth: []
       requestBody:
@@ -301,159 +391,103 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                password:
-                  type: string
-                  format: password
-              example:
-                email: newemail@example.com
-                password: newstrongpassword
+              $ref: "#/components/schemas/SettingsUpdateRequest"
       responses:
-        '200':
-          description: Settings updated successfully
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Settings updated
+        "400":
+          description: Invalid input
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /messages:
+  # ============================================================
+  #                   LOOKUP TABLE ENDPOINTS
+  # ============================================================
+
+  /languages:
     get:
-      summary: Fetch messages between authenticated user and another user with pagination
+      summary: List all languages
+      tags: [Profile]
       security:
         - bearerAuth: []
-      parameters:
-        - in: query
-          name: user_id
-          schema:
-            type: string
-            format: uuid
-          required: true
-        - in: query
-          name: from
-          schema:
-            type: integer
-            example: 0
-          required: true
-        - in: query
-          name: to
-          schema:
-            type: integer
-            example: 20
-          required: true
       responses:
-        '200':
-          description: List of messages
+        "200":
+          description: Languages returned
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Message'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                  $ref: "#/components/schemas/Language"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-    post:
-      summary: Send a message to a specific user
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                receiver_id:
-                  type: string
-                  format: uuid
-                content:
-                  type: string
-              required:
-                - receiver_id
-                - content
-              example:
-                receiver_id: 123e4567-e89b-12d3-a456-426614174000
-                content: "Hi, how are you?"
-      responses:
-        '201':
-          description: Message sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Message'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /mod/suspects:
+  /religions:
     get:
-      summary: Get list of reported users
+      summary: List all religions
+      tags: [Profile]
       security:
         - bearerAuth: []
       responses:
-        '200':
-          description: List of reported users
+        "200":
+          description: Religions returned
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserProfile'
-        '401':
-          description: Unauthorized
+                  $ref: "#/components/schemas/Religion"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============================================================
+  #                        MODERATION
+  # ============================================================
 
   /mod/users:
     get:
-      summary: Get list of all users
+      summary: List all users (Account + Profile)
+      tags: [Moderation]
       security:
         - bearerAuth: []
       responses:
-        '200':
-          description: List of all users
+        "200":
+          description: Users returned
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserProfile'
-        '401':
-          description: Unauthorized
+                  type: object
+                  properties:
+                    account:
+                      $ref: "#/components/schemas/UserAccount"
+                    profile:
+                      $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /mod/users/{id}/ban:
     post:
       summary: Permanently ban a user
+      tags: [Moderation]
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
+          required: true
           schema:
             type: string
             format: uuid
-          required: true
       responses:
-        '200':
-          description: User permanently banned
-        '401':
-          description: Unauthorized
-        '404':
-          description: User not found
+        "200":
+          description: User banned
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
