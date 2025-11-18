@@ -1,0 +1,157 @@
+@startuml
+
+' ============================
+' 1. Enumerations / Simple Types
+' ============================
+
+enum RoleName {
+  ADMIN
+  USER
+  MODERATOR
+}
+
+enum ChatEventType {
+  MESSAGE
+  CALL
+  VIDEOCALL
+}
+
+' ============================
+' 2. Core User & Auth
+' ============================
+
+class Role {
+  +id: int
+  +name: RoleName
+}
+
+class User {
+  +id: int
+  +role_id: int
+  +email: str
+  +password_hash: str
+  +last_login_at: datetime
+  +created_at: datetime
+  +email_verified: bool
+  +is_enabled: bool
+}
+
+Role "1" <-- "0..*" User : role
+
+
+' ============================
+' 3. Profile, Preferences, Taxonomy
+' ============================
+
+class Language {
+  +id: int
+  +name: str
+}
+
+class Religion {
+  +id: int
+  +name: str
+}
+
+class Profile {
+  +id: int
+  +user_id: int
+  +gender_id: int
+  +religion_id: int
+  +first_name: str
+  +last_name: str
+  +birth_date: date
+  +location: str
+  +avatar_url: str
+  +is_smoker: bool
+  +wants_children: bool
+}
+
+class Preference {
+  +id: int
+  +user_id: int
+  +min_age: int
+  +max_age: int
+  +preferred_is_smoker: bool
+  +preferred_wants_children: bool
+}
+
+User "1" <-- "1" Profile : profile
+User "1" <-- "0..1" Preference : preference
+Religion "1" <-- "0..*" Profile : religion
+' (Gender and Language relations can be added when those tables are defined)
+
+
+' ============================
+' 4. Matching & Discovery
+' ============================
+
+class Match {
+  +id: int
+  +user1_id: int
+  +user2_id: int
+  +timestamp: datetime
+  +confirmed: bool
+}
+
+class VideoFeed {
+  +id: int
+  +User1Id
+  +User2Id
+  +timestamp: datetime
+}
+
+User "1" <-- "0..*" Match : as user1
+User "1" <-- "0..*" Match : as user2
+User "1" <-- "0..*" VideoFeed : viewer
+User "1" <-- "0..*" VideoFeed : viewed
+
+
+' ============================
+' 5. Chat, Messages, Calls
+' ============================
+
+class ChatEvent {
+  +id: int
+  +originator_id: int
+  +recipient_id: int
+  +timestamp: datetime
+  +type: ChatEventType
+}
+
+class Message {
+  +id: int
+  +chat_event_id: int
+  +content: str
+  +is_received: bool
+}
+
+class Call {
+  +id: int
+  +chat_event_id: int
+  +ended_at: datetime
+}
+
+User "1" <-- "0..*" ChatEvent : originator
+User "1" <-- "0..*" ChatEvent : recipient
+ChatEvent "1" <-- "0..1" Message
+ChatEvent "1" <-- "0..1" Call
+
+
+' ============================
+' 6. Moderation / Reports
+' ============================
+
+class Report {
+  +id: int
+  +reporter_id: int     ' ReporteeId (who filed)
+  +suspect_id: int      ' who was reported
+  +reason: str
+  +created_at: datetime
+}
+
+User "1" <-- "0..*" Report : reports_filed
+User "1" <-- "0..*" Report : reports_against
+
+
+@enduml
