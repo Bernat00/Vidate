@@ -1,0 +1,310 @@
+@startuml
+
+' =========================
+' 1. High-Level Screen Components
+' =========================
+
+class AppShell {
+  +state currentUser: User?
+  +state currentRoute: Route
+  +render()
+}
+
+class LandingPage {
+  +render()
+}
+
+class LoginPage {
+  +render()
+}
+
+class VideoFeedPage {
+  +render()
+}
+
+class MessagesPage {
+  +render()
+}
+
+class ProfilePage {
+  +render()
+}
+
+AppShell --> LandingPage : route "/"
+AppShell --> LoginPage : route "/login"
+AppShell --> VideoFeedPage : route "/feed"
+AppShell --> MessagesPage : route "/messages"
+AppShell --> ProfilePage : route "/profile"
+
+
+' =========================
+' 2. Shared Layout & Navigation Components
+' =========================
+
+class GradientBackgroundLayout {
+  +props children
+  +render()
+}
+
+class MobileBottomNav {
+  +props activeTab: BottomNavTab
+  +onHomeClick()
+  +onMessagesClick()
+  +onProfileClick()
+}
+
+class DesktopSidebar {
+  +props title: string
+  +props items: SidebarItem[]
+  +props activeItemId: string
+}
+
+GradientBackgroundLayout "1" o-- "1..*" MobileBottomNav : contains?
+MessagesPage "1" o-- "1" MobileBottomNav
+VideoFeedPage "1" o-- "1" MobileBottomNav
+
+MessagesPage "1" o-- "1" DesktopSidebar : "My Matches"
+AppShell "1" o-- "1" GradientBackgroundLayout : wrapper
+
+
+' =========================
+' 3. Landing (Hero) Screen Components
+' =========================
+
+class HeroLayout {
+  +render()
+}
+
+class HeroTextSection {
+  +render()
+}
+
+class HeroCTAButtons {
+  +onSignUpClick()
+  +onSignInClick()
+  +render()
+}
+
+class PhonePreview {
+  +props topProfile: ProfileSummary
+  +props bottomProfile: ProfileSummary
+  +render()
+}
+
+class ProfileBubble {
+  +props profile: ProfileSummary
+  +render()
+}
+
+class VideoCallPreview {
+  +render()
+}
+
+LandingPage "1" o-- "1" HeroLayout
+HeroLayout "1" o-- "1" HeroTextSection
+HeroLayout "1" o-- "1" HeroCTAButtons
+HeroLayout "1" o-- "1" PhonePreview
+PhonePreview "1" o-- "2" ProfileBubble
+PhonePreview "1" o-- "1" VideoCallPreview
+
+
+' =========================
+' 4. Authentication Components
+' =========================
+
+class AuthLayout {
+  +render()
+}
+
+class LogoHeader {
+  +props appName: string
+  +props logoUrl: string
+}
+
+class LoginForm {
+  +state email: string
+  +state password: string
+  +state rememberMe: boolean
+  +onSubmit()
+  +render()
+}
+
+class TextInput {
+  +props id: string
+  +props label: string
+  +props type: string
+  +props value: string
+  +props placeholder: string
+  +onChange()
+}
+
+class CheckboxInput {
+  +props label: string
+  +props checked: boolean
+  +onChange()
+}
+
+class PrimaryButton {
+  +props label: string
+  +props onClick()
+  +props fullWidth: boolean
+}
+
+class AuthSecondaryActions {
+  +onForgotPasswordClick()
+  +onSignUpClick()
+  +render()
+}
+
+LoginPage "1" o-- "1" AuthLayout
+AuthLayout "1" o-- "1" LogoHeader
+AuthLayout "1" o-- "1" LoginForm
+LoginForm "1" o-- "1" TextInput : email
+LoginForm "1" o-- "1" TextInput : password
+LoginForm "1" o-- "1" CheckboxInput : rememberMe
+LoginForm "1" o-- "1" PrimaryButton : "Sign in"
+LoginForm "1" o-- "1" AuthSecondaryActions
+
+
+' =========================
+' 5. Video Feed Components
+' =========================
+
+class VideoFeedLayout {
+  +render()
+}
+
+class VideoCard {
+  +props profile: ProfileSummary
+  +props videoUrl: string
+  +props imageUrl: string
+  +render()
+}
+
+class ProfileOverlay {
+  +props name: string
+  +props age: int
+  +props distance: string
+  +render()
+}
+
+VideoFeedPage "1" o-- "1" VideoFeedLayout
+VideoFeedLayout "1" o-- "1" VideoCard
+VideoCard "1" o-- "1" ProfileOverlay
+VideoFeedLayout "1" o-- "1" MobileBottomNav
+
+
+' =========================
+' 6. Messaging Components
+' =========================
+
+class MessagesLayout {
+  +render()
+}
+
+class MatchesSidebar {
+  +props matches: MatchSummary[]
+  +props activeMatchId: string
+  +onMatchSelect(id: string)
+  +render()
+}
+
+class MatchListItem {
+  +props match: MatchSummary
+  +props active: boolean
+  +onClick()
+}
+
+class MessagesHeaderMobile {
+  +onOpenSidebar()
+  +render()
+}
+
+class ConversationPanel {
+  +props match: MatchSummary
+  +props messages: Message[]
+  +render()
+}
+
+class MessageBubble {
+  +props message: Message
+  +props direction: MessageDirection
+  +render()
+}
+
+class MessageInputArea {
+  +state draft: string
+  +onChange()
+  +onSubmit()
+  +render()
+}
+
+MessagesPage "1" o-- "1" MessagesLayout
+MessagesLayout "1" o-- "1" MatchesSidebar
+MessagesLayout "1" o-- "1" MessagesHeaderMobile
+MessagesLayout "1" o-- "1" ConversationPanel
+MessagesLayout "1" o-- "1" MessageInputArea
+MessagesLayout "1" o-- "1" MobileBottomNav
+
+MatchesSidebar "1" o-- "0..*" MatchListItem
+ConversationPanel "1" o-- "0..*" MessageBubble
+
+
+' =========================
+' 7. Domain / View-Model Classes
+' =========================
+
+class User {
+  +id: string
+  +name: string
+  +age: int
+  +avatarUrl: string
+  +distanceKm: float
+}
+
+class ProfileSummary {
+  +userId: string
+  +displayName: string
+  +age: int
+  +avatarUrl: string
+  +distanceLabel: string
+}
+
+class MatchSummary {
+  +matchId: string
+  +profile: ProfileSummary
+  +lastMessagePreview: string
+  +lastActive: Date
+}
+
+enum MessageDirection {
+  incoming
+  outgoing
+}
+
+class Message {
+  +id: string
+  +senderId: string
+  +content: string
+  +sentAt: Date
+  +direction: MessageDirection
+}
+
+class BottomNavTab {
+  +id: string
+  +iconName: string
+  +label: string
+}
+
+class SidebarItem {
+  +id: string
+  +iconName: string
+  +label: string
+}
+
+User "1" --> "0..*" MatchSummary : participates
+MatchSummary "1" o-- "1" ProfileSummary
+ConversationPanel "1" o-- "0..*" Message
+Message "1" --> "1" User : sender
+
+@enduml
