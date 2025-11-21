@@ -7,9 +7,6 @@ info:
     REST API for the Video Dating App MVP.
     Real-time features (messages, video calls, matches) use WebSockets and are excluded here.
 
-servers:
-  - url: /api
-
 security:
   - bearerAuth: []
 
@@ -234,7 +231,7 @@ paths:
   #                       AUTH ENDPOINTS
   # ============================================================
 
-  /auth/register:
+  /api/auth/register:
     post:
       summary: Register a new account
       tags: [Auth]
@@ -254,7 +251,7 @@ paths:
         "400":
           description: Invalid input
 
-  /auth/login:
+  /api/auth/login:
     post:
       summary: Login and receive a JWT
       tags: [Auth]
@@ -274,7 +271,7 @@ paths:
         "401":
           description: Invalid credentials
 
-  /auth/logout:
+  /api/auth/logout:
     post:
       summary: Logout
       tags: [Auth]
@@ -286,7 +283,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /auth/send-verification:
+  /api/auth/send-verification:
     post:
       summary: Send verification email to authenticated user
       tags: [Auth]
@@ -302,7 +299,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /auth/verify-email:
+  /api/auth/verify-email:
     get:
       summary: Verify email using a token
       tags: [Auth]
@@ -322,7 +319,7 @@ paths:
   #                          /me
   # ============================================================
 
-  /me:
+  /api/me:
     get:
       summary: Get authenticated user's profile
       tags: [Me]
@@ -365,7 +362,7 @@ paths:
   #                         SETTINGS
   # ============================================================
 
-  /settings:
+  /api/settings:
     get:
       summary: Get account-level settings
       tags: [Settings]
@@ -404,7 +401,7 @@ paths:
   #                   LOOKUP TABLE ENDPOINTS
   # ============================================================
 
-  /languages:
+  /api/languages:
     get:
       summary: List all languages
       tags: [Profile]
@@ -422,7 +419,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /religions:
+  /api/religions:
     get:
       summary: List all religions
       tags: [Profile]
@@ -444,7 +441,7 @@ paths:
   #                        MODERATION
   # ============================================================
 
-  /mod/users:
+  /api/mod/users:
     get:
       summary: List all users (Account + Profile)
       tags: [Moderation]
@@ -469,7 +466,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
-  /mod/users/{id}/ban:
+  /api/mod/users/{id}/ban:
     post:
       summary: Permanently ban a user
       tags: [Moderation]
@@ -491,3 +488,22 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+
+
+  # ============================================================
+  #                        WEBSOCKETS
+  # ============================================================
+
+  /ws:
+    get:
+      tags: [Websocket]
+      summary: WebSocket Upgrade Endpoint
+      description: >
+        Endpoint for upgadeing the connection to websocket.
+      responses:
+        '101':
+          description: Switching Protocols (WebSocket handshake accepted)
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
