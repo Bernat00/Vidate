@@ -1,0 +1,51 @@
+@startuml
+left to right direction
+skinparam usecase {
+  BorderColor Black
+  BackgroundColor LightYellow
+  ArrowColor Black
+}
+skinparam actor {
+  BackgroundColor LightBlue
+}
+
+/' Actors '/
+actor "Registered User" as User
+actor "Location Service" as LocationService
+
+/' Layer 2: Profile Management '/
+package "Profile Management" {
+  usecase "Create / Edit Profile" as UC_EditProfile
+  usecase "Upload Profile Photo" as UC_UploadPhoto
+  usecase "Provide Required Info\n(name, DOB 18+, gender,\nseeking genders)" as UC_RequiredInfo
+  usecase "Provide Optional Info\n(smoking, religion,\ninterests, etc.)" as UC_OptionalInfo
+  usecase "Share Location\n(platform consent)" as UC_ShareLocation
+
+  UC_EditProfile .> UC_UploadPhoto : <<include>>
+  UC_EditProfile .> UC_RequiredInfo : <<include>>
+  UC_EditProfile .> UC_OptionalInfo : <<include>>
+}
+
+User --> UC_EditProfile
+User --> UC_ShareLocation
+
+LocationService --> UC_ShareLocation
+
+note right of UC_RequiredInfo
+  **Age Validation:**
+  Only users 18+ can register
+
+  **Gender Options:**
+  Male, Female, Other (free text)
+
+  **Seeking:**
+  Multiple genders allowed
+end note
+
+note left of UC_ShareLocation
+  **Location Privacy:**
+  - Platform permission required
+  - Distance displayed during video calls
+  - Used in matching algorithm
+end note
+@enduml

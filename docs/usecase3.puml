@@ -1,0 +1,45 @@
+@startuml
+left to right direction
+skinparam usecase {
+  BorderColor Black
+  BackgroundColor LightYellow
+  ArrowColor Black
+}
+skinparam actor {
+  BackgroundColor LightBlue
+}
+
+/' Actors '/
+actor "Registered User" as User
+
+/' Layer 3: Video Dating & Matchmaking '/
+package "Video Dating & Matchmaking" {
+  usecase "Enter Match Queue" as UC_EnterQueue
+  usecase "Matchmaking\n(gender-based, MVP)" as UC_Matchmaking
+  usecase "Wait for Partner" as UC_NoPartner
+  usecase "Start Video Date\n(max 2 min)" as UC_StartVideo
+  usecase "End Call Early\n(scroll to next)" as UC_EarlyEnd
+  usecase "Decide: Like / Dislike" as UC_Decide
+  usecase "View Basic Info During Call\n(name, age, distance)" as UC_ViewBasicDuringCall
+
+  UC_EnterQueue .> UC_Matchmaking : <<include>>
+  UC_Matchmaking .> UC_NoPartner : <<extend>>  : "no partner available"
+  UC_Matchmaking .> UC_StartVideo : <<include>> : "when paired"
+  UC_StartVideo .> UC_ViewBasicDuringCall : <<include>>
+  UC_StartVideo .> UC_Decide : <<include>> : "at end"
+  UC_StartVideo .> UC_EarlyEnd : <<extend>> : "user scrolls/ends early"
+  UC_EarlyEnd .> UC_Decide : <<include>>
+}
+
+User --> UC_EnterQueue
+User --> UC_EarlyEnd
+User --> UC_Decide
+
+note bottom of UC_StartVideo
+  **Video Call Features:**
+  - Vertical video stream
+  - Maximum 2 minutes duration
+  - Either party can end early
+  - Both must decide after call ends
+end note
+@enduml

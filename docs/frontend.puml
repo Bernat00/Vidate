@@ -190,6 +190,7 @@ class ProfileOverlay {
 
 VideoFeedPage "1" o-- "1" VideoFeedLayout
 VideoFeedLayout "1" o-- "1" VideoCard
+VideoCard "1" o-- "1" ProfileSummary
 VideoCard "1" o-- "1" ProfileOverlay
 VideoFeedLayout "1" o-- "1" MobileBottomNav
 

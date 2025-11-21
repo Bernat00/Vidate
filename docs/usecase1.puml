@@ -1,0 +1,40 @@
+@startuml
+left to right direction
+skinparam usecase {
+  BorderColor Black
+  BackgroundColor LightYellow
+  ArrowColor Black
+}
+skinparam actor {
+  BackgroundColor LightBlue
+}
+
+/' Actors '/
+actor "Visitor\n(Unregistered)" as Visitor
+actor "Registered User" as User
+actor "Email Service" as EmailService
+
+/' Layer 1: Authentication & Account Management '/
+package "Authentication & Account Management" {
+  usecase "Register (email + password)" as UC_Register
+  usecase "Confirm Email" as UC_ConfirmEmail
+  usecase "Login (email + password)" as UC_Login
+  usecase "Stay Logged In" as UC_StayLoggedIn
+  usecase "Reset Password" as UC_ResetPassword
+  usecase "Send Email" as UC_SendEmail
+
+  UC_Register .> UC_ConfirmEmail : <<include>>
+  UC_Register .> UC_SendEmail : <<include>>
+  UC_ResetPassword .> UC_SendEmail : <<include>>
+}
+
+Visitor --> UC_Register
+Visitor --> UC_Login
+Visitor --> UC_ResetPassword
+
+User --> UC_Login
+User --> UC_StayLoggedIn
+User --> UC_ResetPassword
+
+EmailService --> UC_SendEmail
+@enduml

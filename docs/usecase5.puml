@@ -1,0 +1,32 @@
+@startuml
+left to right direction
+skinparam usecase {
+  BorderColor Black
+  BackgroundColor LightYellow
+  ArrowColor Black
+}
+skinparam actor {
+  BackgroundColor LightBlue
+}
+
+/' Actors '/
+actor "Registered User" as User
+actor "Moderator" as Moderator
+
+/' Layer 5: Safety & Moderation '/
+package "Safety & Moderation" {
+  usecase "Report User\n(during chat/call)" as UC_Report
+  usecase "Block User" as UC_Block
+  usecase "Review Reports" as UC_ReviewReports
+  usecase "Warn / Suspend / Ban User" as UC_ModerationActions
+
+  UC_Report .> UC_ReviewReports : <<include>>
+  UC_ReviewReports .> UC_ModerationActions : <<include>>
+}
+
+User --> UC_Report
+User --> UC_Block
+
+Moderator --> UC_ReviewReports
+Moderator --> UC_ModerationActions
+@enduml

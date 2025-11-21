@@ -1,0 +1,35 @@
+@startuml
+left to right direction
+skinparam usecase {
+  BorderColor Black
+  BackgroundColor LightYellow
+  ArrowColor Black
+}
+skinparam actor {
+  BackgroundColor LightBlue
+}
+
+/' Actors '/
+actor "Registered User" as User
+
+/' Layer 4: Matches & Communication '/
+package "Matches & Communication" {
+  usecase "Create Match\n(mutual likes)" as UC_CreateMatch
+  usecase "View Detailed Profile Info" as UC_ViewDetailedAfterCall
+  usecase "Chat with Match\n(text stored)" as UC_Chat
+  usecase "Voice / Video Call\nwith Match" as UC_CallMatch
+
+  UC_CreateMatch .> UC_ViewDetailedAfterCall : <<include>>
+  UC_CreateMatch .> UC_Chat : <<include>>
+  UC_CreateMatch .> UC_CallMatch : <<include>>
+}
+
+User --> UC_Chat
+User --> UC_CallMatch
+
+note bottom of UC_CreateMatch
+  **Match Conditions:**
+  Both users must like each other
+  after the video date ends
+end note
+@enduml
