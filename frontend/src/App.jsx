@@ -1,8 +1,19 @@
-import { useState } from 'react'
+import {BrowserRouter, Route, Routes} from 'react-router-dom'
 import './App.css'
+import LandingPage from "./components/landingPage.jsx";
+import Login from "./components/login.jsx";
+import Register from "./components/register.jsx";
 
 function App() {
-    return <h1>asd</h1>
+  return (
+    <BrowserRouter>
+        <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+        </Routes>
+    </BrowserRouter>
+  )
 }
 
 export default App
