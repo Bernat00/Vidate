@@ -2,3 +2,5 @@
 *.idea
 */package-lock.json
 */node_modules
+frontend/.flowbite-react/init.tsx
+frontend/.flowbite-react/class-list.json
