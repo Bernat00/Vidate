@@ -1,7 +1,29 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import api from '../api';
 
 const Login = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [apiError, setApiError] = useState('');
+  const navigate = useNavigate();
+
+  const onSubmit = async (data) => {
+    setApiError('');
+    try {
+      const response = await api.post('/api/auth/login', data);
+
+      localStorage.setItem('token', response.data.access_token);
+      navigate('/my-matches');
+    } catch (err) {
+      if (err.response && err.response.status === 401) {
+        setApiError('Email or password is incorrect.');
+      } else {
+        setApiError('Something went wrong. Please try again.');
+      }
+    }
+  };
+
   return (
     <div className="bg-gradient-to-t from-bgAccentPrimary to-bgAccentSecondary flex items-center justify-center min-h-screen">
       <div className="w-full max-w-md bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-8 m-4">
@@ -11,52 +33,68 @@ const Login = () => {
           <h1 className="text-2xl font-bold text-textAccent">Vidate</h1>
         </div>
 
-        {/* Title */}
         <h2 className="text-textPrimary text-xl font-semibold text-center mb-6">
           Sign in to your account
         </h2>
 
-        {/* Form */}
-        <form className="space-y-4">
+        {/* API Error Display */}
+        {apiError && (
+          <div className="mb-4 p-3 text-sm text-textError bg-bgSecondary border border-textError rounded-lg text-center">
+            {apiError}
+          </div>
+        )}
+
+        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+          {/* Email Input */}
           <div>
-            <label
-              htmlFor="email"
-              className="block mb-2 text-sm font-medium text-textSecondary"
-            >
+            <label htmlFor="email" className="block mb-2 text-sm font-medium text-textSecondary">
               Your email
             </label>
             <input
-              type="email"
-              name="email"
               id="email"
               placeholder="name@company.com"
-              className="w-full p-2.5 rounded-lg bg-bgSecondary border border-borderAccentLight text-textPrimary focus:outline-none focus:ring-2 focus:ring-borderAccent"
-              required
+              className={`w-full p-2.5 rounded-lg bg-bgSecondary border text-textPrimary focus:outline-none focus:ring-2 ${
+                errors.email 
+                  ? 'border-textError focus:ring-textError' 
+                  : 'border-borderAccentLight focus:ring-borderAccent'
+              }`}
+              {...register("email", {
+                required: "Email is required",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Invalid email address"
+                }
+              })}
             />
+            {errors.email && <span className="text-textError text-xs mt-1">{errors.email.message}</span>}
           </div>
 
+          {/* Password Input */}
           <div>
-            <label
-              htmlFor="password"
-              className="block mb-2 text-sm font-medium text-textSecondary"
-            >
+            <label htmlFor="password" className="block mb-2 text-sm font-medium text-textSecondary">
               Password
             </label>
             <input
               type="password"
-              name="password"
               id="password"
               placeholder="••••••••"
-              className="w-full p-2.5 rounded-lg bg-bgSecondary border border-borderAccentLight text-textPrimary focus:outline-none focus:ring-2 focus:ring-borderAccent"
-              required
+              className={`w-full p-2.5 rounded-lg bg-bgSecondary border text-textPrimary focus:outline-none focus:ring-2 ${
+                errors.password 
+                  ? 'border-textError focus:ring-textError' 
+                  : 'border-borderAccentLight focus:ring-borderAccent'
+              }`}
+              {...register("password", { required: "Password is required" })}
             />
+            {errors.password && <span className="text-textError text-xs mt-1">{errors.password.message}</span>}
           </div>
 
+          {/* Remember Me & Forgot Password */}
           <div className="flex items-center justify-between text-textSecondary">
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 className="w-4 h-4 rounded border-borderAccentLight bg-bgSecondary focus:ring-borderAccent"
+                {...register("rememberMe")}
               />
               Remember me
             </label>
@@ -65,6 +103,7 @@ const Login = () => {
             </Link>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-bgAccentSecondary hover:bg-borderAccent text-textPrimary font-semibold rounded-lg py-2.5 transition"
