@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@import "flowbite/src/themes/default.css";
+@plugin "flowbite/plugin";
+@source "../node_modules/flowbite";
+
+@theme {
+    /* Backgrounds */
+    --color-bgPrimary: #020617;
+    --color-bgSecondary: #1e293b;
+    --color-bgAccentPrimary: #1e1b4b;
+    --color-bgAccentSecondary: #4a044e;
+
+    /* Text */
+    --color-textPrimary: #ffffff;
+    --color-textSecondary: #9ca3af;
+    --color-textAccent: #a21caf;
+
+    /* Borders / highlights */
+    --color-borderAccent: #701a75;
+    --color-borderAccentLight: rgba(112, 26, 117, 0.4);
+}
