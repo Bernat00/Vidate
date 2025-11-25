@@ -1,4 +1,6 @@
-from typing import Any, Generic, List, Optional, Sequence, Type, TypeVar
+from typing import Any, Generic, List, Optional, Sequence, Type, TypeVar, Coroutine
+
+from sqlalchemy import Row, RowMapping
 from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.interfaces import ORMOption
@@ -39,7 +41,7 @@ class BasicRepo: #lehet kicsit kaka a nev
 
 class BaseRepo(Generic[T], BasicRepo):
     def __init__(self, session: AsyncSession, model_cls: Type[T]):
-        self.session = session
+        super().__init__(session)
         self.model = model_cls
 
     async def get_by_id(
@@ -57,12 +59,12 @@ class BaseRepo(Generic[T], BasicRepo):
         return await self.session.get(self.model, id, options=options)
 
 
-    async def get_all(self, options: Sequence[ORMOption] = None) -> List[T]:
+    async def get_all(self, options: Sequence[ORMOption] = None) -> Sequence[Row[Any] | RowMapping | Any]:
         stmt = select(self.model)
         if options:
             stmt = stmt.options(*options)
             
-        result = await self.session.exec(stmt)
+        result = await self.session.scalars(stmt)
         return result.all()
     
 
@@ -70,7 +72,7 @@ class BaseRepo(Generic[T], BasicRepo):
 class Repo(BasicRepo):
     
     @property
-    def UserRepo(self):
+    def UserRepo(self) -> UserRepo:
         if not self.UserRepo:
             self.UserRepo = UserRepo(self.session)
         return self.UserRepo
