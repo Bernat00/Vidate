@@ -1,4 +1,5 @@
 from uuid import uuid4
+from pydantic import SecretStr, EmailStr
 
 from sqlalchemy import String
 from sqlmodel import Field, SQLModel
@@ -16,14 +17,14 @@ class User(SQLModel, table=True):
         primary_key=True,
     )
 
-    email: str = Field(
+    email: EmailStr = Field(
         sa_type=String(128),
         unique=True,
         nullable=False,
     )
 
     # hidden from API responses
-    _password: str = Field(
+    _password: SecretStr = Field(
         sa_type=String(128),
         nullable=False,
         exclude=True,

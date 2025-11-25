@@ -1,19 +1,25 @@
-from typing import Annotated
+from sqlmodel import SQLModel
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
 
-from sqlmodel import Session, SQLModel, create_engine
+from .repository import Repo
 
 from ..config import Config
 
 
-connect_args = {"check_same_thread": False}
-engine = create_engine(str(Config.SQL_ALCHEMY_DATABASE_URL), connect_args=connect_args)
+engine = create_async_engine(
+    str(Config.SQL_ALCHEMY_DATABASE_URL),
+    echo=True,
+    connect_args={"check_same_thread": False}
+)
 
+async_session = sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
-
-def get_session():
-    with Session(engine) as session:
-        yield session
-
+async def get_repo():
+    async with async_session() as session:
+        yield Repo(session)

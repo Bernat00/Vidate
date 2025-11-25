@@ -1,63 +1,73 @@
-from typing import Any, Generic, List, Optional, Type, TypeVar
-from sqlmodel import Session, SQLModel, inspect
-from .. import engine
+from typing import Any, Generic, List, Optional, Sequence, Type, TypeVar
+from sqlmodel import SQLModel, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.interfaces import ORMOption
 
 
-def get_repo():
-      with Session(engine) as session:
-        yield Repository(session)
-      
-
-
+from .user import UserRepo
 
 
 T = TypeVar("T", bound=SQLModel)
 
 
-class Repository(Generic[T]):
-    model: Type[T] = SQLModel
-    session: Session
+class BasicRepo: #lehet kicsit kaka a nev
+    session: AsyncSession
 
-
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    
-    def save(self, model: T, with_commit=True) -> None:
+
+    async def save(self, model: T, refresh: bool = True) -> T:
         self.session.add(model)
-        if with_commit:
-            self.session.commit()
+        await self.session.commit()
 
-    def delete(self, model: T) -> None:
-        self.session.delete(model)
-        self.session.commit()
+        if refresh:
+            await self.session.refresh(model)
+
+        return model
 
 
-    def get_by_id(self, id: int | str, joins: Optional[List[Any]] = None) -> Optional[T]: #scary type snake
-        '''
-        Join only works if id is the fhirst primary key in the modell!!!
+    async def delete(self, model: T) -> None:
+        await self.session.delete(model)
+        await self.session.commit()
 
-        :param joins: a list of mapped columbs that you what to join with in the order of joinig
-        '''
 
-        if not joins:
-            return self.session.get(self.model, id)
+
+class BaseRepo(Generic[T], BasicRepo):
+    def __init__(self, session: AsyncSession, model_cls: Type[T]):
+        self.session = session
+        self.model = model_cls
+
+    async def get_by_id(
+        self, 
+        id: Any, 
+        options: Sequence[ORMOption] = None
+    ) -> Optional[T]:
+        """
+        Retrieves an entity by ID.
         
+        :param id: The primary key (or tuple for composite keys).
+        :param options: SQLAlchemy loader options (e.g., selectinload, joinedload)
+        """
 
-        statement = (
-            self.model.select().where(inspect(self.model).primary_key[0] == id)
-        )
+        return await self.session.get(self.model, id, options=options)
 
-        for join_column in joins:
-            statement.join(join_column)
 
-        return self.session.scalar(statement)
-
+    async def get_all(self, options: Sequence[ORMOption] = None) -> List[T]:
+        stmt = select(self.model)
+        if options:
+            stmt = stmt.options(*options)
             
+        result = await self.session.exec(stmt)
+        return result.all()
     
-    def get_all(self)-> Optional[List[T]]:
-        statement=(
-            self.model.select()
-        )
 
-        return self.session.scalars(statement).all()
+
+class Repo(BasicRepo):
+    
+    @property
+    def UserRepo(self):
+        if not self.UserRepo:
+            self.UserRepo = UserRepo(self.session)
+        return self.UserRepo
+    
