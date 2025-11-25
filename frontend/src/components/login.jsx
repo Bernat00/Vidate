@@ -14,7 +14,7 @@ const Login = () => {
     const { rememberMe, ...loginPayload } = data;
 
     try {
-      const response = await api.post('/api/auth/login', loginPayload);
+      const response = await api.post('/auth/login', loginPayload);
 
       const token = response.data.access_token;
 
@@ -116,7 +116,7 @@ const Login = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-bgAccentSecondary hover:bg-borderAccent text-textPrimary font-semibold rounded-lg py-2.5 transition"
+            className="w-full bg-bgAccentSecondary hover:bg-borderAccent text-textPrimary font-semibold rounded-lg py-2.5 transition hover:cursor-pointer"
           >
             Sign in
           </button>
