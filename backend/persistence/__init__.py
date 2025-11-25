@@ -2,7 +2,6 @@ from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from .repository import Repo
 
 from ..config import Config
 
@@ -19,7 +18,3 @@ async_session = sessionmaker(
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
-
-async def get_repo():
-    async with async_session() as session:
-        yield Repo(session)

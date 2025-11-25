@@ -5,9 +5,13 @@ from sqlalchemy.orm.interfaces import ORMOption
 
 
 from .user import UserRepo
-
+from .. import async_session
 
 T = TypeVar("T", bound=SQLModel)
+
+async def get_repo():
+    async with async_session() as session:
+        yield Repo(session)
 
 
 class BasicRepo: #lehet kicsit kaka a nev
