@@ -10,10 +10,20 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     setApiError('');
-    try {
-      const response = await api.post('/api/auth/login', data);
 
-      localStorage.setItem('token', response.data.access_token);
+    const { rememberMe, ...loginPayload } = data;
+
+    try {
+      const response = await api.post('/api/auth/login', loginPayload);
+
+      const token = response.data.access_token;
+
+      if (rememberMe) {
+        localStorage.setItem('token', token);
+      } else {
+        sessionStorage.setItem('token', token);
+      }
+
       navigate('/my-matches');
     } catch (err) {
       if (err.response && err.response.status === 401) {
