@@ -24,7 +24,7 @@ class User(SQLModel, table=True):
     )
 
     # hidden from API responses
-    _password: SecretStr = Field(
+    password_hash: SecretStr = Field(
         sa_type=String(128),
         nullable=False,
         exclude=True,
@@ -43,9 +43,15 @@ class User(SQLModel, table=True):
 
     # todo machek, profile, role
 
-    @_password.setter
+    @property
+    def password(self):
+        raise PermissionError(
+            "You cannot access the password field."
+        )
+
+    @password.setter
     def password(self, value):
-        self._password = generate_password_hash(value)
+        self.password_hash = generate_password_hash(value)
 
     def check_password(self, password) -> bool:
-        return check_password_hash(self._password, password)
+        return check_password_hash(self.password_hash, password)

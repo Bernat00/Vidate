@@ -5,14 +5,12 @@ from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.interfaces import ORMOption
 
-
-from .user import UserRepo
-from .. import async_session
+from .. import engine
 
 T = TypeVar("T", bound=SQLModel)
 
 async def get_repo():
-    async with async_session() as session:
+    async with AsyncSession(engine) as session:
         yield Repo(session)
 
 
@@ -45,13 +43,13 @@ class BaseRepo(Generic[T], BasicRepo):
         self.model = model_cls
 
     async def get_by_id(
-        self, 
-        id: Any, 
+        self,
+        id: Any,
         options: Sequence[ORMOption] = None
     ) -> Optional[T]:
         """
         Retrieves an entity by ID.
-        
+
         :param id: The primary key (or tuple for composite keys).
         :param options: SQLAlchemy loader options (e.g., selectinload, joinedload)
         """
@@ -63,17 +61,20 @@ class BaseRepo(Generic[T], BasicRepo):
         stmt = select(self.model)
         if options:
             stmt = stmt.options(*options)
-            
+
         result = await self.session.scalars(stmt)
         return result.all()
-    
 
+
+
+
+from .user import UserRepo
 
 class Repo(BasicRepo):
-    
+
     @property
     def UserRepo(self) -> UserRepo:
         if not self.UserRepo:
             self.UserRepo = UserRepo(self.session)
         return self.UserRepo
-    
+
