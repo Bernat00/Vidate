@@ -1,11 +1,16 @@
+from typing import Annotated
 from uuid import uuid4
-from pydantic import SecretStr, EmailStr
+from pydantic import SecretStr, EmailStr, field_validator
+from pydantic.types import SecretType
 
-from sqlalchemy import String
+from sqlalchemy import String, TypeDecorator, Column
 from sqlmodel import Field, SQLModel
 from datetime import datetime, timezone
 
 from werkzeug.security import check_password_hash, generate_password_hash
+
+
+
 
 
 class User(SQLModel, table=True):
@@ -13,7 +18,7 @@ class User(SQLModel, table=True):
 
     id: str = Field(
         default_factory=lambda: str(uuid4()),
-        sa_type=String(64),
+        sa_type=String(256),
         primary_key=True,
     )
 
@@ -23,11 +28,11 @@ class User(SQLModel, table=True):
         nullable=False,
     )
 
-    # hidden from API responses
-    password_hash: SecretStr = Field(
-        sa_type=String(128),
+    password_hash: str = Field(
+        sa_type=String(256),
         nullable=False,
         exclude=True,
+
     )
 
     created_at: datetime = Field(
@@ -43,15 +48,10 @@ class User(SQLModel, table=True):
 
     # todo machek, profile, role
 
-    @property
-    def password(self):
-        raise PermissionError(
-            "You cannot access the password field."
-        )
+    @staticmethod
+    def hash_password(plaintext: SecretStr):
+        return generate_password_hash(plaintext.get_secret_value())
 
-    @password.setter
-    def password(self, value):
-        self.password_hash = generate_password_hash(value)
+    def check_password(self, password: SecretStr) -> bool:
+        return check_password_hash(self.password_hash, password.get_secret_value())
 
-    def check_password(self, password) -> bool:
-        return check_password_hash(self.password_hash, password)

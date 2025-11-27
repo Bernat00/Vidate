@@ -71,10 +71,16 @@ class BaseRepo(Generic[T], BasicRepo):
 from .user import UserRepo
 
 class Repo(BasicRepo):
+    def __init__(self, session: AsyncSession):
+        super().__init__(session)
+
+
+    _user_repo: UserRepo = None
+
 
     @property
-    def UserRepo(self) -> UserRepo:
-        if not self.UserRepo:
-            self.UserRepo = UserRepo(self.session)
-        return self.UserRepo
+    def user_repo(self) -> UserRepo:
+        if not self._user_repo:
+            self._user_repo = UserRepo(self.session)
+        return self._user_repo
 
