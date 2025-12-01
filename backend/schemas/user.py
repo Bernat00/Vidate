@@ -7,4 +7,5 @@ class UserCreate(BaseModel):
     password: SecretStr
 
 
-
+class UserUpdate(BaseModel):
+    pass

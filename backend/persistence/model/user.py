@@ -1,16 +1,14 @@
-from typing import Annotated
 from uuid import uuid4
-from pydantic import SecretStr, EmailStr, field_validator
-from pydantic.types import SecretType
+from pydantic import SecretStr, EmailStr
 
-from sqlalchemy import String, TypeDecorator, Column
+from sqlalchemy import String
 from sqlmodel import Field, SQLModel
 from datetime import datetime, timezone
 
-from werkzeug.security import check_password_hash, generate_password_hash
+from pwdlib import PasswordHash
 
 
-
+password_hasher = PasswordHash.recommended()
 
 
 class User(SQLModel, table=True):
@@ -46,12 +44,14 @@ class User(SQLModel, table=True):
         nullable=False,
     )
 
+    disabled: bool = Field(nullable=False, default=False)
+
     # todo machek, profile, role
 
     @staticmethod
     def hash_password(plaintext: SecretStr):
-        return generate_password_hash(plaintext.get_secret_value())
+        return password_hasher.hash(plaintext.get_secret_value())
 
     def check_password(self, password: SecretStr) -> bool:
-        return check_password_hash(self.password_hash, password.get_secret_value())
+        return password_hasher.verify(password.get_secret_value(), self.password_hash)
 
