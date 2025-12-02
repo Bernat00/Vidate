@@ -9,8 +9,9 @@ repoDep = Annotated[Repo, Depends(get_repo)]
 
 
 from ..persistence.model.user import User
-from .auth import get_current_user
-current_user_dep = Annotated[User | None, Depends(get_current_user)]
+from .auth import CurrentUserCheckerDependency
+get_and_auth_current_user = Annotated[User | None, Depends(CurrentUserCheckerDependency())]
+#get_and_auth_current_admin = Annotated[User | None, Depends(CurrentUserCheckerDependency("adnimrole"))]
 
 
 from fastapi import APIRouter
