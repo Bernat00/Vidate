@@ -10,16 +10,20 @@ const Register = () => {
 
   const password = watch("password");
 
+  //todo TESTS
+
   const onSubmit = async (data) => {
     setApiError('');
     try {
       await api.post('/auth/register', {
-        email: data.email,
-        password: data.password
+          userCreate : {
+            email: data.email,
+            password: data.password
+          }
       });
 
       navigate('/login');
-    } catch (err) {
+    } catch (err) { //todo fix error handleing sometimes makes frontend crash
       if (err.response && err.response.data && err.response.data.detail) {
         setApiError(err.response.data.detail);
       } else {
@@ -56,7 +60,7 @@ const Register = () => {
             </label>
             <input
               id="email"
-              placeholder="name@company.com"
+              placeholder="name@company.tld"
               className={`w-full p-2.5 rounded-lg bg-bgSecondary border text-textPrimary focus:outline-none focus:ring-2 ${
                 errors.email 
                   ? 'border-textError focus:ring-textError' 

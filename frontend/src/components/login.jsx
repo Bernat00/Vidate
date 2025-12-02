@@ -3,18 +3,32 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import api from '../api';
 
+import qs from 'qs';
+
+
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [apiError, setApiError] = useState('');
   const navigate = useNavigate();
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data) => {    //WTF is this???? egy async function miert igy deklaraltal?? percekig tarott rajonnom h mi folyik itt
     setApiError('');
 
     const { rememberMe, ...loginPayload } = data;
 
     try {
-      const response = await api.post('/auth/login', loginPayload);
+      const response = await api.post('/auth/token',
+          qs.stringify({
+          grant_type: 'password', //todo change this mert depracataed
+          username: loginPayload.email,
+          password: loginPayload.password,
+      }),
+          {
+              headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+              }
+          }
+      );
 
       const token = response.data.access_token;
 
