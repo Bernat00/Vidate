@@ -1,3 +1,5 @@
+from pydantic import SecretStr
+
 from backend.routes import repoDep
 from ..config import Config
 from ..persistence.model.user import User
@@ -77,7 +79,7 @@ async def token(repo: repoDep,
                 form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
                 ) -> Token:
     user = await repo.user_repo.get_by_email(form_data.username)
-    if not user:
+    if not user or user.check_password(SecretStr(form_data.password)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
