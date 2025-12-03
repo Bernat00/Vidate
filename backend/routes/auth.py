@@ -66,21 +66,19 @@ class CurrentUserCheckerDependency:
 async def register(repo: repoDep, userCreate: UserCreate, response: Response) -> None:
     print(userCreate.email)
     print(userCreate.password)
-    try:
-        if await repo.user_repo.get_by_email(userCreate.email):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This email is already registered."
-            )
 
-        user = User(**userCreate.model_dump(), password_hash=User.hash_password(userCreate.password))
+    if await repo.user_repo.get_by_email(userCreate.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This email is already registered."
+        )
 
-        await repo.save(user)
-        response.status = status.HTTP_201_CREATED
+    user = User(**userCreate.model_dump(), password_hash=User.hash_password(userCreate.password))
 
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    await repo.save(user)
+    response.status = status.HTTP_201_CREATED
+
+
 
 
 @router.post('/token')
