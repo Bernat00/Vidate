@@ -1,3 +1,5 @@
+from pydantic import EmailStr
+
 from . import BaseRepo
 from ..model.user import User
 from sqlalchemy import select, ScalarResult

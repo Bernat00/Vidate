@@ -16,10 +16,8 @@ const Register = () => {
     setApiError('');
     try {
       await api.post('/auth/register', {
-          userCreate : {
-            email: data.email,
-            password: data.password
-          }
+        email: data.email,
+        password: data.password
       });
 
       navigate('/login');
