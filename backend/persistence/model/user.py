@@ -52,6 +52,6 @@ class User(SQLModel, table=True):
     def hash_password(plaintext: SecretStr):
         return password_hasher.hash(plaintext.get_secret_value())
 
-    def check_password(self, password: SecretStr) -> bool:
-        return password_hasher.verify(password.get_secret_value(), self.password_hash)
+    def check_password(self, password: str) -> bool:
+        return password_hasher.verify(password, self.password_hash)
 

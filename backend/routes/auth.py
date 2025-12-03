@@ -1,4 +1,4 @@
-from pydantic import SecretStr
+from pydantic import SecretStr, EmailStr
 from sqlalchemy.util import await_only
 
 from backend.routes import repoDep
