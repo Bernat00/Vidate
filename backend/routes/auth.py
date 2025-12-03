@@ -64,6 +64,12 @@ class CurrentUserCheckerDependency:
 @router.post('/register')
 async def register(repo: repoDep, userCreate: Annotated[UserCreate, Body(embed=True)], response: Response) -> None:
     try:
+        if repo.user_repo.get_by_email(userCreate.email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This email is already registered."
+            )
+
         user = User(**userCreate.model_dump(), password_hash=User.hash_password(userCreate.password))
 
         await repo.save(user)
@@ -71,7 +77,7 @@ async def register(repo: repoDep, userCreate: Annotated[UserCreate, Body(embed=T
 
     except Exception as e:
         print(e)
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @router.post('/token')
@@ -79,10 +85,10 @@ async def token(repo: repoDep,
                 form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
                 ) -> Token:
     user = await repo.user_repo.get_by_email(form_data.username)
-    if not user or user.check_password(SecretStr(form_data.password)):
+    if not user or not user.check_password(SecretStr(form_data.password)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
