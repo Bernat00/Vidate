@@ -17,3 +17,5 @@ const ChatInput = () => {
     </form>
   );
 };
+
+export default ChatInput;

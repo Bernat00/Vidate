@@ -25,7 +25,7 @@ const DUMMY_MESSAGES = [
   ];
 
 
-export default function ChatPage() {
+export default function MyMatches() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
