@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import api from '../api';
-
-import qs from 'qs';
+import {login} from "../heplers.js";
 
 
 const Login = () => {
@@ -17,26 +15,7 @@ const Login = () => {
     const { rememberMe, ...loginPayload } = data;
 
     try {
-      const response = await api.post('/auth/token',
-          qs.stringify({
-          grant_type: 'password', //todo change this mert depracataed
-          username: loginPayload.email,
-          password: loginPayload.password,
-      }),
-          {
-              headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded',
-              }
-          }
-      );
-
-      const token = response.data.access_token;
-
-      if (rememberMe) {
-        localStorage.setItem('token', token);
-      } else {
-        sessionStorage.setItem('token', token);
-      }
+      await login(data.email, data.password, rememberMe);
 
       navigate('/my-matches');
     } catch (err) {

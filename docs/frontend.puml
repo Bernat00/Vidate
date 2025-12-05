@@ -31,7 +31,7 @@ class ProfilePage {
 }
 
 AppShell --> LandingPage : route "/"
-AppShell --> LoginPage : route "/login"
+AppShell --> LoginPage : route "/heplers"
 AppShell --> VideoFeedPage : route "/feed"
 AppShell --> MessagesPage : route "/messages"
 AppShell --> ProfilePage : route "/profile"

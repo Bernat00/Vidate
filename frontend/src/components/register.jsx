@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import api from '../api';
+import {login} from '../heplers.js';
 
 const Register = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
@@ -20,7 +21,10 @@ const Register = () => {
         password: data.password
       });
 
-      navigate('/login');
+
+      await login(data.email, data.password);
+
+
     } catch (err) { //todo fix error handleing sometimes makes frontend crash
       if (err.response && err.response.data && err.response.data.detail) {
         setApiError(err.response.data.detail);
@@ -141,7 +145,7 @@ const Register = () => {
 
           <p className="text-textSecondary text-sm text-center">
             Already have an account?{' '}
-            <Link to="/login" className="text-textAccent hover:underline">
+            <Link to="/heplers" className="text-textAccent hover:underline">
               Login here
             </Link>
           </p>

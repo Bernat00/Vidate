@@ -1,7 +1,5 @@
 from contextlib import asynccontextmanager
 
-from sentry_sdk.logger import debug
-
 from .persistence import  create_db_and_tables
 from fastapi.middleware.cors import CORSMiddleware
 
