@@ -1,5 +1,7 @@
 import React, {useEffect, useState} from "react";
 import api from "../../api.js";
+import {faXmark} from "@fortawesome/free-solid-svg-icons";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const [matches, setMatches] = useState([]);
@@ -8,7 +10,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const response = await api.get('/matches/');
+        const response = await api.get('/matches');
         // Assuming response.data is the array of matches
         setMatches(response.data);
       } catch (error) {
@@ -33,7 +35,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           onClick={onClose}
           className="lg:hidden absolute right-4 hover:text-borderAccent text-textPrimary"
         >
-          <i className="fa-solid fa-xmark text-xl"></i>
+          <FontAwesomeIcon icon={faXmark} />
         </button>
       </div>
 

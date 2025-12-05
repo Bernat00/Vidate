@@ -3,6 +3,8 @@ import Sidebar from "./sidebar.jsx";
 import MessageBubble from "./messageBubble.jsx";
 import ChatInput from "./ChatInput.jsx";
 import Navbar from "../navbar.jsx";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faBars} from "@fortawesome/free-solid-svg-icons";
 
 
 const DUMMY_MESSAGES = [
@@ -48,7 +50,7 @@ export default function MyMatches() {
               onClick={() => setIsSidebarOpen(true)}
               className="hover:text-borderAccent p-1 rounded-lg"
             >
-              <i className="fa-solid fa-bars text-xl"></i>
+            <FontAwesomeIcon icon={faBars} />
             </button>
             <span className="font-bold text-textAccent">Vidate</span>
             <div className="w-6" />
