@@ -11,4 +11,4 @@ router = APIRouter(prefix='/test')
 
 @router.get('/')
 async def test(current_user: get_and_auth_current_user):
-    return current_user
+    return 'success'
