@@ -20,7 +20,7 @@ export default function Navbar() {
                     className="inline-flex flex-col items-center gap-1 justify-center px-5 hover:bg-bgAccentSecondary hover:text-bgPrimary"
                 >
                     <FontAwesomeIcon icon={faMessage} />
-                    <span className="text-sm">Messages</span>
+                    <span className="text-sm">My Matches</span>
                 </button>
                 <button
                     type="button"

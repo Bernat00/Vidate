@@ -1,6 +1,6 @@
 const ChatInput = () => {
   return (
-      <form className="mt-auto w-full px-4 mb-14 lg:mb-4">
+      <form className="mt-auto w-full px-4 mb-16 lg:mb-4">
           <label htmlFor="chat" className="sr-only">Your message</label>
           <div className="relative">
                   <textarea

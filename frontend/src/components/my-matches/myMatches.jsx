@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Sidebar from "./sidebar.jsx";
 import MessageBubble from "./messageBubble.jsx";
 import ChatInput from "./ChatInput.jsx";
@@ -20,7 +20,7 @@ const DUMMY_MESSAGES = [
       id: 2,
       sender: 'You',
       avatar: 'https://i.pravatar.cc/150?u=99',
-      text: 'I’m doing great, thanks for asking! 😊',
+      text: "I'm doing great, thanks for asking! 😊",
       time: '11:48',
       isMe: true,
     },
@@ -43,9 +43,9 @@ export default function MyMatches() {
           />
         )}
 
-        <div className="flex-1 w-full lg:ml-56 flex flex-col h-screen">
+        <div className="flex-1 w-full lg:ml-56">
 
-          <header className="flex items-center justify-between p-2 text-textPrimary bg-bgPrimary border-b border-borderAccentLight lg:hidden flex-shrink-0">
+          <header className="flex items-center justify-between p-2 text-textPrimary bg-bgPrimary border-b border-borderAccentLight lg:hidden">
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="hover:text-borderAccent p-1 rounded-lg"
@@ -56,24 +56,23 @@ export default function MyMatches() {
             <div className="w-6" />
           </header>
 
-          <main className="flex justify-center items-center flex-1 overflow-hidden">
-            <div className="w-full lg:w-1/2 h-full flex flex-col pt-4">
+          <main className="flex justify-center items-center min-h-[calc(100vh-4rem)] mx-2">
+            <div className="w-full lg:w-1/2">
+              <div className="flex flex-col min-h-[calc(100vh-4rem)] mx-2 pt-4">
 
-              <div className="flex-1 overflow-y-auto px-4 flex flex-col gap-6">
-                {DUMMY_MESSAGES.map((msg) => (
-                  <MessageBubble key={msg.id} message={msg} />
-                ))}
-              </div>
+                <div className="flex flex-col gap-6 justify-start items-start">
+                  {DUMMY_MESSAGES.map((msg) => (
+                    <MessageBubble key={msg.id} message={msg} />
+                  ))}
+                </div>
 
-              {/* Input Area */}
-              <div className="flex-shrink-0">
                 <ChatInput />
-              </div>
 
+              </div>
             </div>
           </main>
 
-        <Navbar/>
+          <Navbar/>
 
         </div>
       </div>
