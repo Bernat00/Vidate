@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 class Match(SQLModel, table=True):
     __tablename__ = "matches"
     __table_args__ = (
-        UniqueConstraint("user_1", "user2_id"),
+        UniqueConstraint("user1", "user2"),
     )
 
     id: int = Field(
@@ -27,13 +27,13 @@ class Match(SQLModel, table=True):
         default=False,
     )
 
-    user_1: str = Field(
+    user1: str = Field(
         foreign_key="users.id",
         sa_type=String(255),
         nullable=False,
     )
 
-    user2_id: str = Field(
+    user2: str = Field(
         foreign_key="users.id",
         sa_type=String(255),
         nullable=False,

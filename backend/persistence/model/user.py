@@ -51,14 +51,12 @@ class User(SQLModel, table=True):
     disabled: bool = Field(nullable=False, default=False)
 
     matches_as_user1: list["Match"] = Relationship(     #todo ebbe nincs exclude emiatt kell külön OutModel
-        back_populates="user1",
-        sa_relationship_kwargs={"foreign_keys": "Match.user_1"},
+        sa_relationship_kwargs={"foreign_keys": "Match.user1"},
         cascade_delete=True,
     )
 
     matches_as_user2: list["Match"] = Relationship(
-        back_populates="user2",
-        sa_relationship_kwargs={"foreign_keys": "Match.user2_id"},
+        sa_relationship_kwargs={"foreign_keys": "Match.user2"},
         cascade_delete=True,
     )
     # todo profile, role
