@@ -1,6 +1,3 @@
-from pydantic import SecretStr, EmailStr
-from sqlalchemy.util import await_only
-
 from backend.routes import repoDep
 from ..config import Config
 from ..persistence.model.user import User
@@ -11,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status, APIRouter, Body, Response
+from fastapi import Depends, HTTPException, status, APIRouter, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 
