@@ -21,8 +21,14 @@ const Register = () => {
         password: data.password
       });
 
-
-      await login(data.email, data.password);
+      try {
+        await login(data.email, data.password);
+        navigate('/setup-profile');
+      }
+      catch {
+          navigate('/login')
+          // todo show toast
+      }
 
 
     } catch (err) { //todo fix error handleing sometimes makes frontend crash
