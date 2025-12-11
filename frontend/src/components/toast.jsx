@@ -1,7 +1,6 @@
 import React from 'react';
 
 const Toast = ({ text, status = 'info', onClose }) => {
-  // Configuration map for styles and icons based on status
   const config = {
     success: {
       iconColor: 'text-textSuccess',

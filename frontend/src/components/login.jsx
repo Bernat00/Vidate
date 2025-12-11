@@ -1,22 +1,32 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Link, useLocation, useNavigate} from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {login} from "../heplers.js";
+import {useToast} from "../context/toastcontext.jsx";
 
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [apiError, setApiError] = useState('');
+
   const navigate = useNavigate();
+  const location = useLocation();
+  const { showToast } = useToast();
 
-  const onSubmit = async (data) => {    //WTF is this???? egy async function miert igy deklaraltal?? percekig tarott rajonnom h mi folyik itt
+  useEffect(() => {
+    if (location.state?.toastMessage) {
+      const { toastMessage, status } = location.state;
+      showToast(toastMessage, status);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    }, []);
+
+  const onSubmit = async (data) => {
     setApiError('');
-
     const { rememberMe, ...loginPayload } = data;
 
     try {
       await login(data.email, data.password, rememberMe);
-
       navigate('/my-matches');
     } catch (err) {
       if (err.response && err.response.status === 401) {
