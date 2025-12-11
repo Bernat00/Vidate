@@ -22,7 +22,6 @@ const Register = () => {
       });
 
       try {
-        throw new Error('Login failed'); // todo remove
         await login(data.email, data.password);
         navigate('/setup-profile');
       }

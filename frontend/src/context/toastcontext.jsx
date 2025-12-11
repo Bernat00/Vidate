@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import Toast from '../components/toast.jsx';
 
 const ToastContext = createContext();
 
@@ -7,9 +8,12 @@ export const useToast = () => useContext(ToastContext);
 export const ToastProvider = ({ children }) => {
   const [toast, setToast] = useState(null);
 
-  // The global function to trigger the toast
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
+  const showToast = (message, status = 'success') => {
+    setToast({ message, status });
+  };
+
+  const closeToast = () => {
+    setToast(null);
   };
 
   useEffect(() => {
@@ -25,21 +29,13 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={{ showToast }}>
       {children}
 
-      {/* The Global Toast UI */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-50 flex items-center w-full max-w-xs p-4 rounded-lg shadow-xl border transition-all duration-300 transform translate-y-0 ${
-          toast.type === 'error' 
-            ? 'bg-bgSecondary border-textError text-textError' 
-            : 'bg-bgSecondary border-borderAccent text-textAccent'
-        }`}>
-          <div className="text-sm font-semibold">{toast.message}</div>
-          <button
-            onClick={() => setToast(null)}
-            className="ml-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex h-8 w-8 hover:bg-bgPrimary"
-          >
-            <span className="sr-only">Close</span>
-            ✕
-          </button>
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 lg:left-auto lg:right-5 lg:translate-x-0 z-50 w-full max-w-sm px-4 lg:px-0 transition-all duration-300">
+          <Toast
+            text={toast.message}
+            status={toast.status}
+            onClose={closeToast}
+          />
         </div>
       )}
     </ToastContext.Provider>
