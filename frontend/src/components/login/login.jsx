@@ -1,45 +1,38 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Link, useLocation, useNavigate} from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import api from '../api';
-import {login} from '../heplers.js';
+import {login} from "../../heplers.js";
+import {useToast} from "../../context/toastcontext.jsx";
 
-const Register = () => {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm();
+
+const Login = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm();
   const [apiError, setApiError] = useState('');
+
   const navigate = useNavigate();
+  const location = useLocation();
+  const { showToast } = useToast();
 
-  const password = watch("password");
-
-  //todo TESTS
+  useEffect(() => {
+    if (location.state?.toastMessage) {
+      const { toastMessage, status } = location.state;
+      showToast(toastMessage, status);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    }, []);
 
   const onSubmit = async (data) => {
     setApiError('');
+    const { rememberMe, ...loginPayload } = data;
+
     try {
-      await api.post('/auth/register', {
-        email: data.email,
-        password: data.password
-      });
-
-      try {
-        await login(data.email, data.password);
-        navigate('/setup-profile');
-      }
-      catch {
-        navigate('/login', {
-            state: {
-              toastMessage: 'Account created! Please log in.',
-              status: 'success'
-            }
-          });
-      }
-
-
-    } catch (err) { //todo fix error handleing sometimes makes frontend crash
-      if (err.response && err.response.data && err.response.data.detail) {
-        setApiError(err.response.data.detail);
+      await login(data.email, data.password, rememberMe);
+      navigate('/my-matches');
+    } catch (err) {
+      if (err.response && err.response.status === 401) {
+        setApiError('Email or password is incorrect.');
       } else {
-        setApiError('Registration failed. Please try again.');
+        setApiError('Something went wrong. Please try again.');
       }
     }
   };
@@ -54,7 +47,7 @@ const Register = () => {
         </div>
 
         <h2 className="text-textPrimary text-xl font-semibold text-center mb-6">
-          Create an account
+          Sign in to your account
         </h2>
 
         {/* API Error Display */}
@@ -72,7 +65,7 @@ const Register = () => {
             </label>
             <input
               id="email"
-              placeholder="name@company.tld"
+              placeholder="name@company.com"
               className={`w-full p-2.5 rounded-lg bg-bgSecondary border text-textPrimary focus:outline-none focus:ring-2 ${
                 errors.email 
                   ? 'border-textError focus:ring-textError' 
@@ -82,7 +75,7 @@ const Register = () => {
                 required: "Email is required",
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address."
+                  message: "Invalid email address"
                 }
               })}
             />
@@ -103,46 +96,24 @@ const Register = () => {
                   ? 'border-textError focus:ring-textError' 
                   : 'border-borderAccentLight focus:ring-borderAccent'
               }`}
-              {...register("password", {
-                required: "Password is required",
-                minLength: {
-                    value: 8,
-                    message: "Password must be at least 8 characters."
-                },
-                pattern: {
-                    // Regex: At least one lowercase, one uppercase, and one digit
-                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
-                    message: "Must contain at least 1 uppercase, 1 lowercase, and 1 number."
-                }
-              })}
+              {...register("password", { required: "Password is required" })}
             />
             {errors.password && <span className="text-textError text-xs mt-1">{errors.password.message}</span>}
           </div>
 
-          {/* Confirm Password Input */}
-          <div>
-            <label htmlFor="confirm-password" className="block mb-2 text-sm font-medium text-textSecondary">
-              Confirm password
+          {/* Remember Me & Forgot Password */}
+          <div className="flex items-center justify-between text-textSecondary">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-borderAccentLight bg-bgSecondary focus:ring-borderAccent"
+                {...register("rememberMe")}
+              />
+              Remember me
             </label>
-            <input
-              type="password"
-              id="confirm-password"
-              placeholder="••••••••"
-              className={`w-full p-2.5 rounded-lg bg-bgSecondary border text-textPrimary focus:outline-none focus:ring-2 ${
-                errors.confirmPassword 
-                  ? 'border-textError focus:ring-textError' 
-                  : 'border-borderAccentLight focus:ring-borderAccent'
-              }`}
-              {...register("confirmPassword", {
-                required: "Please confirm your password",
-                validate: (val) => {
-                    if (watch('password') !== val) {
-                        return "Your passwords do not match.";
-                    }
-                }
-               })}
-            />
-            {errors.confirmPassword && <span className="text-textError text-xs mt-1">{errors.confirmPassword.message}</span>}
+            <Link to="/forgot-password" className="text-textAccent hover:underline text-sm">
+              Forgot password?
+            </Link>
           </div>
 
           {/* Submit Button */}
@@ -150,13 +121,13 @@ const Register = () => {
             type="submit"
             className="w-full bg-bgAccentSecondary hover:bg-borderAccent text-textPrimary font-semibold rounded-lg py-2.5 transition hover:cursor-pointer"
           >
-            Create an account
+            Sign in
           </button>
 
           <p className="text-textSecondary text-sm text-center">
-            Already have an account?{' '}
-            <Link to="/heplers" className="text-textAccent hover:underline">
-              Login here
+            Don’t have an account?{' '}
+            <Link to="/register" className="text-textAccent hover:underline">
+              Sign up
             </Link>
           </p>
         </form>
@@ -165,4 +136,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;
