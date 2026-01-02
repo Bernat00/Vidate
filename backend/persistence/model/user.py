@@ -1,6 +1,6 @@
 from platform import machine
 from uuid import uuid4
-from pydantic import SecretStr, EmailStr
+from pydantic import SecretStr, EmailStr, computed_field
 
 from sqlalchemy import String
 from sqlmodel import Field, SQLModel, Relationship
@@ -51,20 +51,16 @@ class User(SQLModel, table=True):
     disabled: bool = Field(nullable=False, default=False)
 
     matches_as_user1: list["Match"] = Relationship(     #todo ebbe nincs exclude emiatt kell külön OutModel
-        sa_relationship_kwargs={"foreign_keys": "Match.user1"},
+        sa_relationship_kwargs={"foreign_keys": "Match.user1_id"},
         cascade_delete=True,
     )
 
     matches_as_user2: list["Match"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "Match.user2"},
+        sa_relationship_kwargs={"foreign_keys": "Match.user2_id"},
         cascade_delete=True,
     )
     # todo profile, role
 
-
-    @property
-    def  matches(self):
-        return [self.matches_as_user1, self.matches_as_user2]
 
     @staticmethod
     def hash_password(plaintext: SecretStr):

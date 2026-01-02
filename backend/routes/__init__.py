@@ -24,3 +24,7 @@ from .test import router as test_router
 router.include_router(test_router, tags=['test'])
 
 
+from .matches import router as matches_router
+router.include_router(matches_router, tags=['matches'])
+
+

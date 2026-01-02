@@ -69,6 +69,7 @@ class BaseRepo(Generic[T], BasicRepo):
 
 
 from .user import UserRepo
+from .match import MatchRepo
 
 class Repo(BasicRepo):
     def __init__(self, session: AsyncSession):
@@ -76,6 +77,7 @@ class Repo(BasicRepo):
 
 
     _user_repo: UserRepo = None
+    _mach_repo: MatchRepo = None
 
 
     @property
@@ -83,6 +85,12 @@ class Repo(BasicRepo):
         if not self._user_repo:
             self._user_repo = UserRepo(self.session)
         return self._user_repo
+
+    @property
+    def mach_repo(self) -> MatchRepo:
+        if not self._mach_repo:
+            self._mach_repo = MatchRepo(self.session)
+        return self._mach_repo
 
 
 

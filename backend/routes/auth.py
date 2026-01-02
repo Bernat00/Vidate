@@ -28,7 +28,7 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes
     return encoded_jwt
 
 
-class CurrentUserCheckerDependency:
+class CurrentUserCheckerDependency:     #todo ezt újragondolni
     def __init__(self, role=None):
         if role:
             raise NotImplementedError('Checking the role is not yet implemented.')

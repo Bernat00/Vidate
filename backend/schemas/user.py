@@ -1,6 +1,6 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, List, Optional
 
-from pydantic import EmailStr, SecretStr, BeforeValidator, ConfigDict, computed_field
+from pydantic import EmailStr, SecretStr, BeforeValidator, ConfigDict, computed_field, Field
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -21,28 +21,15 @@ class UserCreate(BaseModel):
     email: Annotated[str, EmailStr]
     password: Annotated[SecretStr, BeforeValidator(validate_password)]
 
+class ChangeEmail(BaseModel):
+    email: Annotated[str, EmailStr]
 
-class UserUpdate(BaseModel):
-    pass
-
-
-
+class ChangePassword(BaseModel):
+    password: Annotated[SecretStr, BeforeValidator(validate_password)]
 
 class UserOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: str
     email: EmailStr
     created_at: datetime
     updated_at: datetime
     disabled: bool
-
-    @computed_field(
-        return_type=list[Match],
-        repr=False,
-    )
-    @property
-    def matches(self) -> list[Match]:
-        orm_user = self.__pydantic_self__  # SQLModel User instance
-
-        return orm_user.matches
