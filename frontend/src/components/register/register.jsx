@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import api from '../api';
-import {login} from '../heplers.js';
+import api from '../../api';
+import {login} from '../../heplers.js';
 
 const Register = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
@@ -21,8 +21,18 @@ const Register = () => {
         password: data.password
       });
 
-
-      await login(data.email, data.password);
+      try {
+        await login(data.email, data.password);
+        navigate('/setup-profile');
+      }
+      catch {
+        navigate('/login', {
+            state: {
+              toastMessage: 'Account created! Please log in.',
+              status: 'success'
+            }
+          });
+      }
 
 
     } catch (err) { //todo fix error handleing sometimes makes frontend crash

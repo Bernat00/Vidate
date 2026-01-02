@@ -9,12 +9,17 @@
     --color-bgSecondary: #1e293b;
     --color-bgAccentPrimary: #1e1b4b;
     --color-bgAccentSecondary: #4a044e;
+    --color-bgSuccessSoft: rgba(74, 222, 128, 0.1);
+    --color-bgErrorSoft: rgba(239, 68, 68, 0.1);
+    --color-bgWarningSoft: rgba(250, 204, 21, 0.1);
 
     /* Text */
     --color-textPrimary: #ffffff;
     --color-textSecondary: #9ca3af;
     --color-textAccent: #a21caf;
     --color-textError: #ef4444;
+    --color-textSuccess: #4ade80; /* bright green */
+    --color-textWarning: #facc15; /* yellow/orange */
 
     /* Borders / highlights */
     --color-borderAccent: #701a75;
