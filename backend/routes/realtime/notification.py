@@ -7,7 +7,7 @@ router = APIRouter(prefix='/notification')
 
 @router.websocket('/test')
 async def test(websocket: WebSocket): #todo nem ferni hozza a headerekhez a szaros jsben (ha jol ertem)
-    manager.connect(websocket)
+    await manager.connect(websocket)
     try:
         while True:
             await manager.send({'message': 'hello'})

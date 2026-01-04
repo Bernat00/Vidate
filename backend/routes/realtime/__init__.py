@@ -32,7 +32,7 @@ class ConnectionManager:
 
         jwt = None
 
-        while timeout < datetime.now() or jwt is not None:
+        while jwt is None and timeout < datetime.now():
             jwt =  await websocket.receive_json()
 
         token_data = TokenData(user_id='asd') # decode_token(jwt, WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated'))
