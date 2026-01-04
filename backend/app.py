@@ -3,8 +3,9 @@ from contextlib import asynccontextmanager
 from .persistence import  create_db_and_tables
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import router
-from fastapi import FastAPI
+from .routes import router as api_router
+from .routes.realtime import router as realtime_router
+from fastapi import FastAPI, WebSocket
 
 
 
@@ -33,5 +34,5 @@ app.add_middleware(
 )
 
 
-app.include_router(router)
-
+app.include_router(api_router)
+app.include_router(realtime_router, tags=['realtime'])

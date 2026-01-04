@@ -31,11 +31,11 @@ class ConnectionManager:
         await websocket.accept()
 
         jwt = None
-
-        while jwt is None and timeout < datetime.now():
+        while jwt is None and timeout > datetime.now(): #todo this is shit, az await megallitja idk dani help
             jwt =  await websocket.receive_json()
 
-        token_data = TokenData(user_id='asd') # decode_token(jwt, WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated'))
+
+        token_data = decode_token(jwt, WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated'))
 
         conn = Connection()
         conn.user_id = token_data.user_id
@@ -56,3 +56,11 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+
+
+
+
+from .notification import router as notification_router
+router.include_router(notification_router, tags=['notification'])
