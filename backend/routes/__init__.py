@@ -27,4 +27,7 @@ router.include_router(test_router, tags=['test'])
 from .matches import router as matches_router
 router.include_router(matches_router, tags=['matches'])
 
+from .realtime import router as realtime_router
+router.include_router(realtime_router, tags=['realtime'])
+
 

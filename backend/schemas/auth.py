@@ -9,4 +9,4 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    id: str | None = None
+    user_id: str | None = None

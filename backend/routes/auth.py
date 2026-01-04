@@ -19,6 +19,16 @@ router = APIRouter(prefix='/auth')
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/auth/token')
 
 
+def decode_token(token: str, credentials_exception: Exception) -> TokenData:
+    payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
+    id = payload.get("sub")
+
+    if id is None:
+        raise credentials_exception
+
+    return TokenData(user_id=id)
+
+
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=60)):
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + expires_delta
@@ -40,18 +50,12 @@ class CurrentUserCheckerDependency:     #todo ezt újragondolni
             headers={"WWW-Authenticate": "Bearer"},
         )
         try:
-            payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
-            id = payload.get("sub")
-
-            if id is None:
-                raise credentials_exception
-
-            token_data = TokenData(id=id) #todo why was this in the demo? it literally does nothing
+            token_data = decode_token(token, credentials_exception)
 
         except InvalidTokenError:
             raise credentials_exception
 
-        user = await repo.user_repo.get_by_id(token_data.id)
+        user = await repo.user_repo.get_by_id(token_data.user_id)
 
         if user is None:
             raise credentials_exception
