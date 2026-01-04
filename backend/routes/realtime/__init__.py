@@ -1,10 +1,15 @@
-from datetime import timedelta, datetime
+import asyncio
+
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketException, status
 
 from backend.routes.auth import decode_token
 from backend.schemas.auth import TokenData
+
+
+
+
 
 router = APIRouter(prefix='/ws')
 
@@ -26,13 +31,26 @@ class ConnectionManager:
         return None
 
 
-    async def connect(self, websocket: WebSocket): #todo a szaros jsben nem lehet a ws-headert beallitani (asszem)
-        timeout = datetime.now() + timedelta(seconds=10)
+    async def connect(self, websocket: WebSocket): #a szaros jsben nem lehet a ws-headert beallitani (asszem)
         await websocket.accept()
 
-        jwt = None
-        while jwt is None and timeout > datetime.now(): #todo this is shit, az await megallitja idk dani help
-            jwt =  await websocket.receive_json()
+
+        jwt = ""
+
+        async def receive_async():
+            nonlocal jwt    #lehet nem a legszebb
+            jwt = await websocket.receive_text()
+
+        task = asyncio.create_task(receive_async())     #dark magic    todo  Dani pls adj velemenyt
+
+        done, pending = await asyncio.wait(
+            {task},
+            timeout=40
+        )
+
+        if task not in done:
+            task.cancel()
+            raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated')
 
 
         token_data = decode_token(jwt, WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated'))

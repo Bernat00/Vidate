@@ -20,7 +20,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/auth/token')
 
 
 def decode_token(token: str, credentials_exception: Exception) -> TokenData:
-    payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
+    try:
+        payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
+    except jwt.exceptions.DecodeError:
+        raise credentials_exception
+
     id = payload.get("sub")
 
     if id is None:

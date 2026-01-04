@@ -6,11 +6,9 @@ from backend.routes.realtime import manager
 router = APIRouter(prefix='/notifications')
 
 @router.websocket('/test')
-async def test(websocket: WebSocket): #todo nem ferni hozza a headerekhez a szaros jsben (ha jol ertem)
+async def test(websocket: WebSocket):
     await manager.connect(websocket)
     try:
-        while True:
-            await manager.send({'message': 'hello'}, websocket)
-            #await websocket.receive_json()
+        await manager.send({'message': 'hello'}, websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
