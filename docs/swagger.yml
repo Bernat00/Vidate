@@ -90,11 +90,11 @@ components:
           format: date
         gender:
           type: string
-        avatar_url:
-          type: string
-          format: uri
         is_smoker:
           type: boolean
+        #avatar_url:
+        #  type: string
+        #  format: uri
         wants_children:
           type: boolean
         language:
