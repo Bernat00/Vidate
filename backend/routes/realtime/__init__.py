@@ -12,24 +12,25 @@ import redis.asyncio as redis
 
 router = APIRouter(prefix='/ws')
 
+r = redis.Redis(host='localhost', port=6379)
 
 
 class ConnectionManager:
-    def __init__(self):
-        self.r = redis.Redis(host='localhost', port=6379)
+    def __init__(self, websocket: WebSocket):
+        self.websocket = websocket
 
-
-    async def connect(self, websocket: WebSocket): #a szaros jsben nem lehet a ws-headert beallitani (asszem)
-        await websocket.accept()
+    async def connect(self) -> str:
+        """:return user_id"""
+        await self.websocket.accept()
 
 
         jwt = ""
 
         async def receive_async():
             nonlocal jwt    #lehet nem a legszebb
-            jwt = await websocket.receive_text()
+            jwt = await self.websocket.receive_text()
 
-        task = asyncio.create_task(receive_async())     #dark magic    todo  Dani pls adj velemenyt
+        task = asyncio.create_task(receive_async())     #dark magic
 
         done, pending = await asyncio.wait(
             {task},
@@ -43,21 +44,16 @@ class ConnectionManager:
 
         token_data = decode_token(jwt, WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated'))
 
-        #todo dani itt kezd
-        user_id = token_data.user_id
+        return token_data.user_id
 
 
-
-    def disconnect(self, websocket: WebSocket):
-        pass
-
-    async def send(self, data: Any, websocket: WebSocket):
-        await websocket.send_json(data)
+    def disconnect(self):
+        self.websocket.close()
 
 
+    async def send(self, data: Any):
+        await self.websocket.send_json(data)
 
-
-manager = ConnectionManager()
 
 
 

@@ -1,5 +1,3 @@
-
-
 from sqlalchemy import String, UniqueConstraint
 from sqlmodel import Field, SQLModel
 from datetime import datetime, timezone

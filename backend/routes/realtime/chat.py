@@ -8,8 +8,15 @@ from . import r
 
 
 
-router = APIRouter(prefix='/notifications')
+router = APIRouter(prefix='/chat')
 
 @router.websocket('/test')
 async def test(conn: Annotated[ConnectionManager, Depends(ConnectionManager)]):
-    pass
+    try:
+        uid = await conn.connect()
+        pubsub = r.pubsub()
+        pubsub.subscribe(uid)
+        pubsub.subscribe('broadcast')
+
+    except WebSocketDisconnect:
+        conn.disconnect()
