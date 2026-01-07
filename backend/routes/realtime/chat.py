@@ -15,7 +15,7 @@ async def test(conn: Annotated[ConnectionManager, Depends(ConnectionManager)]):
     try:
         uid = await conn.connect()
         pubsub = r.pubsub()
-        pubsub.subscribe(uid)
+        pubsub.subscribe(uid) #aaaaaaaaaa
         pubsub.subscribe('broadcast')
 
     except WebSocketDisconnect:
