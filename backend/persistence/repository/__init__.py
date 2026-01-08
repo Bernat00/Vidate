@@ -124,6 +124,3 @@ class Repo(BasicRepo):
             self._religion_repo = ReligionRepo(self.session)
         return self._religion_repo
 
-
-
-
