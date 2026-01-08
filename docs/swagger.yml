@@ -70,6 +70,17 @@ components:
           type: string
 
     # ======================
+    # GENDER TABLE
+    # ======================
+    Gender:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    # ======================
     # PROFILE TABLE
     # ======================
     UserProfile:
@@ -92,9 +103,6 @@ components:
           type: string
         is_smoker:
           type: boolean
-        #avatar_url:
-        #  type: string
-        #  format: uri
         wants_children:
           type: boolean
         language:
@@ -315,8 +323,6 @@ paths:
         "400":
           description: Invalid or expired token
 
- 
-
   # ============================================================
   #                         SETTINGS
   # ============================================================
@@ -395,8 +401,6 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-
-
   # ============================================================
   #                   LOOKUP TABLE ENDPOINTS
   # ============================================================
@@ -418,6 +422,56 @@ paths:
                   $ref: "#/components/schemas/Language"
         "401":
           $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create a new language
+      tags: [Profile]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+              required: [code, name]
+      responses:
+        "201":
+          description: Language created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Language"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/profile/languages/{id}:
+    delete:
+      summary: Delete a language
+      tags: [Profile]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Language deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /api/profile/religions:
     get:
@@ -436,6 +490,120 @@ paths:
                   $ref: "#/components/schemas/Religion"
         "401":
           $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create a new religion
+      tags: [Profile]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        "201":
+          description: Religion created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Religion"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/profile/religions/{id}:
+    delete:
+      summary: Delete a religion
+      tags: [Profile]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Religion deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/profile/genders:
+    get:
+      summary: List all genders
+      tags: [Profile]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Genders returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Gender"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create a new gender
+      tags: [Profile]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        "201":
+          description: Gender created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gender"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/profile/genders/{id}:
+    delete:
+      summary: Delete a gender
+      tags: [Profile]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Gender deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   # ============================================================
   #                        MODERATION
@@ -488,7 +656,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-
 
   # ============================================================
   #                        WEBSOCKETS

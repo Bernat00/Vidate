@@ -11,4 +11,4 @@ class Religion(SQLModel, table=True):
     __tablename__ = "religions"
 
     id: int = Field(primary_key=True)
-    text: str = Field()
+    name: str = Field()

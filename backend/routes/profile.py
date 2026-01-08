@@ -1,20 +1,20 @@
 from fastapi import APIRouter
 from backend.routes import get_and_auth_current_user, repoDep
-from backend.schemas.user import UserOut
 
-router = APIRouter(prefix='/profile', tags=['user'])
-
-
-@router.get('/available-religions')
-def me(repo: repoDep, user: get_and_auth_current_user):
-    return repo.
+router = APIRouter(prefix='/profile', tags=['profile'])
 
 
-@router.get('/available-languages')
-def me(repo: repoDep, user: get_and_auth_current_user):
-    return UserOut(**user.model_dump())
+@router.get('/religions')
+async def get_religions(repo: repoDep, user: get_and_auth_current_user):
+    return await repo.religion_repo.get_all()
 
 
-@router.get('/available-genders')
-def me(repo: repoDep, user: get_and_auth_current_user):
-    return UserOut(**user.model_dump())
+@router.get('/languages')
+async def get_languages(repo: repoDep, user: get_and_auth_current_user):
+    return await repo.language_repo.get_all()
+
+
+@router.get('/genders')
+async def get_genders(repo: repoDep, user: get_and_auth_current_user):
+    return await repo.gender_repo.get_all()
+

@@ -59,6 +59,12 @@ class User(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "Match.user2_id"},
         cascade_delete=True,
     )
+
+    role_id: int = Field(
+        sa_column_kwargs={"foreign_keys": "Role.id"},
+        default=0,
+    )
+
     # todo profile, role
 
 
