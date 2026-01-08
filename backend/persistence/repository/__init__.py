@@ -5,7 +5,6 @@ from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.interfaces import ORMOption
 
-from .profile import ProfileRepo
 from .. import engine
 
 T = TypeVar("T", bound=SQLModel)
@@ -71,6 +70,10 @@ class BaseRepo(Generic[T], BasicRepo):
 
 from .user import UserRepo
 from .match import MatchRepo
+from .profile import ProfileRepo
+from .gender import GenderRepo
+from .religion import ReligionRepo
+from .language import LanguageRepo
 
 class Repo(BasicRepo):
     def __init__(self, session: AsyncSession):
@@ -79,6 +82,10 @@ class Repo(BasicRepo):
 
     _user_repo: UserRepo = None
     _mach_repo: MatchRepo = None
+    _profile_repo: ProfileRepo = None
+    _language_repo: LanguageRepo = None
+    _gender_repo: GenderRepo = None
+    _religion_repo: ReligionRepo = None
 
 
     @property
@@ -93,6 +100,27 @@ class Repo(BasicRepo):
             self._mach_repo = MatchRepo(self.session)
         return self._mach_repo
 
+    @property
+    def profile_repo(self) -> ProfileRepo:
+        if not self._profile_repo:
+            self._profile_repo = ProfileRepo(self.session)
+        return self._profile_repo
 
+    @property
+    def language_repo(self) -> LanguageRepo:
+        if not self._language_repo:
+            self._language_repo = LanguageRepo(self.session)
+        return self._language_repo
 
+    @property
+    def gender_repo(self) -> GenderRepo:
+        if not self._gender_repo:
+            self._gender_repo = GenderRepo(self.session)
+        return self._gender_repo
+
+    @property
+    def religion_repo(self) -> ReligionRepo:
+        if not self._religion_repo:
+            self._religion_repo = ReligionRepo(self.session)
+        return self._religion_repo
 
