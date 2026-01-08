@@ -5,6 +5,7 @@ from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.interfaces import ORMOption
 
+from .profile import ProfileRepo
 from .. import engine
 
 T = TypeVar("T", bound=SQLModel)
