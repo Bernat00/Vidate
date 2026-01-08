@@ -45,7 +45,7 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes
 class CurrentUserCheckerDependency:     #todo ezt újragondolni
     def __init__(self, role=None):
         if role:
-            raise NotImplementedError('Checking the role is not yet implemented.')
+            self.role_name = role
 
     async def __call__(self, token: Annotated[str, Depends(oauth2_scheme)], repo: repoDep):
         credentials_exception = HTTPException(
@@ -63,6 +63,17 @@ class CurrentUserCheckerDependency:     #todo ezt újragondolni
 
         if user is None:
             raise credentials_exception
+
+
+        if self.role_name:
+            role = await repo.role_repo.get_by_name(self.role_name)
+            if role is None:
+                raise ValueError(f'no such a role ({self.role_name})')
+
+            if user.role_id != role.id:
+                raise credentials_exception
+
+
         return user
 
 

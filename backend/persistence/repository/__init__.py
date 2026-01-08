@@ -74,6 +74,7 @@ from .profile import ProfileRepo
 from .gender import GenderRepo
 from .religion import ReligionRepo
 from .language import LanguageRepo
+from .role import RoleRepo
 
 class Repo(BasicRepo):
     def __init__(self, session: AsyncSession):
@@ -86,6 +87,7 @@ class Repo(BasicRepo):
     _language_repo: LanguageRepo = None
     _gender_repo: GenderRepo = None
     _religion_repo: ReligionRepo = None
+    _role_repo: RoleRepo = None
 
 
     @property
@@ -124,3 +126,26 @@ class Repo(BasicRepo):
             self._religion_repo = ReligionRepo(self.session)
         return self._religion_repo
 
+    @property
+    def role_repo(self) -> RoleRepo:
+        if not self._role_repo:
+            self._role_repo = RoleRepo(self.session)
+        return self._role_repo
+
+
+
+#todo ezt valamikor megnezni
+
+"""
+
+    def _add_repo(self, repo: ):
+        var_name = '_' + repo.__class__.__name__
+        prop_name = repo.__class__.__name__[:-4].lower() + '_repo'
+
+        def prop(self):
+            if not self.__getattribute__(var_name):
+                self.__setattr__(var_name, repo())
+
+
+        self.__setattr__(name)
+"""
