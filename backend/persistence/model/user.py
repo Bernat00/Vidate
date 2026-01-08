@@ -5,13 +5,16 @@ from pydantic import SecretStr, EmailStr, computed_field
 from sqlalchemy import String
 from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime, timezone
-from typing import List, Callable
+from typing import List, Callable, TYPE_CHECKING
 
 from pwdlib import PasswordHash
 
-from backend.persistence.model.match import Match
+from backend.persistence.model.profile import Profile
 
-password_hasher = PasswordHash.recommended()
+if TYPE_CHECKING:
+    from backend.persistence.model.match import Match
+
+password_hasher = PasswordHash. recommended()
 
 
 class User(SQLModel, table=True):
@@ -38,30 +41,36 @@ class User(SQLModel, table=True):
     )
 
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime. now(timezone.utc),
         nullable=False,
     )
 
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=lambda: datetime.now(timezone. utc),
+        sa_column_kwargs={"onupdate":  lambda: datetime.now(timezone. utc)},
         nullable=False,
     )
 
     disabled: bool = Field(nullable=False, default=False)
 
-    matches_as_user1: list["Match"] = Relationship(     #todo ebbe nincs exclude emiatt kell külön OutModel
-        sa_relationship_kwargs={"foreign_keys": "Match.user1_id"},
-        cascade_delete=True,
+    matches_as_user1: list["Match"] = Relationship(
+        back_populates=None,
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id == Match.user1_id",
+            "lazy": "noload",
+        },
     )
 
     matches_as_user2: list["Match"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "Match.user2_id"},
-        cascade_delete=True,
+        back_populates=None,
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id == Match.user2_id",
+            "lazy": "noload",
+        },
     )
 
     role_id: int = Field(
-        sa_column_kwargs={"foreign_keys": "roles.id"},
+        foreign_key="roles.user_id",
         default=2,
     )
 
@@ -73,6 +82,4 @@ class User(SQLModel, table=True):
         return password_hasher.hash(plaintext.get_secret_value())
 
     def check_password(self, password: str) -> bool:
-        return password_hasher.verify(password, self.password_hash)
-
-
+        return password_hasher.verify(password, self. password_hash)

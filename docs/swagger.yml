@@ -378,7 +378,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-    patch:
+    put:
       summary: Update authenticated user's profile
       tags: [ Profile ]
       security:
