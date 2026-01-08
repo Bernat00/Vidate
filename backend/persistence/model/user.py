@@ -61,8 +61,8 @@ class User(SQLModel, table=True):
     )
 
     role_id: int = Field(
-        sa_column_kwargs={"foreign_keys": "Role.id"},
-        default=0,
+        sa_column_kwargs={"foreign_keys": "roles.id"},
+        default=2,
     )
 
     # todo profile, role
