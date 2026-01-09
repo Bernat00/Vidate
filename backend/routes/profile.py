@@ -1,7 +1,10 @@
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.util import await_only
 
-from backend.routes import get_and_auth_current_user, repoDep
+from backend.persistence.model.user import User
+from backend.routes import get_and_auth_current_user, repoDep, CurrentUserCheckerDependency
 from backend.schemas.profile import ProfileCreate
 
 router = APIRouter(prefix='/profile', tags=['profile'])
@@ -27,5 +30,5 @@ async def get_mine(repo: repoDep, user: get_and_auth_current_user):
     return await repo.profile_repo.get_by_id(user.id)
 
 @router.put('/mine')
-async def update_mine(profile: ProfileCreate, repo: repoDep, user: get_and_auth_current_user):
+async def update_mine(profile: ProfileCreate, repo: repoDep, user: Annotated[User | None, Depends(CurrentUserCheckerDependency("admin"))]):
     raise NotImplementedError()
