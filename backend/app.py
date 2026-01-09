@@ -4,7 +4,7 @@ from .persistence import  create_db_and_tables
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routes import router as api_router
-from .routes.realtime import router as realtime_router
+from .routes.realtime.endpoints import router as realtime_router
 from fastapi import FastAPI, WebSocket
 
 
@@ -21,8 +21,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 origins = [
-    "http://localhost:8000",
-    "http://localhost:5173",
+    "*" #todo remove for prod
 ]
 
 app.add_middleware(

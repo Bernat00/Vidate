@@ -74,6 +74,7 @@ class User(SQLModel, table=True):
     role_id: int = Field(
         foreign_key="roles.id",
         default=2,
+        nullable=False,
     )
 
     # todo profile, role

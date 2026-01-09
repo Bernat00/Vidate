@@ -10,4 +10,4 @@ class Role(SQLModel, table=True):
     __tablename__ = "roles"
 
     id: int = Field(primary_key=True)
-    name: str = Field()
+    name: str = Field(nullable=False)

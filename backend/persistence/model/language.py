@@ -11,4 +11,4 @@ class Language(SQLModel, table=True):
     __tablename__ = "languages"
 
     id: int = Field(primary_key=True)
-    name: str = Field()
+    name: str = Field(nullable=False)

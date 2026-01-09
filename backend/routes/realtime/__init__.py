@@ -3,14 +3,12 @@ import asyncio
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketException, status
+from fastapi.logger import logger
 
 from backend.routes.auth import decode_token
 
 import redis.asyncio as redis
 
-
-
-router = APIRouter(prefix='/ws')
 
 r = redis.Redis(host='localhost', port=6379)
 
@@ -29,6 +27,7 @@ class ConnectionManager:
         async def receive_async():
             nonlocal jwt    #lehet nem a legszebb
             jwt = await self.websocket.receive_text()
+            #todo maybe kene valami valasz erre
 
         task = asyncio.create_task(receive_async())     #dark magic
 
@@ -41,24 +40,19 @@ class ConnectionManager:
             task.cancel()
             raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated')
 
-
         token_data = decode_token(jwt, WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated'))
 
         return token_data.user_id
-
-
-    def disconnect(self):
-        self.websocket.close()
 
 
     async def send(self, data: Any):
         await self.websocket.send_json(data)
 
 
+    async def receive_json(self) -> Any:
+        return await self.websocket.receive_json()
+
+    async def receive_text(self) -> str:
+        return await self.websocket.receive_text()
 
 
-
-
-
-from .notification import router as notification_router
-router.include_router(notification_router, tags=['notification'])

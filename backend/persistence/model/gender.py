@@ -11,4 +11,4 @@ class Gender(SQLModel, table=True):
     __tablename__ = "genders"
 
     id: int = Field(primary_key=True)
-    name: str = Field()
+    name: str = Field(nullable=False)

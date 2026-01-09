@@ -12,12 +12,12 @@ class Profile(SQLModel, table=True):
 
     user_id: int = Field(foreign_key="users.id", primary_key=True)
 
-    first_name: str = Field()
-    middle_name: str = Field()
-    last_name: str = Field()
-    birth_date: datetime = Field()
-    gender_id: int = Field(foreign_key="genders.id")
-    language_id: int = Field(foreign_key="languages.id")
+    first_name: str = Field(nullable=False)
+    middle_name: str = Field(nullable=False)
+    last_name: str = Field(nullable=False)
+    birth_date: datetime = Field(nullable=False)
+    gender_id: int = Field(foreign_key="genders.id", nullable=False)
+    language_id: int = Field(foreign_key="languages.id", nullable=False)
     religion_id: int = Field(foreign_key="religions.id")
 
 

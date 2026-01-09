@@ -22,6 +22,7 @@ class Match(SQLModel, table=True):
     )
 
     confirmed: bool = Field(
+        nullable=False,
         default=False,
     )
 
