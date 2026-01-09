@@ -59,6 +59,7 @@ class User(SQLModel, table=True):
             "primaryjoin": "User.id == Match.user1_id",
             "lazy": "noload",
         },
+        cascade_delete=True,
     )
 
     matches_as_user2: list["Match"] = Relationship(
@@ -67,10 +68,11 @@ class User(SQLModel, table=True):
             "primaryjoin": "User.id == Match.user2_id",
             "lazy": "noload",
         },
+        cascade_delete=True,
     )
 
     role_id: int = Field(
-        foreign_key="roles.user_id",
+        foreign_key="roles.id",
         default=2,
     )
 

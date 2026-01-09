@@ -97,7 +97,7 @@ class Repo(BasicRepo):
         return self._user_repo
 
     @property
-    def mach_repo(self) -> MatchRepo:
+    def match_repo(self) -> MatchRepo:
         if not self._mach_repo:
             self._mach_repo = MatchRepo(self.session)
         return self._mach_repo

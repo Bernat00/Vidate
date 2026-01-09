@@ -14,6 +14,10 @@ router = APIRouter(prefix='/profile', tags=['profile'])
 async def get_religions(repo: repoDep, user: get_and_auth_current_user):
     return await repo.religion_repo.get_all()
 
+@router.post('/religions')
+async def post_religions(repo: repoDep, user: Annotated[User | None, Depends(CurrentUserCheckerDependency("admin"))]):
+    raise NotImplementedError()
+
 
 @router.get('/languages')
 async def get_languages(repo: repoDep, user: get_and_auth_current_user):
@@ -30,5 +34,5 @@ async def get_mine(repo: repoDep, user: get_and_auth_current_user):
     return await repo.profile_repo.get_by_id(user.id)
 
 @router.put('/mine')
-async def update_mine(profile: ProfileCreate, repo: repoDep, user: Annotated[User | None, Depends(CurrentUserCheckerDependency("admin"))]):
+async def update_mine(profile: ProfileCreate, repo: repoDep, user: get_and_auth_current_user):
     raise NotImplementedError()

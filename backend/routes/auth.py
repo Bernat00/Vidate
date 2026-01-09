@@ -9,6 +9,7 @@ from typing import Annotated
 
 import jwt
 from fastapi import Depends, HTTPException, status, APIRouter, Response
+from fastapi.logger import logger
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 
@@ -42,10 +43,9 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes
     return encoded_jwt
 
 
-class CurrentUserCheckerDependency:     #todo ezt újragondolni
+class CurrentUserCheckerDependency:
     def __init__(self, role=None):
-        if role:
-            self.role_name = role
+        self.role_name = role
 
     async def __call__(self, token: Annotated[str, Depends(oauth2_scheme)], repo: repoDep):
         credentials_exception = HTTPException(
@@ -80,9 +80,6 @@ class CurrentUserCheckerDependency:     #todo ezt újragondolni
 
 @router.post('/register')
 async def register(repo: repoDep, userCreate: UserCreate, response: Response) -> None:
-    print(userCreate.email)
-    print(userCreate.password)
-
     if await repo.user_repo.get_by_email(userCreate.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -90,9 +87,10 @@ async def register(repo: repoDep, userCreate: UserCreate, response: Response) ->
         )
 
     user = User(**userCreate.model_dump(), password_hash=User.hash_password(userCreate.password))
+    logger.info(f'New user registered:\n{user.email}')
 
     await repo.save(user)
-    response.status = status.HTTP_201_CREATED
+    response.status_code = status.HTTP_201_CREATED
 
 
 
