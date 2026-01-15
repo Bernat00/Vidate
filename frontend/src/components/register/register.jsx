@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import api from '../../api';
 import {login} from '../../heplers.js';
+import { useAuth } from '../../context/authContext.jsx';
 
 const Register = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const [apiError, setApiError] = useState('');
   const navigate = useNavigate();
+  const { refresh } = useAuth();
 
   const password = watch("password");
 
@@ -23,6 +25,8 @@ const Register = () => {
 
       try {
         await login(data.email, data.password);
+        // Ensure auth context reflects the logged-in user before navigating to a protected route
+        await refresh();
         navigate('/setup-profile');
       }
       catch {
@@ -155,7 +159,7 @@ const Register = () => {
 
           <p className="text-textSecondary text-sm text-center">
             Already have an account?{' '}
-            <Link to="/heplers" className="text-textAccent hover:underline">
+            <Link to="/login" className="text-textAccent hover:underline">
               Login here
             </Link>
           </p>

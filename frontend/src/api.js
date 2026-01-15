@@ -23,4 +23,18 @@ api.interceptors.request.use(
   }
 );
 
+// Add a response interceptor to centralize 401 handling (optional)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.clear();
+      sessionStorage.clear();
+      // Optionally redirect:
+      // window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

@@ -28,3 +28,11 @@ from .matches import router as matches_router
 router.include_router(matches_router, tags=['matches'])
 
 
+# NEW: include user and profile routers
+from .user import router as user_router
+router.include_router(user_router, tags=['user'])
+
+from .profile import router as profile_router
+router.include_router(profile_router, tags=['profile'])
+
+

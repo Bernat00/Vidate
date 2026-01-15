@@ -3,6 +3,7 @@ import {Link, useLocation, useNavigate} from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {login} from "../../heplers.js";
 import {useToast} from "../../context/toastcontext.jsx";
+import { useAuth } from '../../context/authContext.jsx';
 
 
 const Login = () => {
@@ -12,6 +13,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
+  const { refresh } = useAuth();
 
   useEffect(() => {
     if (location.state?.toastMessage) {
@@ -27,6 +29,8 @@ const Login = () => {
 
     try {
       await login(data.email, data.password, rememberMe);
+      // Ensure AuthContext is up-to-date before hitting protected routes
+      await refresh();
       navigate('/my-matches');
     } catch (err) {
       if (err.response && err.response.status === 401) {
