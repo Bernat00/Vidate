@@ -31,5 +31,5 @@ export async function logout() {
 }
 
 export async function getCurrentUser() {
-    return api.get('users/me');
+    return api.get('/users/me');
 }

@@ -33,3 +33,12 @@ class UserOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     disabled: bool
+
+
+class UserMe(BaseModel):
+    id: str
+    email: EmailStr
+    created_at: datetime
+    updated_at: datetime
+    disabled: bool
+    is_onboarded: bool

@@ -77,6 +77,8 @@ class User(SQLModel, table=True):
         nullable=False,
     )
 
+    is_onboarded: bool = Field(default=False)
+
     # todo profile, role
 
 

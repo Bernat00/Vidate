@@ -10,7 +10,8 @@ from datetime import datetime, timezone
 class Profile(SQLModel, table=True):
     __tablename__ = "profiles"
 
-    user_id: int = Field(foreign_key="users.id", primary_key=True)
+    # Match User.id which is a UUID string
+    user_id: str = Field(foreign_key="users.id", primary_key=True, sa_type=String(256))
 
     first_name: str = Field(nullable=False)
     middle_name: str = Field(nullable=False)
