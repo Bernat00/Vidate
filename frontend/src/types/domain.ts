@@ -1,0 +1,66 @@
+export type ToastStatus = 'success' | 'error' | 'warning' | 'info';
+
+// Backend: UserMe(BaseModel) but any field may be null.
+export interface UserMe {
+  id: string | null;
+  email: string | null;
+  created_at: string | null; // ISO datetime
+  updated_at: string | null; // ISO datetime
+  disabled: boolean | null;
+  is_onboarded: boolean | null;
+}
+
+export interface ProfileOption {
+  id: number;
+  name: string;
+}
+
+// Backend: /profile/mine may include more fields; we only model the ones we use.
+export interface ProfileMine {
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  birth_date?: string | null; // ISO date/datetime string
+  gender_id?: number | null;
+  language_id?: number | null;
+  religion_id?: number | null;
+  [key: string]: unknown;
+}
+
+export interface SetupProfileForm {
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  birth_date: string; // YYYY-MM-DD
+  gender_id: string; // keep form state as string
+  language_id: string;
+  religion_id: string;
+}
+
+export interface SetupProfilePayload {
+  first_name: string | null;
+  middle_name: string | null;
+  last_name: string | null;
+  birth_date: string | null; // ISO datetime string
+  gender_id: number | null;
+  language_id: number | null;
+  religion_id: number | null;
+}
+
+export interface ChatMessage {
+  id: number | string;
+  sender: string;
+  avatar: string;
+  text: string;
+  time: string;
+  isMe: boolean;
+}
+
+export interface MatchItem {
+  id?: string | number;
+  _id?: string | number;
+  name?: string | null;
+  username?: string | null;
+  profilePicture?: string | null;
+  avatar?: string | null;
+}

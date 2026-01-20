@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import Sidebar from "./sidebar.jsx";
-import MessageBubble from "./messageBubble.jsx";
-import ChatInput from "./ChatInput.jsx";
-import Navbar from "../navbar.jsx";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faBars} from "@fortawesome/free-solid-svg-icons";
-
+import type { ReactElement } from 'react';
+import { useState } from 'react';
+import Sidebar from "./sidebar";
+import MessageBubble from "./messageBubble";
+import ChatInput from "./ChatInput";
+import Navbar from "../navbar";
+import { Menu } from 'lucide-react';
 
 const DUMMY_MESSAGES = [
     {
@@ -27,7 +26,7 @@ const DUMMY_MESSAGES = [
   ];
 
 
-export default function MyMatches() {
+export default function MyMatches(): ReactElement {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -50,7 +49,7 @@ export default function MyMatches() {
               onClick={() => setIsSidebarOpen(true)}
               className="hover:text-borderAccent p-1 rounded-lg"
             >
-            <FontAwesomeIcon icon={faBars} />
+            <Menu />
             </button>
             <span className="font-bold text-textAccent">Vidate</span>
             <div className="w-6" />
@@ -62,7 +61,9 @@ export default function MyMatches() {
 
                 <div className="flex flex-col gap-6 justify-start items-start">
                   {DUMMY_MESSAGES.map((msg) => (
-                    <MessageBubble key={msg.id} message={msg} />
+                    <li key={msg.id}>
+                      <MessageBubble message={msg} />
+                    </li>
                   ))}
                 </div>
 

@@ -1,7 +1,20 @@
-import React from 'react';
+import type { ReactNode } from 'react';
+import type { ToastStatus } from '../types/domain';
 
-const Toast = ({ text, status = 'info', onClose }) => {
-  const config = {
+type ToastConfig = {
+  iconColor: string;
+  iconBg: string;
+  icon: ReactNode;
+};
+
+type ToastProps = {
+  text: string;
+  status?: ToastStatus;
+  onClose?: () => void;
+};
+
+const Toast = ({ text, status = 'info', onClose }: ToastProps) => {
+  const config: Record<ToastStatus, ToastConfig> = {
     success: {
       iconColor: 'text-textSuccess',
       iconBg: 'bg-bgSuccessSoft',
@@ -40,20 +53,17 @@ const Toast = ({ text, status = 'info', onClose }) => {
     },
   };
 
-  const currentConfig = config[status] || config.info;
+  const currentConfig = config[status];
 
   return (
     <div className="flex items-center w-full max-w-sm p-4 text-textPrimary bg-bgSecondary rounded-lg shadow-xl border border-borderAccentLight" role="alert">
-      {/* Icon Wrapper */}
       <div className={`inline-flex items-center justify-center shrink-0 w-8 h-8 ${currentConfig.iconColor} ${currentConfig.iconBg} rounded-lg`}>
         {currentConfig.icon}
         <span className="sr-only">{status} icon</span>
       </div>
 
-      {/* Message */}
       <div className="ms-3 text-sm font-normal break-normal">{text}</div>
 
-      {/* Close Button */}
       <button
         type="button"
         onClick={onClose}

@@ -5,7 +5,7 @@ const ChatInput = () => {
           <div className="relative">
                   <textarea
                       id="chat"
-                      rows="1"
+                      rows={1}
                       className="block w-full p-2.5 pr-12 text-sm text-textPrimary bg-bgSecondary border border-borderAccentLight rounded-lg shadow-md focus:ring-borderAccent placeholder-textSecondary resize-none"
                       placeholder="Your message..."
                   ></textarea>
@@ -13,7 +13,10 @@ const ChatInput = () => {
                   type="submit"
                   className="absolute top-1/2 right-2 -translate-y-1/2 p-2 text-textPrimary hover:text-textAccent hover:bg-borderAccent rounded-full shadow transition"
               >
-                  <i className="fa-solid fa-paper-plane"></i>
+                  {/* replace font-awesome plane with inline SVG */}
+                  <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9-7-9-7-9 7 9 7z" />
+                  </svg>
               </button>
           </div>
       </form>
@@ -21,3 +24,4 @@ const ChatInput = () => {
 };
 
 export default ChatInput;
+

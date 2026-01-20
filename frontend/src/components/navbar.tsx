@@ -1,6 +1,4 @@
-import React from "react";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faMessage, faUser, faVideo} from "@fortawesome/free-solid-svg-icons";
+import { Video, MessageSquare, User } from 'lucide-react';
 
 export default function Navbar() {
     return (
@@ -12,21 +10,21 @@ export default function Navbar() {
                     type="button"
                     className="inline-flex flex-col items-center gap-1 justify-center px-5 hover:bg-bgAccentSecondary hover:text-bgPrimary"
                 >
-                    <FontAwesomeIcon icon={faVideo} />
+                    <Video />
                     Home
                 </button>
                 <button
                     type="button"
                     className="inline-flex flex-col items-center gap-1 justify-center px-5 hover:bg-bgAccentSecondary hover:text-bgPrimary"
                 >
-                    <FontAwesomeIcon icon={faMessage} />
+                    <MessageSquare />
                     <span className="text-sm">My Matches</span>
                 </button>
                 <button
                     type="button"
                     className="inline-flex flex-col items-center gap-1 justify-center px-5 hover:bg-bgAccentSecondary hover:text-bgPrimary"
                 >
-                    <FontAwesomeIcon icon={faUser} />
+                    <User />
                     <span className="text-sm">Profile</span>
                 </button>
             </div>

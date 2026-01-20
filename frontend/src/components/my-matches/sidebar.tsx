@@ -1,18 +1,22 @@
-import React, {useEffect, useState} from "react";
-import api from "../../api.js";
-import {faXmark} from "@fortawesome/free-solid-svg-icons";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {useEffect, useState} from "react";
+import api from "../../api";
+import { X } from 'lucide-react';
+import type { MatchItem } from '../../types/domain';
 
-const Sidebar = ({ isOpen, onClose }) => {
-  const [matches, setMatches] = useState([]);
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+  const [matches, setMatches] = useState<MatchItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const response = await api.get('/matches');
-        // Assuming response.data is the array of matches
-        setMatches(response.data);
+        const response = await api.get<MatchItem[]>('/matches');
+        setMatches(response.data ?? []);
       } catch (error) {
         console.error("Failed to fetch matches:", error);
       } finally {
@@ -35,7 +39,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           onClick={onClose}
           className="lg:hidden absolute right-4 hover:text-borderAccent text-textPrimary"
         >
-          <FontAwesomeIcon icon={faXmark} />
+          <X />
         </button>
       </div>
 
@@ -46,13 +50,12 @@ const Sidebar = ({ isOpen, onClose }) => {
            <li className="p-4 text-center text-textSecondary text-sm">No matches yet.</li>
         ) : (
           matches.map((match) => (
-            <li key={match.id || match._id}>
+            <li key={match.id ?? match._id ?? `${match.name ?? match.username ?? ''}` }>
               <a href="#" className="flex items-center p-2 rounded-lg hover:bg-bgSecondary transition">
                 <img
-                  // Adjust property names based on your actual API response
                   src={match.profilePicture || match.avatar || 'https://via.placeholder.com/32'}
                   className="w-8 h-8 rounded-full mr-3 object-cover"
-                  alt={match.name}
+                  alt={match.name ?? match.username ?? 'Match'}
                 />
                 <span>{match.name || match.username}</span>
               </a>

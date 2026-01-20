@@ -1,9 +1,11 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/authContext.jsx';
+import { useAuth } from '../../context/authContext';
 
-export default function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+export default function ProtectedRoute({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  const user = auth?.user;
+  const loading = auth?.loading;
   const location = useLocation();
 
   if (loading) {
@@ -22,5 +24,5 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/setup-profile" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }
