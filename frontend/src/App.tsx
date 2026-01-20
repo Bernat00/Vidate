@@ -1,18 +1,18 @@
+import type { ReactElement } from 'react'
 import {BrowserRouter, Route, Routes} from 'react-router-dom'
 import './App.css'
-import LandingPage from "./components/landing/landingPage.jsx";
-import Login from "./components/login/login.jsx";
-import Register from "./components/register/register.jsx";
-import MyMatches from "./components/my-matches/myMatches.jsx";
-import { ToastProvider } from './context/toastcontext';
+import LandingPage from "./components/landing/landingPage";
+import Login from "./components/login/login";
+import Register from "./components/register/register";
+import MyMatches from "./components/my-matches/myMatches";
+import { ToastProvider } from './context/toastContext';
 
-import SetupProfile from "./components/setup-profile/setupProfile.jsx";
-// NEW auth context and route guards
-import { AuthProvider } from './context/authContext.jsx';
-import ProtectedRoute from './components/routing/ProtectedRoute.jsx';
-import PublicOnlyRoute from './components/routing/PublicOnlyRoute.jsx';
+import SetupProfile from "./components/setup-profile/setupProfile";
+import { AuthProvider } from './context/authContext';
+import ProtectedRoute from './components/routing/ProtectedRoute';
+import PublicOnlyRoute from './components/routing/PublicOnlyRoute';
 
-function App() {
+function App(): ReactElement {
   return (
     <BrowserRouter>
         <ToastProvider>

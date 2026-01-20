@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 
 const api = axios.create({
   baseURL: 'http://localhost:8000/api',
@@ -10,17 +10,23 @@ const api = axios.create({
 // Add a request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Check both storages for the token
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (!token) return config;
+
+    if (config.headers instanceof AxiosHeaders) {
+      config.headers.set('Authorization', `Bearer ${token}`);
+      return config;
     }
+
+    // If headers is a plain object (or undefined), normalize to AxiosHeaders.
+    const headers = new AxiosHeaders(config.headers);
+    headers.set('Authorization', `Bearer ${token}`);
+    config.headers = headers;
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Add a response interceptor to centralize 401 handling (optional)
@@ -30,8 +36,7 @@ api.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.clear();
       sessionStorage.clear();
-      // Optionally redirect:
-      // window.location.href = '/login';
+      // Optionally redirect: window.location.href = '/login';
     }
     return Promise.reject(error);
   }

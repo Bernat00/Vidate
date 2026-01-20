@@ -1,7 +1,5 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faArrowRightToBracket} from "@fortawesome/free-solid-svg-icons";
+import { LogIn } from 'lucide-react';
 
 const LandingPage = () => {
   return (
@@ -21,7 +19,7 @@ const LandingPage = () => {
               to="/register"
               className="inline-flex items-center px-5 py-3 text-base font-medium text-center text-textPrimary rounded-lg bg-bgAccentSecondary hover:bg-borderAccent focus:ring-4 focus:ring-borderAccentLight"
             >
-              Sign Up <FontAwesomeIcon icon={faArrowRightToBracket} />
+              Sign Up <LogIn />
            </Link>
             <Link
               to="/login"

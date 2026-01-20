@@ -1,6 +1,16 @@
-import TextField from '../form/TextField.jsx';
+import TextField from '../form/TextField';
+import type { ChangeEvent } from 'react';
+import type { SetupProfileForm } from '../../types/domain';
 
-export default function NameFields({ form, update }) {
+type FieldChangeEvent = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+
+export default function NameFields({
+  form,
+  update,
+}: {
+  form: SetupProfileForm;
+  update: <K extends keyof SetupProfileForm>(k: K) => (e: FieldChangeEvent) => void;
+}) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <TextField id="first_name" label="First name" value={form.first_name} onChange={update('first_name')} />

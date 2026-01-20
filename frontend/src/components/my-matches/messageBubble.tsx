@@ -1,6 +1,6 @@
-import React from "react";
+import type { ChatMessage } from '../../types/domain';
 
-const MessageBubble = ({ message }) => {
+const MessageBubble = ({ message }: { message: ChatMessage }) => {
   const { isMe, text, time, sender, avatar } = message;
 
   return (
@@ -20,8 +20,8 @@ const MessageBubble = ({ message }) => {
           ${isMe 
             ? 'bg-bgAccentSecondary rounded-s-xl rounded-ee-xl' 
             : 'bg-bgSecondary rounded-e-xl rounded-es-xl'
-          }`}
-        >
+          }
+        `}>
           <p className="text-sm font-normal">{text}</p>
         </div>
       </div>
