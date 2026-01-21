@@ -26,6 +26,8 @@ async def get_genders(repo: repoDep, user: get_and_auth_current_user):
 async def get_mine(repo: repoDep, user: get_and_auth_current_user):
     return await repo.profile_repo.get_by_id(user.id)
 
+
+# todo minden kaka
 @router.put('/mine')
 async def update_mine(profile: ProfileCreate, repo: repoDep, user: get_and_auth_current_user):
     # Capture the user id early to avoid touching an expired instance after commits
