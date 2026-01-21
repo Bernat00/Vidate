@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
+import GradientPage from '../components/layout/GradientPage';
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-to-t from-bgAccentPrimary to-bgAccentSecondary">
+    <GradientPage className="flex items-center justify-center px-4 py-8">
       <div className="grid max-w-screen-xl lg:grid-cols-12 lg:gap-8 xl:gap-0 lg:py-16">
         {/* Hero Text */}
         <div className="mr-auto place-self-center lg:col-span-7">
@@ -61,7 +62,7 @@ const LandingPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </GradientPage>
   );
 };
 

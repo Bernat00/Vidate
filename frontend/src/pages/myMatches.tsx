@@ -5,6 +5,10 @@ import MessageBubble from "../components/messageBubble.tsx";
 import ChatInput from "../components/ChatInput.tsx";
 import Navbar from "../components/navbar.tsx";
 import { Menu } from 'lucide-react';
+import GradientPage from '../components/layout/GradientPage';
+import MobileTopBar from '../components/layout/MobileTopBar';
+import SidebarOverlay from '../components/layout/SidebarOverlay';
+import ChatColumn from '../components/layout/ChatColumn';
 
 const DUMMY_MESSAGES = [
     {
@@ -30,53 +34,41 @@ export default function MyMatches(): ReactElement {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="bg-gradient-to-t from-bgAccentPrimary to-bgAccentSecondary min-h-screen">
+    <GradientPage>
       <div className="flex min-h-screen relative">
-
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-        {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
+        <SidebarOverlay open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
         <div className="flex-1 w-full lg:ml-56">
+          <MobileTopBar
+            title="Vidate"
+            left={
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="hover:text-borderAccent p-1 rounded-lg"
+                aria-label="Open sidebar"
+              >
+                <Menu />
+              </button>
+            }
+          />
 
-          <header className="flex items-center justify-between p-2 text-textPrimary bg-bgPrimary border-b border-borderAccentLight lg:hidden">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="hover:text-borderAccent p-1 rounded-lg"
-            >
-            <Menu />
-            </button>
-            <span className="font-bold text-textAccent">Vidate</span>
-            <div className="w-6" />
-          </header>
-
-          <main className="flex justify-center items-center min-h-[calc(100vh-4rem)] mx-2">
-            <div className="w-full lg:w-1/2">
-              <div className="flex flex-col min-h-[calc(100vh-4rem)] mx-2 pt-4">
-
-                <div className="flex flex-col gap-6 justify-start items-start">
-                  {DUMMY_MESSAGES.map((msg) => (
-                    <li key={msg.id}>
-                      <MessageBubble message={msg} />
-                    </li>
-                  ))}
-                </div>
-
-                <ChatInput />
-
-              </div>
+          <ChatColumn>
+            <div className="flex flex-col gap-6 justify-start items-start">
+              {DUMMY_MESSAGES.map((msg) => (
+                <li key={msg.id}>
+                  <MessageBubble message={msg} />
+                </li>
+              ))}
             </div>
-          </main>
+
+            <ChatInput />
+          </ChatColumn>
 
           <Navbar/>
-
         </div>
       </div>
-    </div>
+    </GradientPage>
   );
 }
