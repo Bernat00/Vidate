@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../types/domain';
+import type { ChatMessage } from '../types/domain.ts';
 
 const MessageBubble = ({ message }: { message: ChatMessage }) => {
   const { isMe, text, time, sender, avatar } = message;

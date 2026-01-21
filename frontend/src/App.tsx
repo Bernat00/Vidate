@@ -1,13 +1,13 @@
 import type { ReactElement } from 'react'
 import {BrowserRouter, Route, Routes} from 'react-router-dom'
 import './App.css'
-import LandingPage from "./components/landing/landingPage";
-import Login from "./components/login/login";
-import Register from "./components/register/register";
-import MyMatches from "./components/my-matches/myMatches";
+import LandingPage from "./pages/landingPage.tsx";
+import Login from "./pages/login.tsx";
+import Register from "./pages/register.tsx";
+import MyMatches from "./pages/myMatches.tsx";
 import { ToastProvider } from './context/toastContext';
 
-import SetupProfile from "./components/setup-profile/setupProfile";
+import SetupProfile from "./pages/setupProfile.tsx";
 import { AuthProvider } from './context/authContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import PublicOnlyRoute from './components/routing/PublicOnlyRoute';

@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
-import api from "../../api";
+import api from "../api.ts";
 import { X } from 'lucide-react';
-import type { MatchItem } from '../../types/domain';
+import type { MatchItem } from '../types/domain.ts';
 
 interface SidebarProps {
   isOpen: boolean;
