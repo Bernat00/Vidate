@@ -29,24 +29,22 @@ async def get_mine(repo: repoDep, user: get_and_auth_current_user):
 
 # todo minden kaka
 @router.put('/mine')
-async def update_mine(profile: ProfileCreate, repo: repoDep, user: get_and_auth_current_user):
+async def update_mine(profile_create: ProfileCreate, repo: repoDep, user: get_and_auth_current_user):
     # Capture the user id early to avoid touching an expired instance after commits
     uid = user.id
 
-    existing = await repo.profile_repo.get_by_id(uid)
+    profile = await repo.profile_repo.get_by_id(uid)
 
-    if existing:
-        data = profile.model_dump()
+    if profile:
+        data = profile_create.model_dump()
         for k, v in data.items():
-            setattr(existing, k, v)
-        await repo.save(existing)
+            setattr(profile, k, v)
+        await repo.save(profile)
     else:
-        new_profile = Profile(user_id=uid, **profile.model_dump())
-        await repo.save(new_profile)
+        profile = Profile(user_id=uid, **profile_create.model_dump())
+        await repo.save(profile)
+        user.is_onboarded = True
+        await repo.save(user, refresh=False)
 
-    # mark onboarding complete
-    user.is_onboarded = True
-    await repo.save(user, refresh=False)
 
-    # Use the captured uid to avoid triggering a lazy refresh on an expired user instance
-    return await repo.profile_repo.get_by_id(uid)
+    return profile
