@@ -2,6 +2,8 @@ import {useEffect, useState} from "react";
 import api from "../api.ts";
 import { X } from 'lucide-react';
 import type { MatchItem } from '../types/domain.ts';
+import ListItem from './common/ListItem';
+import { Spinner } from 'flowbite-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -45,20 +47,19 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
       <ul className="space-y-3 mx-2 mt-4 font-medium text-textPrimary overflow-y-auto max-h-[calc(100vh-5rem)]">
         {loading ? (
-           <li className="p-4 text-center text-textSecondary text-sm">Loading matches...</li>
+           <li className="p-4 flex justify-center">
+             <Spinner color="purple" size="md" />
+           </li>
         ) : matches.length === 0 ? (
            <li className="p-4 text-center text-textSecondary text-sm">No matches yet.</li>
         ) : (
           matches.map((match) => (
             <li key={match.id ?? match._id ?? `${match.name ?? match.username ?? ''}` }>
-              <a href="#" className="flex items-center p-2 rounded-lg hover:bg-bgSecondary transition">
-                <img
-                  src={match.profilePicture || match.avatar || 'https://via.placeholder.com/32'}
-                  className="w-8 h-8 rounded-full mr-3 object-cover"
-                  alt={match.name ?? match.username ?? 'Match'}
-                />
-                <span>{match.name || match.username}</span>
-              </a>
+              <ListItem
+                title={match.name || match.username || 'Match'}
+                avatar={match.profilePicture || match.avatar || 'https://via.placeholder.com/32'}
+                onClick={() => {}}
+              />
             </li>
           ))
         )}

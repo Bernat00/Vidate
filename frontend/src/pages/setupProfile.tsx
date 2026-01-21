@@ -8,6 +8,7 @@ import DemographicFields from '../components/DemographicFields.tsx';
 import type { ProfileMine, ProfileOption, SetupProfileForm, SetupProfilePayload } from '../types/domain.ts';
 import GradientPage from '../components/layout/GradientPage';
 import PrimaryButton from '../components/form/PrimaryButton';
+import CenteredLoader from '../components/layout/CenteredLoader';
 
 type FieldChangeEvent = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 
@@ -103,9 +104,7 @@ export default function SetupProfile() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bgPrimary text-textSecondary">Loading...</div>
-    );
+    return <CenteredLoader />;
   }
 
   return (
