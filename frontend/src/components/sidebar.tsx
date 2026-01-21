@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import type { MatchItem } from '../types/domain.ts';
 import ListItem from './common/ListItem';
 import { Spinner } from 'flowbite-react';
+import { getAvatarUrl, getDisplayName } from '../helpers.ts';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -56,8 +57,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           matches.map((match) => (
             <li key={match.id ?? match._id ?? `${match.name ?? match.username ?? ''}` }>
               <ListItem
-                title={match.name || match.username || 'Match'}
-                avatar={match.profilePicture || match.avatar || 'https://via.placeholder.com/32'}
+                title={getDisplayName(match)}
+                avatar={getAvatarUrl(match)}
                 onClick={() => {}}
               />
             </li>

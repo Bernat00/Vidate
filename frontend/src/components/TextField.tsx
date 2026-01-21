@@ -1,5 +1,6 @@
 import { Label, TextInput } from 'flowbite-react';
 import type { ChangeEventHandler } from 'react';
+import { commonInputClasses, commonLabelClasses } from './form/formStyles';
 
 type TextFieldProps = {
   id: string;
@@ -14,7 +15,7 @@ type TextFieldProps = {
 export default function TextField({ id, label, value, onChange, type = 'text', placeholder = '', required = false }: TextFieldProps) {
   return (
     <div>
-      <Label htmlFor={id} className="text-textSecondary mb-1">{label}</Label>
+      <Label htmlFor={id} className={commonLabelClasses}>{label}</Label>
       <TextInput
         id={id}
         type={type}
@@ -22,7 +23,7 @@ export default function TextField({ id, label, value, onChange, type = 'text', p
         value={value}
         required={required}
         onChange={onChange as ChangeEventHandler<HTMLInputElement> | undefined}
-        className="w-full bg-bgSecondary text-textPrimary border-borderAccentLight focus:ring-borderAccent"
+        className={commonInputClasses}
       />
     </div>
   );

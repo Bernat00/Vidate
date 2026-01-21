@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import type { Location } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { login } from '../helpers.ts';
-import { useToast } from '../context/toastContext.tsx';
-import { useAuth } from '../context/authContext.tsx';
-import type { ToastStatus } from '../types/domain.ts';
 import type { AxiosError } from 'axios';
 import AuthCardLayout from '../components/auth/AuthCardLayout';
 import FormAlert from '../components/form/FormAlert';
 import PrimaryButton from '../components/form/PrimaryButton';
 import RHFTextInput from '../components/form/RHFTextInput';
 import RHFCheckbox from '../components/form/RHFCheckbox';
+import { useAuthRedirect } from '../hooks/useAuthRedirect';
+import { useFlashToast } from '../hooks/useFlashToast';
 
 type LoginFormValues = {
   email: string;
@@ -19,36 +17,19 @@ type LoginFormValues = {
   rememberMe?: boolean;
 };
 
-type LoginLocationState = {
-  toastMessage?: string;
-  status?: ToastStatus;
-};
-
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const [apiError, setApiError] = useState('');
 
-  const navigate = useNavigate();
-  const location = useLocation() as Location & { state?: LoginLocationState };
-  const { showToast } = useToast();
-  const { refresh } = useAuth() || {};
-
-  useEffect(() => {
-    if (location.state?.toastMessage) {
-      const { toastMessage, status } = location.state;
-      showToast(toastMessage, status);
-      navigate(location.pathname, { replace: true, state: undefined });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { handleAuthSuccess } = useAuthRedirect();
+  useFlashToast();
 
   const onSubmit = async (data: LoginFormValues) => {
     setApiError('');
 
     try {
       await login(data.email, data.password, Boolean(data.rememberMe));
-      if (refresh) await refresh();
-      navigate('/my-matches');
+      await handleAuthSuccess('/my-matches');
     } catch (err) {
       const axiosErr = err as AxiosError<unknown>;
       if (axiosErr.response?.status === 401) {

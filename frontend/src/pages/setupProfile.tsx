@@ -3,12 +3,13 @@ import type { ChangeEvent, FormEvent } from 'react';
 import api from '../api.ts';
 import { useToast } from '../context/toastContext.tsx';
 import { useAuth } from '../context/authContext.tsx';
-import NameFields from '../components/NameFields.tsx';
-import DemographicFields from '../components/DemographicFields.tsx';
+import NameFields from '../components/profile/NameFields.tsx';
+import DemographicFields from '../components/profile/DemographicFields.tsx';
 import type { ProfileMine, ProfileOption, SetupProfileForm, SetupProfilePayload } from '../types/domain.ts';
 import GradientPage from '../components/layout/GradientPage';
 import PrimaryButton from '../components/form/PrimaryButton';
 import CenteredLoader from '../components/layout/CenteredLoader';
+import Section from '../components/layout/Section';
 
 type FieldChangeEvent = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 
@@ -109,15 +110,17 @@ export default function SetupProfile() {
 
   return (
     <GradientPage className="flex items-center justify-center p-4">
-      <form onSubmit={onSubmit} className="w-full max-w-2xl bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
-        <h1 className="text-2xl font-bold text-textAccent mb-4">Complete your profile</h1>
-        <NameFields form={form} update={update} />
-        <DemographicFields form={form} update={update} genders={genders} languages={languages} religions={religions} />
+      <Section maxWidth="2xl">
+        <form onSubmit={onSubmit} className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
+          <h1 className="text-2xl font-bold text-textAccent mb-4">Complete your profile</h1>
+          <NameFields form={form} update={update} />
+          <DemographicFields form={form} update={update} genders={genders} languages={languages} religions={religions} />
 
-        <PrimaryButton type="submit" disabled={saving} className="mt-6">
-          {saving ? 'Saving...' : 'Save and continue'}
-        </PrimaryButton>
-      </form>
+          <PrimaryButton type="submit" disabled={saving} className="mt-6">
+            {saving ? 'Saving...' : 'Save and continue'}
+          </PrimaryButton>
+        </form>
+      </Section>
     </GradientPage>
   );
 }

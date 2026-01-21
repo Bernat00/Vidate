@@ -1,5 +1,6 @@
 import api from './api';
 import qs from 'qs';
+import type { MatchItem } from './types/domain';
 
 interface TokenResponse {
   access_token: string;
@@ -36,5 +37,13 @@ export async function logout(): Promise<void> {
 
 export async function getCurrentUser() {
   return api.get('/users/me');
+}
+
+export function getDisplayName(match: MatchItem): string {
+  return match.name || match.username || 'Match';
+}
+
+export function getAvatarUrl(match: MatchItem): string {
+  return match.profilePicture || match.avatar || 'https://via.placeholder.com/150';
 }
 

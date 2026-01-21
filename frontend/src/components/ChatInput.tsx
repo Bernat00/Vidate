@@ -1,4 +1,5 @@
 import { Send } from 'lucide-react';
+import Icon from './common/Icon';
 
 const ChatInput = () => {
   return (
@@ -13,9 +14,9 @@ const ChatInput = () => {
                   ></textarea>
               <button
                   type="submit"
-                  className="absolute top-1/2 right-2 -translate-y-1/2 p-2 text-textPrimary hover:text-textAccent hover:bg-borderAccent rounded-full shadow transition"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 p-2 text-textPrimary hover:bg-borderAccent rounded-full shadow transition"
               >
-                  <Send className="w-4 h-4" aria-hidden="true" />
+                  <Icon icon={Send} size={16} aria-hidden="true" />
               </button>
           </div>
       </form>

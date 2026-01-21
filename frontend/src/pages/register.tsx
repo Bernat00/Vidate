@@ -4,12 +4,12 @@ import { useForm } from 'react-hook-form';
 import type { AxiosError } from 'axios';
 import api from '../api.ts';
 import { login } from '../helpers.ts';
-import { useAuth } from '../context/authContext.tsx';
 import type { ToastStatus } from '../types/domain.ts';
 import AuthCardLayout from '../components/auth/AuthCardLayout';
 import FormAlert from '../components/form/FormAlert';
 import PrimaryButton from '../components/form/PrimaryButton';
 import RHFTextInput from '../components/form/RHFTextInput';
+import { useAuthRedirect } from '../hooks/useAuthRedirect';
 
 type RegisterFormValues = {
   email: string;
@@ -28,7 +28,7 @@ const Register = () => {
   const { register: reg, handleSubmit, getValues, formState: { errors } } = useForm<RegisterFormValues>();
   const [apiError, setApiError] = useState('');
   const navigate = useNavigate();
-  const { refresh } = useAuth() || {};
+  const { handleAuthSuccess } = useAuthRedirect();
 
   const onSubmit = async (data: RegisterFormValues) => {
     setApiError('');
@@ -40,8 +40,7 @@ const Register = () => {
 
       try {
         await login(data.email, data.password);
-        if (refresh) await refresh();
-        navigate('/setup-profile');
+        await handleAuthSuccess('/setup-profile');
       } catch {
         navigate('/login', {
           state: {
