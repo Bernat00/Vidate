@@ -6,6 +6,10 @@ import api from '../api.ts';
 import { login } from '../helpers.ts';
 import { useAuth } from '../context/authContext.tsx';
 import type { ToastStatus } from '../types/domain.ts';
+import AuthCardLayout from '../components/auth/AuthCardLayout';
+import FormAlert from '../components/form/FormAlert';
+import PrimaryButton from '../components/form/PrimaryButton';
+import RHFTextInput from '../components/form/RHFTextInput';
 
 type RegisterFormValues = {
   email: string;
@@ -59,47 +63,65 @@ const Register = () => {
   };
 
   return (
-    <div className="bg-gradient-to-t from-bgAccentPrimary to-bgAccentSecondary flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-md bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-8 m-4">
-        <div className="flex flex-col items-center mb-6">
-          <img className="w-16 h-16 mb-2 rounded-4xl" src="/logo.png" alt="logo" />
-          <h1 className="text-2xl font-bold text-textAccent">Vidate</h1>
-        </div>
+    <AuthCardLayout subtitle="Create an account">
+      {apiError && <FormAlert variant="error">{apiError}</FormAlert>}
 
-        <h2 className="text-textPrimary text-xl font-semibold text-center mb-6">Create an account</h2>
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <RHFTextInput
+          id="email"
+          label="Your email"
+          placeholder="name@company.tld"
+          register={reg('email', {
+            required: 'Email is required',
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: 'Invalid email address.',
+            },
+          })}
+          error={errors.email?.message}
+          autoComplete="email"
+        />
 
-        {apiError && (
-          <div className="mb-4 p-3 text-sm text-textError bg-bgSecondary border border-textError rounded-lg text-center">{apiError}</div>
-        )}
+        <RHFTextInput
+          id="password"
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          register={reg('password', {
+            required: 'Password is required',
+            minLength: { value: 8, message: 'Password must be at least 8 characters.' },
+            pattern: {
+              value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
+              message: 'Must contain at least 1 uppercase, 1 lowercase, and 1 number.',
+            },
+          })}
+          error={errors.password?.message}
+          autoComplete="new-password"
+        />
 
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label htmlFor="email" className="block mb-2 text-sm font-medium text-textSecondary">Your email</label>
-            <input id="email" placeholder="name@company.tld" className={`w-full p-2.5 rounded-lg bg-bgSecondary border text-textPrimary focus:outline-none focus:ring-2 ${errors.email ? 'border-textError focus:ring-textError' : 'border-borderAccentLight focus:ring-borderAccent'}`} {...reg('email', { required: 'Email is required', pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Invalid email address.' } })} />
-            {errors.email && <span className="text-textError text-xs mt-1">{errors.email.message}</span>}
-          </div>
+        <RHFTextInput
+          id="confirm-password"
+          label="Confirm password"
+          type="password"
+          placeholder="••••••••"
+          register={reg('confirmPassword', {
+            required: 'Please confirm your password',
+            validate: (val) => (getValues('password') === val ? true : 'Your passwords do not match.'),
+          })}
+          error={errors.confirmPassword?.message}
+          autoComplete="new-password"
+        />
 
-          <div>
-            <label htmlFor="password" className="block mb-2 text-sm font-medium text-textSecondary">Password</label>
-            <input type="password" id="password" placeholder="••••••••" className={`w-full p-2.5 rounded-lg bg-bgSecondary border text-textPrimary focus:outline-none focus:ring-2 ${errors.password ? 'border-textError focus:ring-textError' : 'border-borderAccentLight focus:ring-borderAccent'}`} {...reg('password', { required: 'Password is required', minLength: { value: 8, message: 'Password must be at least 8 characters.' }, pattern: { value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, message: 'Must contain at least 1 uppercase, 1 lowercase, and 1 number.' } })} />
-            {errors.password && <span className="text-textError text-xs mt-1">{errors.password.message}</span>}
-          </div>
+        <PrimaryButton type="submit">Create an account</PrimaryButton>
 
-          <div>
-            <label htmlFor="confirm-password" className="block mb-2 text-sm font-medium text-textSecondary">Confirm password</label>
-            <input type="password" id="confirm-password" placeholder="••••••••" className={`w-full p-2.5 rounded-lg bg-bgSecondary border text-textPrimary focus:outline-none focus:ring-2 ${errors.confirmPassword ? 'border-textError focus:ring-textError' : 'border-borderAccentLight focus:ring-borderAccent'}`} {...reg('confirmPassword', {
-              required: 'Please confirm your password',
-              validate: (val) => (getValues('password') === val ? true : 'Your passwords do not match.')
-            })} />
-            {errors.confirmPassword && <span className="text-textError text-xs mt-1">{errors.confirmPassword.message}</span>}
-          </div>
-
-          <button type="submit" className="w-full bg-bgAccentSecondary hover:bg-borderAccent text-textPrimary font-semibold rounded-lg py-2.5 transition hover:cursor-pointer">Create an account</button>
-
-          <p className="text-textSecondary text-sm text-center">Already have an account? <Link to="/login" className="text-textAccent hover:underline">Login here</Link></p>
-        </form>
-      </div>
-    </div>
+        <p className="text-textSecondary text-sm text-center">
+          Already have an account?{' '}
+          <Link to="/login" className="text-textAccent hover:underline">
+            Login here
+          </Link>
+        </p>
+      </form>
+    </AuthCardLayout>
   );
 };
 

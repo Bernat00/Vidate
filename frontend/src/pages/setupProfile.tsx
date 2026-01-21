@@ -6,6 +6,8 @@ import { useAuth } from '../context/authContext.tsx';
 import NameFields from '../components/NameFields.tsx';
 import DemographicFields from '../components/DemographicFields.tsx';
 import type { ProfileMine, ProfileOption, SetupProfileForm, SetupProfilePayload } from '../types/domain.ts';
+import GradientPage from '../components/layout/GradientPage';
+import PrimaryButton from '../components/form/PrimaryButton';
 
 type FieldChangeEvent = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 
@@ -107,15 +109,16 @@ export default function SetupProfile() {
   }
 
   return (
-    <div className="bg-gradient-to-t from-bgAccentPrimary to-bgAccentSecondary min-h-screen flex items-center justify-center p-4">
+    <GradientPage className="flex items-center justify-center p-4">
       <form onSubmit={onSubmit} className="w-full max-w-2xl bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
         <h1 className="text-2xl font-bold text-textAccent mb-4">Complete your profile</h1>
         <NameFields form={form} update={update} />
         <DemographicFields form={form} update={update} genders={genders} languages={languages} religions={religions} />
-        <button type="submit" disabled={saving} className="mt-6 w-full bg-bgAccentSecondary hover:bg-borderAccent text-textPrimary font-semibold rounded-lg py-2.5 transition">
+
+        <PrimaryButton type="submit" disabled={saving} className="mt-6">
           {saving ? 'Saving...' : 'Save and continue'}
-        </button>
+        </PrimaryButton>
       </form>
-    </div>
+    </GradientPage>
   );
 }

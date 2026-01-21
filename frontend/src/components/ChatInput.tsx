@@ -1,3 +1,5 @@
+import { Send } from 'lucide-react';
+
 const ChatInput = () => {
   return (
       <form className="mt-auto w-full px-4 mb-16 lg:mb-4">
@@ -13,10 +15,7 @@ const ChatInput = () => {
                   type="submit"
                   className="absolute top-1/2 right-2 -translate-y-1/2 p-2 text-textPrimary hover:text-textAccent hover:bg-borderAccent rounded-full shadow transition"
               >
-                  {/* replace font-awesome plane with inline SVG */}
-                  <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9-7-9-7-9 7 9 7z" />
-                  </svg>
+                  <Send className="w-4 h-4" aria-hidden="true" />
               </button>
           </div>
       </form>
@@ -24,4 +23,3 @@ const ChatInput = () => {
 };
 
 export default ChatInput;
-
