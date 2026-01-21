@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
+import CenteredLoader from '../layout/CenteredLoader';
 
 export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const user = auth?.user;
   const loading = auth?.loading;
 
-  if (loading) return <>{children}</>;
+  if (loading) return <CenteredLoader />;
 
   if (user?.is_onboarded) return <Navigate to="/my-matches" replace />;
   if (user && !user.is_onboarded) return <Navigate to="/setup-profile" replace />;

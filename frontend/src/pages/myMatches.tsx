@@ -1,14 +1,8 @@
 import type { ReactElement } from 'react';
-import { useState } from 'react';
-import Sidebar from "../components/sidebar.tsx";
-import MessageBubble from "../components/messageBubble.tsx";
 import ChatInput from "../components/ChatInput.tsx";
-import Navbar from "../components/navbar.tsx";
-import { Menu } from 'lucide-react';
-import GradientPage from '../components/layout/GradientPage';
-import MobileTopBar from '../components/layout/MobileTopBar';
-import SidebarOverlay from '../components/layout/SidebarOverlay';
 import ChatColumn from '../components/layout/ChatColumn';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import MessageList from '../components/chat/MessageList';
 
 const DUMMY_MESSAGES = [
     {
@@ -31,44 +25,12 @@ const DUMMY_MESSAGES = [
 
 
 export default function MyMatches(): ReactElement {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   return (
-    <GradientPage>
-      <div className="flex min-h-screen relative">
-        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-
-        <SidebarOverlay open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-
-        <div className="flex-1 w-full lg:ml-56">
-          <MobileTopBar
-            title="Vidate"
-            left={
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="hover:text-borderAccent p-1 rounded-lg"
-                aria-label="Open sidebar"
-              >
-                <Menu />
-              </button>
-            }
-          />
-
-          <ChatColumn>
-            <div className="flex flex-col gap-6 justify-start items-start">
-              {DUMMY_MESSAGES.map((msg) => (
-                <li key={msg.id}>
-                  <MessageBubble message={msg} />
-                </li>
-              ))}
-            </div>
-
-            <ChatInput />
-          </ChatColumn>
-
-          <Navbar/>
-        </div>
-      </div>
-    </GradientPage>
+    <DashboardLayout title="Vidate">
+      <ChatColumn>
+        <MessageList messages={DUMMY_MESSAGES} />
+        <ChatInput />
+      </ChatColumn>
+    </DashboardLayout>
   );
 }

@@ -12,7 +12,7 @@ export default function NameFields({
   update: <K extends keyof SetupProfileForm>(k: K) => (e: FieldChangeEvent) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-app-gap">
       <TextField id="first_name" label="First name" value={form.first_name} onChange={update('first_name')} />
       <TextField id="middle_name" label="Middle name" value={form.middle_name} onChange={update('middle_name')} />
       <TextField id="last_name" label="Last name" value={form.last_name} onChange={update('last_name')} />

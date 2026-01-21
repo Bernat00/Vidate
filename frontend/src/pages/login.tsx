@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { login } from '../helpers.ts';
-import type { AxiosError } from 'axios';
 import AuthCardLayout from '../components/auth/AuthCardLayout';
 import FormAlert from '../components/form/FormAlert';
 import PrimaryButton from '../components/form/PrimaryButton';
@@ -10,6 +9,7 @@ import RHFTextInput from '../components/form/RHFTextInput';
 import RHFCheckbox from '../components/form/RHFCheckbox';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
 import { useFlashToast } from '../hooks/useFlashToast';
+import { useApiError } from '../hooks/useApiError';
 
 type LoginFormValues = {
   email: string;
@@ -22,6 +22,7 @@ const Login = () => {
   const [apiError, setApiError] = useState('');
 
   const { handleAuthSuccess } = useAuthRedirect();
+  const { getErrorMessage } = useApiError();
   useFlashToast();
 
   const onSubmit = async (data: LoginFormValues) => {
@@ -31,12 +32,7 @@ const Login = () => {
       await login(data.email, data.password, Boolean(data.rememberMe));
       await handleAuthSuccess('/my-matches');
     } catch (err) {
-      const axiosErr = err as AxiosError<unknown>;
-      if (axiosErr.response?.status === 401) {
-        setApiError('Email or password is incorrect.');
-      } else {
-        setApiError('Something went wrong. Please try again.');
-      }
+      setApiError(getErrorMessage(err));
     }
   };
 

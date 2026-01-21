@@ -5,6 +5,8 @@ import type { MatchItem } from '../types/domain.ts';
 import ListItem from './common/ListItem';
 import { Spinner } from 'flowbite-react';
 import { getAvatarUrl, getDisplayName } from '../helpers.ts';
+import EmptyState from './common/EmptyState';
+import { Users } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -52,7 +54,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
              <Spinner color="purple" size="md" />
            </li>
         ) : matches.length === 0 ? (
-           <li className="p-4 text-center text-textSecondary text-sm">No matches yet.</li>
+           <EmptyState 
+            title="No matches yet" 
+            description="Keep exploring to find your perfect match!" 
+            icon={Users}
+            className="mt-10"
+          />
         ) : (
           matches.map((match) => (
             <li key={match.id ?? match._id ?? `${match.name ?? match.username ?? ''}` }>
