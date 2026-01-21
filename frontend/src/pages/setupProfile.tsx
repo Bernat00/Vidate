@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import api from '../../api';
-import { useToast } from '../../context/toastContext';
-import { useAuth } from '../../context/authContext';
-import NameFields from './NameFields';
-import DemographicFields from './DemographicFields';
-import type { ProfileMine, ProfileOption, SetupProfileForm, SetupProfilePayload } from '../../types/domain';
+import api from '../api.ts';
+import { useToast } from '../context/toastContext.tsx';
+import { useAuth } from '../context/authContext.tsx';
+import NameFields from '../components/NameFields.tsx';
+import DemographicFields from '../components/DemographicFields.tsx';
+import type { ProfileMine, ProfileOption, SetupProfileForm, SetupProfilePayload } from '../types/domain.ts';
 
 type FieldChangeEvent = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 

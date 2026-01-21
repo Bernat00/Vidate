@@ -1,6 +1,6 @@
-import TextField from '../form/TextField';
+import TextField from './TextField.tsx';
 import type { ChangeEvent } from 'react';
-import type { SetupProfileForm } from '../../types/domain';
+import type { SetupProfileForm } from '../types/domain.ts';
 
 type FieldChangeEvent = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 

@@ -1,9 +1,9 @@
 import type { ReactElement } from 'react';
 import { useState } from 'react';
-import Sidebar from "./sidebar";
-import MessageBubble from "./messageBubble";
-import ChatInput from "./ChatInput";
-import Navbar from "../navbar";
+import Sidebar from "../components/sidebar.tsx";
+import MessageBubble from "../components/messageBubble.tsx";
+import ChatInput from "../components/ChatInput.tsx";
+import Navbar from "../components/navbar.tsx";
 import { Menu } from 'lucide-react';
 
 const DUMMY_MESSAGES = [

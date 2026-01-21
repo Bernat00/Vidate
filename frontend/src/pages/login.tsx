@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { Location } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { login } from '../../helpers';
-import { useToast } from '../../context/toastContext';
-import { useAuth } from '../../context/authContext';
-import type { ToastStatus } from '../../types/domain';
+import { login } from '../helpers.ts';
+import { useToast } from '../context/toastContext.tsx';
+import { useAuth } from '../context/authContext.tsx';
+import type { ToastStatus } from '../types/domain.ts';
 import type { AxiosError } from 'axios';
 
 type LoginFormValues = {

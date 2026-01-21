@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import type { AxiosError } from 'axios';
-import api from '../../api';
-import { login } from '../../helpers';
-import { useAuth } from '../../context/authContext';
-import type { ToastStatus } from '../../types/domain';
+import api from '../api.ts';
+import { login } from '../helpers.ts';
+import { useAuth } from '../context/authContext.tsx';
+import type { ToastStatus } from '../types/domain.ts';
 
 type RegisterFormValues = {
   email: string;
