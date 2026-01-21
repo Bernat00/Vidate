@@ -1,5 +1,6 @@
 import { Label, Select } from 'flowbite-react';
 import type { ChangeEventHandler } from 'react';
+import { commonInputClasses, commonLabelClasses } from './form/formStyles';
 
 type OptionLike = {
   id?: number | string;
@@ -20,12 +21,12 @@ type SelectFieldProps = {
 export default function SelectField({ id, label, value, onChange, options = [], placeholder = 'Select one' }: SelectFieldProps) {
   return (
     <div>
-      <Label htmlFor={id} className="text-textSecondary mb-1">{label}</Label>
+      <Label htmlFor={id} className={commonLabelClasses}>{label}</Label>
       <Select
         id={id}
         value={value}
         onChange={onChange}
-        className="w-full bg-bgSecondary text-textPrimary border-borderAccentLight focus:ring-borderAccent"
+        className={commonInputClasses}
       >
         <option value="" disabled>{placeholder}</option>
         {options.map(o => (

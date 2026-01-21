@@ -2,6 +2,7 @@ import { Label, TextInput } from 'flowbite-react';
 import type { HTMLInputTypeAttribute } from 'react';
 import type { UseFormRegisterReturn } from 'react-hook-form';
 import FormErrorText from './FormErrorText';
+import { commonInputClasses, commonLabelClasses } from './formStyles';
 
 type RHFTextInputProps = {
   id: string;
@@ -22,13 +23,11 @@ export default function RHFTextInput({
   error,
   autoComplete,
 }: RHFTextInputProps) {
-  const inputClass =
-    `w-full bg-bgSecondary text-textPrimary border-borderAccentLight focus:ring-borderAccent ` +
-    (error ? 'border-textError focus:ring-textError' : '');
+  const inputClass = commonInputClasses + (error ? ' border-textError focus:ring-textError' : '');
 
   return (
     <div>
-      <Label htmlFor={id} className="block mb-2 text-sm font-medium text-textSecondary">
+      <Label htmlFor={id} className={`block ${commonLabelClasses} text-sm font-medium`}>
         {label}
       </Label>
       <TextInput

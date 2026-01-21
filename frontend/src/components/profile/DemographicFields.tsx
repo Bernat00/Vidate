@@ -1,7 +1,7 @@
-import DateField from './DateField.tsx';
-import SelectField from './SelectField.tsx';
+import DateField from '../DateField.tsx';
+import SelectField from '../SelectField.tsx';
 import type { ChangeEvent } from 'react';
-import type { ProfileOption, SetupProfileForm } from '../types/domain.ts';
+import type { ProfileOption, SetupProfileForm } from '../../types/domain.ts';
 
 type FieldChangeEvent = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 
