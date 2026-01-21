@@ -24,4 +24,8 @@
     /* Borders / highlights */
     --color-borderAccent: #701a75;
     --color-borderAccentLight: rgba(112, 26, 117, 0.4);
+
+    /* Spacing */
+    --spacing-app-gap: 1.5rem; /* gap-6 */
+    --spacing-app-padding: 1rem; /* p-4 */
 }

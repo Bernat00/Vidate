@@ -109,14 +109,14 @@ export default function SetupProfile() {
   }
 
   return (
-    <GradientPage className="flex items-center justify-center p-4">
+    <GradientPage className="flex items-center justify-center p-app-padding">
       <Section maxWidth="2xl">
         <form onSubmit={onSubmit} className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
           <h1 className="text-2xl font-bold text-textAccent mb-4">Complete your profile</h1>
           <NameFields form={form} update={update} />
           <DemographicFields form={form} update={update} genders={genders} languages={languages} religions={religions} />
 
-          <PrimaryButton type="submit" disabled={saving} className="mt-6">
+          <PrimaryButton type="submit" disabled={saving} className="mt-app-gap">
             {saving ? 'Saving...' : 'Save and continue'}
           </PrimaryButton>
         </form>

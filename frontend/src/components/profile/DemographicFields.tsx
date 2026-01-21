@@ -27,7 +27,7 @@ export default function DemographicFields({
   religions: ProfileOption[];
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap mt-app-gap">
       <DateField id="birth_date" label="Birth date" value={form.birth_date} onChange={update('birth_date')} />
       <SelectField id="gender_id" label="Gender" value={form.gender_id} onChange={asSelectHandler(update('gender_id'))} options={genders} />
       <SelectField id="language_id" label="Language" value={form.language_id} onChange={asSelectHandler(update('language_id'))} options={languages} />

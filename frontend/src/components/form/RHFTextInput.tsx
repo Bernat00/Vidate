@@ -1,8 +1,8 @@
-import { Label, TextInput } from 'flowbite-react';
+import { TextInput } from 'flowbite-react';
 import type { HTMLInputTypeAttribute } from 'react';
 import type { UseFormRegisterReturn } from 'react-hook-form';
-import FormErrorText from './FormErrorText';
-import { commonInputClasses, commonLabelClasses } from './formStyles';
+import { commonInputClasses } from './formStyles';
+import FormField from './FormField';
 
 type RHFTextInputProps = {
   id: string;
@@ -23,24 +23,18 @@ export default function RHFTextInput({
   error,
   autoComplete,
 }: RHFTextInputProps) {
-  const inputClass = commonInputClasses + (error ? ' border-textError focus:ring-textError' : '');
-
   return (
-    <div>
-      <Label htmlFor={id} className={`block ${commonLabelClasses} text-sm font-medium`}>
-        {label}
-      </Label>
+    <FormField id={id} label={label} error={error}>
       <TextInput
         id={id}
         type={type}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className={inputClass}
+        className={commonInputClasses}
         color={error ? 'failure' : undefined}
         {...register}
       />
-      <FormErrorText>{error}</FormErrorText>
-    </div>
+    </FormField>
   );
 }
 

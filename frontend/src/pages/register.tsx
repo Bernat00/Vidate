@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import type { AxiosError } from 'axios';
 import api from '../api.ts';
 import { login } from '../helpers.ts';
 import type { ToastStatus } from '../types/domain.ts';
@@ -10,6 +9,7 @@ import FormAlert from '../components/form/FormAlert';
 import PrimaryButton from '../components/form/PrimaryButton';
 import RHFTextInput from '../components/form/RHFTextInput';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
+import { useApiError } from '../hooks/useApiError';
 
 type RegisterFormValues = {
   email: string;
@@ -29,6 +29,7 @@ const Register = () => {
   const [apiError, setApiError] = useState('');
   const navigate = useNavigate();
   const { handleAuthSuccess } = useAuthRedirect();
+  const { getErrorMessage } = useApiError();
 
   const onSubmit = async (data: RegisterFormValues) => {
     setApiError('');
@@ -50,14 +51,7 @@ const Register = () => {
         });
       }
     } catch (err) {
-      const axiosErr = err as AxiosError<RegisterErrorBody>;
-      const detail = axiosErr.response?.data?.detail;
-
-      if (detail) {
-        setApiError(detail);
-      } else {
-        setApiError('Registration failed. Please try again.');
-      }
+      setApiError(getErrorMessage(err));
     }
   };
 
