@@ -2,6 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import jwt
 from backend.extensions import get_redis
 from ...config import Config
+from  backend.routes import get_and_auth_current_user
 
 router = APIRouter(prefix='/ws')
 
@@ -22,23 +23,10 @@ async def listen_to_user_channel(ws: WebSocket, user_id: str):
         await pubsub.aclose()
 
 @router.websocket('/main')
-async def ws_endpoint(ws: WebSocket, token: str = None):
+async def ws_endpoint(ws: WebSocket, user: get_and_auth_current_user):
     await ws.accept()
-    if not token:
-        await ws.close(1001, "No JWT provided")
-        return
-    try:
-        payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
-        user_id = payload.get("sub")
-    except Exception:
-        await ws.close(1001, "Invalid JWT provided")
-        return
 
-    if not user_id:
-        await ws.close(1001, "Invalid JWT provided")
-        return
-
-    await listen_to_user_channel(ws, user_id)
+    await listen_to_user_channel(ws, user.id)
     print("asd")
 
 

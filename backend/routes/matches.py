@@ -25,11 +25,16 @@ from . import get_and_auth_current_user
 router = APIRouter(prefix='/matches')
 
 
-@router.get('/mine') #todo atgondolni ezt hova rakjam, kene egy masik ami a matcheket adja nem a matchelt usereket
+@router.get('/mine')
 async def mine(repo: repoDep, user: get_and_auth_current_user):
     users = await  repo.user_repo.get_matched_users(user.id)
     print(users)
     return [UserOut(**user.model_dump()) for user in users]
+
+
+@router.get('/all')
+async def all(repo: repoDep, user: get_and_auth_current_user):
+    return await repo.match_repo.get_by_user_id(user.id)
 
 
 
@@ -48,8 +53,10 @@ async def match(match_id: str, repo: repoDep, user: get_and_auth_current_user):
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found.")
 
-    if match.user2_id != user.id and match.user2_id != user.id: #todo ide kell adminnak is engedely?
+    if not (match.user1_id == user.id or match.user2_id == user.id):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You cant delete this match.")
 
 
     await repo.match_repo.delete(match)
+
+    return 'deleted'

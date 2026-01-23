@@ -15,33 +15,31 @@ class MatchRepo(BaseRepo[Match]):
     def __init__(self, session):
         super().__init__(session, Match)
 
-
-
-    async def get_by_both_user_ids(self, id1, id2) -> Match | None:
+    async def get_by_both_user_ids(self, id1: str, id2:str) -> Match | None:
         stmt = (
-            select(Match).where((Match.user1_id == id1 & Match.user2_id == id2) | (Match.user1_id == id2 & Match.user2_id == id1))
+            select(Match).where(
+                (Match.user1_id == id1 and Match.user2_id == id2) | (Match.user1_id == id2 and Match.user2_id == id1))
         )
 
         return await self.session.scalar(stmt)
 
-
-    async def get_by_user_id(self, user_id: str) -> Match | None:
+    async def get_by_user_id(self, user_id: str) -> list[Match] | None:
         stmt = (
-            select(Match).where(Match.user1_id == user_id | Match.user2_id == user_id)
+            select(Match).where((Match.user1_id == user_id) | (Match.user2_id == user_id))
         )
 
-        return await self.session.scalar(stmt)
+        results = await self.session.scalars(stmt)
 
+        return list(results.all())
 
     async def match(self, me: User, to_match: User) -> Match:
         match_repo = MatchRepo(session=self.session)
-        base_repo = BaseRepo(session=self.session)
 
-        match = await match_repo.get_by_both_user_ids(me.id1, to_match.id1)
+        match = await match_repo.get_by_both_user_ids(me.id, to_match.id)
 
         if match:
             match.confirmed = True
-            return await base_repo.save(match)
+            return await match_repo.save(match)
 
         mach = Match()
         if me.id < to_match.id:
@@ -51,6 +49,4 @@ class MatchRepo(BaseRepo[Match]):
             mach.user1_id = to_match.id
             mach.user2_id = me.id
 
-
-        return await base_repo.save(mach)
-
+        return await match_repo.save(mach)

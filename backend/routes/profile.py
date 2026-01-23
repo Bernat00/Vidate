@@ -26,6 +26,8 @@ async def delete_religions(religion_id: int, repo: repoDep, user: Annotated[User
 
     await repo.delete(religion)
 
+    return 'deleted'
+
 
 
 
@@ -46,6 +48,8 @@ async def delete_languages(language_id: int, repo: repoDep,
 
     await repo.delete(language)
 
+    return 'deleted'
+
 
 
 @router.get('/genders')
@@ -64,6 +68,8 @@ async def delete_genders(gender_id: int, repo: repoDep,
         raise HTTPException(status_code=404, detail="Religion not found")
 
     await repo.delete(gender)
+
+    return 'deleted'
 
 
 @router.get('/mine')
