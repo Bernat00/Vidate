@@ -5,10 +5,10 @@ from ..schemas.auth import Token, TokenData
 from ..schemas.user import UserCreate
 
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, Optional
 
 import jwt
-from fastapi import Depends, HTTPException, status, APIRouter, Response
+from fastapi import Depends, HTTPException, status, APIRouter, Response, Query
 from fastapi.logger import logger
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
@@ -43,16 +43,32 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes
     return encoded_jwt
 
 
-class CurrentUserCheckerDependency:
-    def __init__(self, role=None):
-        self.role_name = role
-
-    async def __call__(self, token: Annotated[str, Depends(oauth2_scheme)], repo: repoDep):
-        credentials_exception = HTTPException(
+credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def get_token(
+        header_token: Annotated[Optional[str], Depends(oauth2_scheme)],
+        query_token: Annotated[Optional[str], Query(None, alias="token")],
+) -> str:
+    if header_token:
+        return header_token
+    if query_token:
+        return query_token
+
+    raise credentials_exception
+
+
+
+class CurrentUserCheckerDependency:
+    def __init__(self, role=None):
+        self.role_name = role
+
+
+    async def __call__(self, token: Annotated[str, Depends(get_token)] | str, repo: repoDep):
         try:
             token_data = decode_token(token, credentials_exception)
 
