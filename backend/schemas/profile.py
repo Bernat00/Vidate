@@ -6,6 +6,7 @@ from typing import Optional
 
 class ProfileCreate(BaseModel):
     first_name: str
+    # Accept null or empty string for optional middle name and normalize to None
     middle_name: Optional[str] = None
     last_name: str
     birth_date: datetime
@@ -24,3 +25,19 @@ class ProfileCreate(BaseModel):
         if age < 18:
             raise ValueError('You must be at least 18 years old')
         return v
+
+    # Normalize middle_name so API consumers can send null or empty string
+    @field_validator('middle_name', mode='before')
+    @classmethod
+    def normalize_middle_name(cls, v: Optional[str]) -> Optional[str]:
+        # Allow explicit nulls
+        if v is None:
+            return None
+        # If something non-string sneaks in, coerce to string for safety
+        if not isinstance(v, str):
+            try:
+                v = str(v)
+            except Exception:
+                return None
+        v = v.strip()
+        return v or None

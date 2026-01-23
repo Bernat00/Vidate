@@ -8,6 +8,48 @@
     color-scheme: dark;
 }
 
+/* Restore pleasant rounded corners on native controls */
+input,
+select,
+textarea,
+button {
+    border-radius: 0.5rem; /* matches rounded-lg/2xl look */
+    /* Prevent the inner background from visually filling the rounded corners */
+    background-clip: padding-box;
+    overflow: hidden; /* clip any inner artifacts to the radius */
+}
+
+/* Force dark styling for native selects and their option popups for better readability */
+select,
+select:focus {
+    background-color: var(--color-bgSecondary) !important;
+    color: var(--color-textPrimary) !important;
+    border-color: var(--color-borderAccentLight) !important;
+}
+
+/* If the select currently shows a disabled placeholder option, make it subtle */
+select:has(option[disabled]:checked) {
+    color: var(--color-textSecondary) !important;
+}
+
+/* Many browsers use <option> backgrounds/text for the dropdown list */
+option {
+    background-color: var(--color-bgSecondary);
+    color: var(--color-textPrimary);
+}
+
+/* Placeholder/disabled option appears subtly */
+option:disabled {
+    color: var(--color-textSecondary);
+}
+
+/* Improve readability for hovered/selected options (where supported) */
+option:hover,
+option:checked {
+    background-color: #3b82f6; /* blue-500 */
+    color: #ffffff;
+}
+
 @theme {
     /* Backgrounds */
     --color-bgPrimary: #020617;
