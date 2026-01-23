@@ -7,37 +7,39 @@ from fastapi.logger import logger
 
 from backend.routes.auth import decode_token
 
+import redis.asyncio as redis
+
+
+r = redis.Redis(host='localhost', port=6379)
+
 
 class ConnectionManager:
     def __init__(self, websocket: WebSocket):
         self.websocket = websocket
 
     async def connect(self) -> str:
-        """:return user_id"""
+        ":return user_id"
         await self.websocket.accept()
-        #todo megnezni mi a helyzet a connection timeouttal
-        #todo egy clienthes nem kene tobb websocket endpoint semmikeppen
-        #idk vegig gondolni ezt az egeszet
 
-        jwt = ""
-
-        async def receive_async():
-            nonlocal jwt    #lehet nem a legszebb
-            jwt = await self.websocket.receive_text()
-            #todo maybe kene valami valasz erre
-
-        task = asyncio.create_task(receive_async())     #dark magic
-
-        done, pending = await asyncio.wait(
-            {task},
-            timeout=40
+        # Expect JWT in query params: ?jwt=... (also accept ?token=... for flexibility)
+        jwt_token = (
+            self.websocket.query_params.get("jwt")
+            or self.websocket.query_params.get("token")
         )
 
-        if task not in done:
-            task.cancel()
-            raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated')
+        if not jwt_token:
+            raise WebSocketException(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason="Client is not authenticated",
+            )
 
-        token_data = decode_token(jwt, WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason='Client is not authenticated'))
+        token_data = decode_token(
+            jwt_token,
+            WebSocketException(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason="Client is not authenticated",
+            ),
+        )
 
         return token_data.user_id
 

@@ -10,4 +10,5 @@ class Config:
     PSW_SECRET_KEY = os.getenv("PSW_SECRET_KEY") or "dev"
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM") or "HS256"
     PWD_SALT = os.getenv("PWD_SALT") or "helikopter"
-
+    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))

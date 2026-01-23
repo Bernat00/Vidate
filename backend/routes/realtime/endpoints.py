@@ -1,39 +1,42 @@
-from time import sleep
-from typing import Annotated
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+import jwt
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, WebSocketException, status, Depends
-
-from backend.routes.realtime import ConnectionManager
-
-
+from ...config import Config
+from ...app import r
 
 router = APIRouter(prefix='/ws')
 
-
-
-@router.websocket('/aa')
-async def aa(conn: Annotated[ConnectionManager, Depends(ConnectionManager)]):
+async def listen_to_user_channel(ws: WebSocket, user_id: str):
+    channel = f"user:{user_id}"
     pubsub = r.pubsub()
-
+    await pubsub.subscribe(channel)
     try:
-        uid = await conn.connect()
-        pubsub.subscribe(f'chat:{uid}') #todo dani talald ki mi legyen ezzel
+        async for message in pubsub.listen():
+            if message.get("type") != "message":
+                continue
+            payload = message.get("data")
+            await ws.send_text(payload)
+    except (WebSocketDisconnect, RuntimeError):
+        pass
+    finally:
+        await pubsub.unsubscribe(channel)
+        await pubsub.aclose()
 
+@router.websocket('/main')
+async def ws_endpoint(ws: WebSocket, token: str = None):
+    await ws.accept()
+    if not token:
+        await ws.close(1001, "No JWT provided")
+        return
+    try:
+        payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
+        user_id = payload.get("sub")
+    except jwt.exceptions.DecodeError:
+        await ws.close(1001, "Invalid JWT provided")
+        return
 
-        async for msg in pubsub.listen():
-            await conn.send(msg)
+    if not user_id:
+        await ws.close(1001, "Invalid JWT provided")
+        return
 
-
-
-    except WebSocketDisconnect:
-        pubsub.unsubscribe()
-
-
-@router.websocket('/test')
-async def test(conn: Annotated[ConnectionManager, Depends(ConnectionManager)]):
-    await conn.connect()
-    while True:
-        tmp = await conn.receive_json()
-        await conn.send(tmp)
-
-
+    await listen_to_user_channel(ws, user_id)
