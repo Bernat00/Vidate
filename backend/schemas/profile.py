@@ -41,3 +41,19 @@ class ProfileCreate(BaseModel):
                 return None
         v = v.strip()
         return v or None
+
+
+
+class LanguageCreate(BaseModel):
+    name: str
+
+
+class ReligionCreate(BaseModel):
+    name: str
+
+
+class GenderCreate(BaseModel):
+    name: str
+
+
+

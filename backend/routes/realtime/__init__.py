@@ -7,11 +7,6 @@ from fastapi.logger import logger
 
 from backend.routes.auth import decode_token
 
-import redis.asyncio as redis
-
-
-r = redis.Redis(host='localhost', port=6379)
-
 
 class ConnectionManager:
     def __init__(self, websocket: WebSocket):
@@ -20,7 +15,9 @@ class ConnectionManager:
     async def connect(self) -> str:
         """:return user_id"""
         await self.websocket.accept()
-
+        #todo megnezni mi a helyzet a connection timeouttal
+        #todo egy clienthes nem kene tobb websocket endpoint semmikeppen
+        #idk vegig gondolni ezt az egeszet
 
         jwt = ""
 
