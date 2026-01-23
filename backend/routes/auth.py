@@ -17,7 +17,7 @@ from jwt.exceptions import InvalidTokenError
 
 router = APIRouter(prefix='/auth')
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/auth/token')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/auth/token', auto_error=False)
 
 
 def decode_token(token: str, credentials_exception: Exception) -> TokenData:
@@ -52,7 +52,7 @@ credentials_exception = HTTPException(
 
 def get_token(
         header_token: Annotated[Optional[str], Depends(oauth2_scheme)],
-        query_token: Annotated[Optional[str], Query(None, alias="token")],
+        query_token = Query(None, alias="token"),
 ) -> str:
     if header_token:
         return header_token
@@ -68,7 +68,7 @@ class CurrentUserCheckerDependency:
         self.role_name = role
 
 
-    async def __call__(self, token: Annotated[str, Depends(get_token)] | str, repo: repoDep):
+    async def __call__(self, token: Annotated[str, Depends(get_token)], repo: repoDep):
         try:
             token_data = decode_token(token, credentials_exception)
 
