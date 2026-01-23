@@ -11,3 +11,19 @@ class ProfileCreate(BaseModel):
     gender_id: int
     language_id: int
     religion_id: int
+
+
+
+class LanguageCreate(BaseModel):
+    name: str
+
+
+class ReligionCreate(BaseModel):
+    name: str
+
+
+class GenderCreate(BaseModel):
+    name: str
+
+
+

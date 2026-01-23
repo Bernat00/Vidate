@@ -5,7 +5,6 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, WebSocketExceptio
 
 from backend.routes.realtime import ConnectionManager
 
-from . import r
 
 
 router = APIRouter(prefix='/ws')
