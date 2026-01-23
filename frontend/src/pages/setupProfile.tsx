@@ -89,7 +89,7 @@ export default function SetupProfile() {
     const isBlank = (s: string) => !s || s.trim().length === 0;
 
     if (isBlank(form.first_name)) newErrors.first_name = 'First name is required';
-    if (isBlank(form.middle_name)) newErrors.middle_name = 'Middle name is required';
+    // Middle name is optional
     if (isBlank(form.last_name)) newErrors.last_name = 'Last name is required';
 
     if (isBlank(form.birth_date)) {
@@ -100,6 +100,18 @@ export default function SetupProfile() {
       const today = new Date();
       if (!isValid) newErrors.birth_date = 'Provide a valid date';
       else if (d > today) newErrors.birth_date = 'Birth date cannot be in the future';
+      else {
+        // Age must be at least 18
+        const birth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+        const now = new Date();
+        const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        let age = todayUtc.getUTCFullYear() - birth.getUTCFullYear();
+        const m = todayUtc.getUTCMonth() - birth.getUTCMonth();
+        if (m < 0 || (m === 0 && todayUtc.getUTCDate() < birth.getUTCDate())) {
+          age--;
+        }
+        if (age < 18) newErrors.birth_date = 'You must be at least 18 years old';
+      }
     }
 
     if (!toNumberOrNull(form.gender_id)) newErrors.gender_id = 'Gender is required';
@@ -115,9 +127,9 @@ export default function SetupProfile() {
     setSaving(true);
     try {
       const payload: SetupProfilePayload = {
-        // Backend requires non-null fields; we validated already
+        // Backend accepts optional middle_name
         first_name: form.first_name.trim(),
-        middle_name: form.middle_name.trim(),
+        middle_name: form.middle_name.trim() || null,
         last_name: form.last_name.trim(),
         birth_date: new Date(form.birth_date).toISOString(),
         gender_id: Number(form.gender_id),

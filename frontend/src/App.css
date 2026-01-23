@@ -3,6 +3,11 @@
 @source "../.flowbite-react/class-list.json";
 @source "../node_modules/flowbite";
 
+/* Ensure native form controls (like the select dropdown popup) use dark UI when possible */
+:root, html, body {
+    color-scheme: dark;
+}
+
 @theme {
     /* Backgrounds */
     --color-bgPrimary: #020617;
