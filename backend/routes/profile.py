@@ -1,6 +1,9 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
+from backend.persistence.model.gender import Gender
+from backend.persistence.model.language import Language
+from backend.persistence.model.religion import Religion
 from backend.persistence.model.user import User
 from backend.routes import CurrentUserCheckerDependency
 from backend.routes import get_and_auth_current_user, repoDep
@@ -16,7 +19,7 @@ async def get_religions(repo: repoDep, user: get_and_auth_current_user):
 
 @router.post('/religions')
 async def post_religions(religion: ReligionCreate, repo: repoDep, user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
-    return await repo.save(**religion.model_dump())
+    return await repo.save(Religion(**religion.model_dump()))
 
 @router.delete('/religions')
 async def delete_religions(religion_id: int, repo: repoDep, user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
@@ -37,7 +40,7 @@ async def get_languages(repo: repoDep, user: get_and_auth_current_user):
 
 @router.post('/languages')
 async def post_language(language: LanguageCreate, repo: repoDep, user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
-    return await repo.save(**language.model_dump())
+    return await repo.save(Language(**language.model_dump()))
 
 @router.delete('/languages')
 async def delete_languages(language_id: int, repo: repoDep,
@@ -58,7 +61,7 @@ async def get_genders(repo: repoDep, user: get_and_auth_current_user):
 
 @router.post('/genders')
 async def post_gender(gender: GenderCreate, repo: repoDep, user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
-    return await repo.save(**gender.model_dump())
+    return await repo.save(Gender(**gender.model_dump()))   #todo uniqe test (lehetne try-cath-el is)
 
 @router.delete('/genders')
 async def delete_genders(gender_id: int, repo: repoDep,
