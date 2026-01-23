@@ -17,15 +17,18 @@ def validate_password(v: str):
         raise ValueError("Password must contain a digit")
     return v
 
+
 class UserCreate(BaseModel):
     email: Annotated[str, EmailStr]
     password: Annotated[SecretStr, BeforeValidator(validate_password)]
 
-class ChangeEmail(BaseModel):
-    email: Annotated[str, EmailStr]
 
-class ChangePassword(BaseModel):
-    password: Annotated[SecretStr, BeforeValidator(validate_password)]
+class UserEdit(BaseModel):
+    email: Optional[EmailStr] = None
+    password: Optional[
+        Annotated[SecretStr, BeforeValidator(validate_password)]
+    ] = None
+
 
 class UserOut(BaseModel):
     id: str
@@ -35,7 +38,7 @@ class UserOut(BaseModel):
     disabled: bool
 
 
-class UserMe(BaseModel):
+class UserMe(BaseModel):            #todo really??
     id: str
     email: EmailStr
     created_at: datetime
