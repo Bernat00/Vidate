@@ -34,6 +34,7 @@ export default function SetupProfile() {
   const [religions, setReligions] = useState<ProfileOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof SetupProfileForm, string>>>({});
 
   useEffect(() => {
     (async () => {
@@ -82,17 +83,47 @@ export default function SetupProfile() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    // Validate form before submit
+    const newErrors: Partial<Record<keyof SetupProfileForm, string>> = {};
+
+    const isBlank = (s: string) => !s || s.trim().length === 0;
+
+    if (isBlank(form.first_name)) newErrors.first_name = 'First name is required';
+    if (isBlank(form.middle_name)) newErrors.middle_name = 'Middle name is required';
+    if (isBlank(form.last_name)) newErrors.last_name = 'Last name is required';
+
+    if (isBlank(form.birth_date)) {
+      newErrors.birth_date = 'Birth date is required';
+    } else {
+      const d = new Date(form.birth_date);
+      const isValid = !isNaN(d.getTime());
+      const today = new Date();
+      if (!isValid) newErrors.birth_date = 'Provide a valid date';
+      else if (d > today) newErrors.birth_date = 'Birth date cannot be in the future';
+    }
+
+    if (!toNumberOrNull(form.gender_id)) newErrors.gender_id = 'Gender is required';
+    if (!toNumberOrNull(form.language_id)) newErrors.language_id = 'Language is required';
+    if (!toNumberOrNull(form.religion_id)) newErrors.religion_id = 'Religion is required';
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      showToast('Please fix the highlighted errors.', 'warning');
+      return;
+    }
+
     setSaving(true);
     try {
       const payload: SetupProfilePayload = {
-        first_name: form.first_name || null,
-        middle_name: form.middle_name || null,
-        last_name: form.last_name || null,
-        birth_date: form.birth_date ? new Date(form.birth_date).toISOString() : null,
-        gender_id: toNumberOrNull(form.gender_id),
-        language_id: toNumberOrNull(form.language_id),
-        religion_id: toNumberOrNull(form.religion_id),
-      };
+        // Backend requires non-null fields; we validated already
+        first_name: form.first_name.trim(),
+        middle_name: form.middle_name.trim(),
+        last_name: form.last_name.trim(),
+        birth_date: new Date(form.birth_date).toISOString(),
+        gender_id: Number(form.gender_id),
+        language_id: Number(form.language_id),
+        religion_id: Number(form.religion_id),
+      } as unknown as SetupProfilePayload;
 
       await api.put('/profile/mine', payload);
       if (refresh) await refresh();
@@ -113,8 +144,8 @@ export default function SetupProfile() {
       <Section maxWidth="2xl">
         <form onSubmit={onSubmit} className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
           <h1 className="text-2xl font-bold text-textAccent mb-4">Complete your profile</h1>
-          <NameFields form={form} update={update} />
-          <DemographicFields form={form} update={update} genders={genders} languages={languages} religions={religions} />
+          <NameFields form={form} update={update} errors={errors} />
+          <DemographicFields form={form} update={update} genders={genders} languages={languages} religions={religions} errors={errors} />
 
           <PrimaryButton type="submit" disabled={saving} className="mt-app-gap">
             {saving ? 'Saving...' : 'Save and continue'}
