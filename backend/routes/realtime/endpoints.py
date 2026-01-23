@@ -1,40 +1,35 @@
-from time import sleep
-from typing import Annotated
-
+import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, WebSocketException, status, Depends
 
-from backend.routes.realtime import ConnectionManager
+import jwt
 
-from . import r
-
+from ...config import Config
 
 router = APIRouter(prefix='/ws')
 
 
 
-@router.websocket('/aa')
-async def aa(conn: Annotated[ConnectionManager, Depends(ConnectionManager)]):
-    pubsub = r.pubsub()
-
+@router.websocket('/main')
+async def ws_endpoint(ws: WebSocket, token: str = None):
+    await ws.accept()
+    if not jwt:
+        await ws.close(1001, "No JWT provided")
+    user_id = None
     try:
-        uid = await conn.connect()
-        pubsub.subscribe(f'chat:{uid}') #todo dani talald ki mi legyen ezzel
+        payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
+        user_id = payload.get("sub")
+    except jwt.exceptions.DecodeError:
+        await ws.close(1001, "Invalid JWT provided")
+
+    if not user_id:
+        await ws.close(1001, "Invalid JWT provided")
+
+    print(user_id)
+
+    await asyncio.sleep(100000)
 
 
-        async for msg in pubsub.listen():
-            await conn.send(msg)
 
 
-
-    except WebSocketDisconnect:
-        pubsub.unsubscribe()
-
-
-@router.websocket('/test')
-async def test(conn: Annotated[ConnectionManager, Depends(ConnectionManager)]):
-    await conn.connect()
-    while True:
-        tmp = await conn.receive_json()
-        await conn.send(tmp)
 
 
