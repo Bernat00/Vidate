@@ -27,17 +27,18 @@ class Preference(SQLModel, table=True):
     wants_children: Optional[bool] = Field(default=None)
     is_smoker: Optional[bool] = Field(default=None)
 
-    genders: List[Gender] = Relationship(
+    genders: Optional[List[Gender]] = Relationship(
         link_model=PreferenceGenderLink,
         sa_relationship_kwargs={"lazy": "joined"},
+
     )
 
-    languages: List[Language] = Relationship(
+    languages: Optional[List[Language]] = Relationship(
         link_model=PreferenceLanguageLink,
         sa_relationship_kwargs={"lazy": "joined"},
     )
 
-    religions: List[Religion] = Relationship(
+    religions: Optional[List[Religion]] = Relationship(
         link_model=PreferenceReligionLink,
         sa_relationship_kwargs={"lazy": "joined"},
     )
