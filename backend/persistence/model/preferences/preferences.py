@@ -20,9 +20,9 @@ class Preference(SQLModel, table=True):
         sa_type=String(256),
     )
 
-    first_name: str = Field(nullable=False)
-    last_name: str = Field(nullable=False)
-    birth_date: datetime = Field(nullable=False)
+
+    age_min: int = Field(nullable=True, default=None)
+    age_max: int = Field(nullable=True, default=None)
 
     wants_children: Optional[bool] = Field(default=None)
     is_smoker: Optional[bool] = Field(default=None)
@@ -30,16 +30,19 @@ class Preference(SQLModel, table=True):
     genders: List[Gender] = Relationship(
         back_populates="preferences",
         link_model=PreferenceGenderLink,
+        sa_relationship_kwargs={"lazy": "joined"},
     )
 
     languages: List[Language] = Relationship(
         back_populates="preferences",
         link_model=PreferenceLanguageLink,
+        sa_relationship_kwargs={"lazy": "joined"},
     )
 
     religions: List[Religion] = Relationship(
         back_populates="preferences",
         link_model=PreferenceReligionLink,
+        sa_relationship_kwargs={"lazy": "joined"},
     )
 
 
