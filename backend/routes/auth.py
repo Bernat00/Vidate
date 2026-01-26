@@ -52,7 +52,7 @@ credentials_exception = HTTPException(
 
 def get_token(
         header_token: Annotated[Optional[str], Depends(oauth2_scheme)],
-        query_token = Query(None, alias="token"),
+        query_token = Query(default=None, alias="token"),
 ) -> str:
     if header_token:
         return header_token

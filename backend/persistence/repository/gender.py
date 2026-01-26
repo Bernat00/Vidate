@@ -6,3 +6,4 @@ class GenderRepo(BaseRepo[Gender]):
 
     def __init__(self, session):
         super().__init__(session, Gender)
+

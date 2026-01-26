@@ -1,13 +1,13 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, status
 import jwt
 from backend.extensions import get_redis
 from ...config import Config
-from  backend.routes import get_and_auth_current_user
+from backend.routes import get_and_auth_current_user, CurrentUserCheckerDependency, repoDep
 
 router = APIRouter(prefix='/ws')
 
-async def listen_to_user_channel(ws: WebSocket, user_id: str):
-    channel = f"user:{user_id}"
+async def listen_to_user_channel(ws: WebSocket, user, repo):
+    channel = f"user:{user.id}"
     pubsub = get_redis().pubsub()
     await pubsub.subscribe(channel)
     try:
@@ -23,10 +23,15 @@ async def listen_to_user_channel(ws: WebSocket, user_id: str):
         await pubsub.aclose()
 
 @router.websocket('/main')
-async def ws_endpoint(ws: WebSocket, user: get_and_auth_current_user):
+async def ws_endpoint(ws: WebSocket, token:str, repo: repoDep):
+    current_user = CurrentUserCheckerDependency()
+    user = await current_user(token, repo)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
     await ws.accept()
 
-    await listen_to_user_channel(ws, user.id)
+    await listen_to_user_channel(ws, user, repo)
     print("asd")
 
 

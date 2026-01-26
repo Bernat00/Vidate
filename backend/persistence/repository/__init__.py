@@ -75,6 +75,9 @@ from .gender import GenderRepo
 from .religion import ReligionRepo
 from .language import LanguageRepo
 from .role import RoleRepo
+from .preference import PreferenceRepo
+
+
 
 class Repo(BasicRepo):
     def __init__(self, session: AsyncSession):
@@ -88,6 +91,7 @@ class Repo(BasicRepo):
     _gender_repo: GenderRepo = None
     _religion_repo: ReligionRepo = None
     _role_repo: RoleRepo = None
+    _preference_repo: PreferenceRepo = None
 
 
     @property
@@ -131,6 +135,12 @@ class Repo(BasicRepo):
         if not self._role_repo:
             self._role_repo = RoleRepo(self.session)
         return self._role_repo
+
+    @property
+    def preference_repo(self) -> PreferenceRepo:
+        if not self._preference_repo:
+            self._preference_repo = PreferenceRepo(self.session)
+        return self._preference_repo
 
 
 
