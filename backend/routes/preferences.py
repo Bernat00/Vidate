@@ -31,7 +31,3 @@ router = APIRouter(prefix='/preferences', tags=['preferences'])
 async def get_preferences(user: get_and_auth_current_user, repo: repoDep):
     preferences =  repo.preference_repo.get_by_id(user.id)
     return preferences
-
-
-
-
