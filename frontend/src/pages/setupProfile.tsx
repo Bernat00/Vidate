@@ -17,8 +17,12 @@ import { Select } from 'flowbite-react';
 import { commonInputClasses } from '../components/form/formStyles';
 
 type CombinedOnboardingForm = SetupProfileForm & {
-  wants_children: string;
-  is_smoker: string;
+  // User's own attributes (Profile)
+  self_wants_children: string; // "true" | "false" | ""
+  self_is_smoker: string; // "true" | "false" | "" (required)
+  // Preferences for potential matches (Preferences)
+  pref_wants_children: string; // "true" | "false" | ""
+  pref_is_smoker: string; // "true" | "false" | ""
   preferred_gender_ids: string[];
   preferred_language_ids: string[];
   preferred_religion_ids: string[];
@@ -32,8 +36,10 @@ const emptyForm: CombinedOnboardingForm = {
   gender_id: '',
   language_id: '',
   religion_id: '',
-  wants_children: '',
-  is_smoker: '',
+  self_wants_children: '',
+  self_is_smoker: '',
+  pref_wants_children: '',
+  pref_is_smoker: '',
   preferred_gender_ids: [],
   preferred_language_ids: [],
   preferred_religion_ids: [],
@@ -73,7 +79,7 @@ export default function SetupProfile() {
         setLanguages(l.data ?? []);
         setReligions(r.data ?? []);
 
-        const my = myRes.data;
+        const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null }) | null;
         if (my) {
           setValue('first_name', my.first_name ?? '');
           setValue('middle_name', my.middle_name ?? '');
@@ -82,12 +88,15 @@ export default function SetupProfile() {
           setValue('gender_id', my.gender_id != null ? String(my.gender_id) : '');
           setValue('language_id', my.language_id != null ? String(my.language_id) : '');
           setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
+          // Self attributes
+          setValue('self_is_smoker', my.is_smoker != null ? String(my.is_smoker) : '');
+          setValue('self_wants_children', my.wants_children != null ? String(my.wants_children) : '');
         }
 
         const pref = prefRes.data;
         if (pref) {
-          setValue('wants_children', pref.wants_children != null ? String(pref.wants_children) : '');
-          setValue('is_smoker', pref.is_smoker != null ? String(pref.is_smoker) : '');
+          setValue('pref_wants_children', pref.wants_children != null ? String(pref.wants_children) : '');
+          setValue('pref_is_smoker', pref.is_smoker != null ? String(pref.is_smoker) : '');
           setValue('preferred_gender_ids', pref.genders?.map(g => String(g.id)) ?? []);
           setValue('preferred_language_ids', pref.languages?.map(l => String(l.id)) ?? []);
           setValue('preferred_religion_ids', pref.religions?.map(r => String(r.id)) ?? []);
@@ -139,20 +148,15 @@ export default function SetupProfile() {
         gender_id: Number(data.gender_id),
         language_id: Number(data.language_id),
         religion_id: Number(data.religion_id),
-        // Include smoker/children flags here too because backend ProfileCreate requires them
-        // (extra fields are casted for TS to match SetupProfilePayload)
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        is_smoker: data.is_smoker === '' ? false : data.is_smoker === 'true',
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        wants_children: data.wants_children === '' ? null : data.wants_children === 'true',
-      } as unknown as SetupProfilePayload;
+        // Backend ProfileCreate: is_smoker required boolean, wants_children optional
+        is_smoker: data.self_is_smoker === '' ? false : data.self_is_smoker === 'true',
+        wants_children: data.self_wants_children === '' ? null : data.self_wants_children === 'true',
+      };
 
       // Save preferences data
       const preferencesPayload: SetupPreferencesPayload = {
-        wants_children: data.wants_children === '' ? null : data.wants_children === 'true',
-        is_smoker: data.is_smoker === '' ? null : data.is_smoker === 'true',
+        wants_children: data.pref_wants_children === '' ? null : data.pref_wants_children === 'true',
+        is_smoker: data.pref_is_smoker === '' ? null : data.pref_is_smoker === 'true',
         gender_ids: data.preferred_gender_ids.map(Number),
         language_ids: data.preferred_language_ids.map(Number),
         religion_ids: data.preferred_religion_ids.map(Number),
@@ -200,14 +204,54 @@ export default function SetupProfile() {
             validateAge={validateAge}
           />
 
-          {/* Preferences */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap mt-app-gap">
-            <FormField id="wants_children" label="Do you want children?" error={errors.wants_children?.message}>
+          {/* Personal attributes (self) */}
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-textAccent mb-3">About you</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
+            <FormField id="self_is_smoker" label="Are you a smoker?" error={errors.self_is_smoker?.message}>
               <Select
-                id="wants_children"
-                {...register('wants_children')}
+                id="self_is_smoker"
+                {...register('self_is_smoker', {
+                  required: 'Please select an option',
+                })}
                 className={commonInputClasses}
-                color={errors.wants_children ? 'failure' : undefined}
+                color={errors.self_is_smoker ? 'failure' : undefined}
+              >
+                <option value="" disabled>Select one</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </Select>
+            </FormField>
+
+            <FormField id="self_wants_children" label="Do you want children?" error={errors.self_wants_children?.message}>
+              <Select
+                id="self_wants_children"
+                {...register('self_wants_children')}
+                className={commonInputClasses}
+                color={errors.self_wants_children ? 'failure' : undefined}
+              >
+                <option value="">Prefer not to say</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </Select>
+            </FormField>
+          </div>
+
+          {/* Preferences */}
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-textAccent mb-3">Preferences</h2>
+            <p className="text-textSecondary text-sm mb-4">These are your preferences for potential matches. You can leave any of these as “Prefer not to say”.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
+            <FormField id="pref_wants_children" label="Should they want children?" error={errors.pref_wants_children?.message}>
+              <Select
+                id="pref_wants_children"
+                {...register('pref_wants_children')}
+                className={commonInputClasses}
+                color={errors.pref_wants_children ? 'failure' : undefined}
               >
                 <option value="">Prefer not to say</option>
                 <option value="true">Yes</option>
@@ -215,12 +259,12 @@ export default function SetupProfile() {
               </Select>
             </FormField>
 
-            <FormField id="is_smoker" label="Do you smoke?" error={errors.is_smoker?.message}>
+            <FormField id="pref_is_smoker" label="Should they be a smoker?" error={errors.pref_is_smoker?.message}>
               <Select
-                id="is_smoker"
-                {...register('is_smoker')}
+                id="pref_is_smoker"
+                {...register('pref_is_smoker')}
                 className={commonInputClasses}
-                color={errors.is_smoker ? 'failure' : undefined}
+                color={errors.pref_is_smoker ? 'failure' : undefined}
               >
                 <option value="">Prefer not to say</option>
                 <option value="true">Yes</option>

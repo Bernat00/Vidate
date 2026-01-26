@@ -45,6 +45,9 @@ export interface SetupProfilePayload {
   gender_id: number | null;
   language_id: number | null;
   religion_id: number | null;
+  // Updated to match backend ProfileCreate schema
+  is_smoker: boolean;
+  wants_children: boolean | null;
 }
 
 export interface PreferenceMine {
