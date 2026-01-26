@@ -35,6 +35,9 @@ router.include_router(user_router, tags=['user'])
 from .profile import router as profile_router
 router.include_router(profile_router, tags=['profile'])
 
+from .preferences import router as preferences_router
+router.include_router(preferences_router, tags=['preferences'])
+
 
 
 
