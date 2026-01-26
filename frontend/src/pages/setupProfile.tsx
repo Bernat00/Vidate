@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
 import api from '../api.ts';
 import { useToast } from '../context/toastContext.tsx';
 import { useAuth } from '../context/authContext.tsx';
@@ -10,8 +10,6 @@ import GradientPage from '../components/layout/GradientPage';
 import PrimaryButton from '../components/form/PrimaryButton';
 import CenteredLoader from '../components/layout/CenteredLoader';
 import Section from '../components/layout/Section';
-
-type FieldChangeEvent = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 
 const emptyForm: SetupProfileForm = {
   first_name: '',
@@ -27,14 +25,14 @@ export default function SetupProfile() {
   const { showToast } = useToast();
   const { refresh } = useAuth() || {};
 
-  const [form, setForm] = useState<SetupProfileForm>(emptyForm);
+  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<SetupProfileForm>({
+    defaultValues: emptyForm
+  });
 
   const [genders, setGenders] = useState<ProfileOption[]>([]);
   const [languages, setLanguages] = useState<ProfileOption[]>([]);
   const [religions, setReligions] = useState<ProfileOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof SetupProfileForm, string>>>({});
 
   useEffect(() => {
     (async () => {
@@ -52,16 +50,13 @@ export default function SetupProfile() {
 
         const my = myRes.data;
         if (my) {
-          setForm((prev) => ({
-            ...prev,
-            first_name: my.first_name ?? '',
-            middle_name: my.middle_name ?? '',
-            last_name: my.last_name ?? '',
-            birth_date: my.birth_date ? my.birth_date.slice(0, 10) : '',
-            gender_id: my.gender_id != null ? String(my.gender_id) : '',
-            language_id: my.language_id != null ? String(my.language_id) : '',
-            religion_id: my.religion_id != null ? String(my.religion_id) : '',
-          }));
+          setValue('first_name', my.first_name ?? '');
+          setValue('middle_name', my.middle_name ?? '');
+          setValue('last_name', my.last_name ?? '');
+          setValue('birth_date', my.birth_date ? my.birth_date.slice(0, 10) : '');
+          setValue('gender_id', my.gender_id != null ? String(my.gender_id) : '');
+          setValue('language_id', my.language_id != null ? String(my.language_id) : '');
+          setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
         }
       } finally {
         setLoading(false);
@@ -69,72 +64,38 @@ export default function SetupProfile() {
     })();
   }, []);
 
-  const update =
-    <K extends keyof SetupProfileForm>(k: K) =>
-    (e: FieldChangeEvent) => {
-      setForm((f) => ({ ...f, [k]: e.target.value }));
-    };
-
-  const toNumberOrNull = (v: string): number | null => {
-    if (!v) return null;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
+  const validateAge = (dateString: string): true | string => {
+    const d = new Date(dateString);
+    const isValid = !isNaN(d.getTime());
+    if (!isValid) return 'Provide a valid date';
+    
+    const today = new Date();
+    if (d > today) return 'Birth date cannot be in the future';
+    
+    // Age must be at least 18
+    const birth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    const now = new Date();
+    const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    let age = todayUtc.getUTCFullYear() - birth.getUTCFullYear();
+    const m = todayUtc.getUTCMonth() - birth.getUTCMonth();
+    if (m < 0 || (m === 0 && todayUtc.getUTCDate() < birth.getUTCDate())) {
+      age--;
+    }
+    if (age < 18) return 'You must be at least 18 years old';
+    
+    return true;
   };
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    // Validate form before submit
-    const newErrors: Partial<Record<keyof SetupProfileForm, string>> = {};
-
-    const isBlank = (s: string) => !s || s.trim().length === 0;
-
-    if (isBlank(form.first_name)) newErrors.first_name = 'First name is required';
-    // Middle name is optional
-    if (isBlank(form.last_name)) newErrors.last_name = 'Last name is required';
-
-    if (isBlank(form.birth_date)) {
-      newErrors.birth_date = 'Birth date is required';
-    } else {
-      const d = new Date(form.birth_date);
-      const isValid = !isNaN(d.getTime());
-      const today = new Date();
-      if (!isValid) newErrors.birth_date = 'Provide a valid date';
-      else if (d > today) newErrors.birth_date = 'Birth date cannot be in the future';
-      else {
-        // Age must be at least 18
-        const birth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-        const now = new Date();
-        const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-        let age = todayUtc.getUTCFullYear() - birth.getUTCFullYear();
-        const m = todayUtc.getUTCMonth() - birth.getUTCMonth();
-        if (m < 0 || (m === 0 && todayUtc.getUTCDate() < birth.getUTCDate())) {
-          age--;
-        }
-        if (age < 18) newErrors.birth_date = 'You must be at least 18 years old';
-      }
-    }
-
-    if (!toNumberOrNull(form.gender_id)) newErrors.gender_id = 'Gender is required';
-    if (!toNumberOrNull(form.language_id)) newErrors.language_id = 'Language is required';
-    if (!toNumberOrNull(form.religion_id)) newErrors.religion_id = 'Religion is required';
-
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) {
-      showToast('Please fix the highlighted errors.', 'warning');
-      return;
-    }
-
-    setSaving(true);
+  const onSubmit = handleSubmit(async (data) => {
     try {
       const payload: SetupProfilePayload = {
-        // Backend accepts optional middle_name
-        first_name: form.first_name.trim(),
-        middle_name: form.middle_name.trim() || null,
-        last_name: form.last_name.trim(),
-        birth_date: new Date(form.birth_date).toISOString(),
-        gender_id: Number(form.gender_id),
-        language_id: Number(form.language_id),
-        religion_id: Number(form.religion_id),
+        first_name: data.first_name.trim(),
+        middle_name: data.middle_name.trim() || null,
+        last_name: data.last_name.trim(),
+        birth_date: new Date(data.birth_date).toISOString(),
+        gender_id: Number(data.gender_id),
+        language_id: Number(data.language_id),
+        religion_id: Number(data.religion_id),
       } as unknown as SetupProfilePayload;
 
       await api.put('/profile/mine', payload);
@@ -142,10 +103,8 @@ export default function SetupProfile() {
       showToast('Profile saved successfully!', 'success');
     } catch {
       showToast('Failed to save profile. Please try again.', 'error');
-    } finally {
-      setSaving(false);
     }
-  };
+  });
 
   if (loading) {
     return <CenteredLoader />;
@@ -156,11 +115,11 @@ export default function SetupProfile() {
       <Section maxWidth="2xl">
         <form onSubmit={onSubmit} className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
           <h1 className="text-2xl font-bold text-textAccent mb-4">Complete your profile</h1>
-          <NameFields form={form} update={update} errors={errors} />
-          <DemographicFields form={form} update={update} genders={genders} languages={languages} religions={religions} errors={errors} />
+          <NameFields register={register} errors={errors} />
+          <DemographicFields register={register} errors={errors} genders={genders} languages={languages} religions={religions} validateAge={validateAge} />
 
-          <PrimaryButton type="submit" disabled={saving} className="mt-app-gap">
-            {saving ? 'Saving...' : 'Save and continue'}
+          <PrimaryButton type="submit" disabled={isSubmitting} className="mt-app-gap">
+            {isSubmitting ? 'Saving...' : 'Save and continue'}
           </PrimaryButton>
         </form>
       </Section>

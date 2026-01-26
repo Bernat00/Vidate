@@ -1,39 +1,92 @@
-import DateField from '../DateField.tsx';
-import SelectField from '../SelectField.tsx';
-import type { ChangeEvent } from 'react';
+import FormField from '../form/FormField';
+import { TextInput, Select } from 'flowbite-react';
+import { commonInputClasses } from '../form/formStyles';
+import type { UseFormRegister, FieldErrors } from 'react-hook-form';
 import type { ProfileOption, SetupProfileForm } from '../../types/domain.ts';
 
-type FieldChangeEvent = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
-
-type SelectChangeEvent = ChangeEvent<HTMLSelectElement>;
-
-type UpdateFn = <K extends keyof SetupProfileForm>(k: K) => (e: FieldChangeEvent) => void;
-
-const asSelectHandler = (fn: (e: FieldChangeEvent) => void) => (e: SelectChangeEvent) => {
-  fn(e as unknown as FieldChangeEvent);
-};
-
 export default function DemographicFields({
-  form,
-  update,
+  register,
+  errors,
   genders,
   languages,
   religions,
-  errors,
+  validateAge,
 }: {
-  form: SetupProfileForm;
-  update: UpdateFn;
+  register: UseFormRegister<SetupProfileForm>;
+  errors: FieldErrors<SetupProfileForm>;
   genders: ProfileOption[];
   languages: ProfileOption[];
   religions: ProfileOption[];
-  errors?: Partial<Record<keyof SetupProfileForm, string>>;
+  validateAge: (dateString: string) => true | string;
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap mt-app-gap">
-      <DateField id="birth_date" label="Birth date" value={form.birth_date} onChange={update('birth_date')} error={errors?.birth_date} />
-      <SelectField id="gender_id" label="Gender" value={form.gender_id} onChange={asSelectHandler(update('gender_id'))} options={genders} error={errors?.gender_id} />
-      <SelectField id="language_id" label="Language" value={form.language_id} onChange={asSelectHandler(update('language_id'))} options={languages} error={errors?.language_id} />
-      <SelectField id="religion_id" label="Religion" value={form.religion_id} onChange={asSelectHandler(update('religion_id'))} options={religions} error={errors?.religion_id} />
+      <FormField id="birth_date" label="Birth date" error={errors.birth_date?.message}>
+        <TextInput
+          id="birth_date"
+          type="date"
+          {...register('birth_date', {
+            required: 'Birth date is required',
+            validate: validateAge
+          })}
+          className={commonInputClasses}
+          color={errors.birth_date ? 'failure' : undefined}
+        />
+      </FormField>
+      <FormField id="gender_id" label="Gender" error={errors.gender_id?.message}>
+        <Select
+          id="gender_id"
+          {...register('gender_id', {
+            required: 'Gender is required',
+            validate: (val) => (val && val !== '') || 'Gender is required'
+          })}
+          className={commonInputClasses}
+          color={errors.gender_id ? 'failure' : undefined}
+        >
+          <option value="" disabled>Select one</option>
+          {genders.map(o => (
+            <option key={o.id} value={String(o.id)}>
+              {o.name}
+            </option>
+          ))}
+        </Select>
+      </FormField>
+      <FormField id="language_id" label="Language" error={errors.language_id?.message}>
+        <Select
+          id="language_id"
+          {...register('language_id', {
+            required: 'Language is required',
+            validate: (val) => (val && val !== '') || 'Language is required'
+          })}
+          className={commonInputClasses}
+          color={errors.language_id ? 'failure' : undefined}
+        >
+          <option value="" disabled>Select one</option>
+          {languages.map(o => (
+            <option key={o.id} value={String(o.id)}>
+              {o.name}
+            </option>
+          ))}
+        </Select>
+      </FormField>
+      <FormField id="religion_id" label="Religion" error={errors.religion_id?.message}>
+        <Select
+          id="religion_id"
+          {...register('religion_id', {
+            required: 'Religion is required',
+            validate: (val) => (val && val !== '') || 'Religion is required'
+          })}
+          className={commonInputClasses}
+          color={errors.religion_id ? 'failure' : undefined}
+        >
+          <option value="" disabled>Select one</option>
+          {religions.map(o => (
+            <option key={o.id} value={String(o.id)}>
+              {o.name}
+            </option>
+          ))}
+        </Select>
+      </FormField>
     </div>
   );
 }
