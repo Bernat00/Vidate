@@ -8,7 +8,6 @@ import MyMatches from "./pages/myMatches.tsx";
 import { ToastProvider } from './context/toastContext';
 
 import SetupProfile from "./pages/setupProfile.tsx";
-import SetupPreferences from "./pages/setupPreferences.tsx";
 import { AuthProvider } from './context/authContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import PublicOnlyRoute from './components/routing/PublicOnlyRoute';
@@ -37,11 +36,6 @@ function App(): ReactElement {
                     <Route path="/setup-profile" element={
                       <ProtectedRoute>
                         <SetupProfile />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/setup-preferences" element={
-                      <ProtectedRoute>
-                        <SetupPreferences />
                       </ProtectedRoute>
                     } />
                     <Route path="/my-matches" element={

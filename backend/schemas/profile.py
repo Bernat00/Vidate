@@ -13,6 +13,8 @@ class ProfileCreate(BaseModel):
     gender_id: int
     language_id: int
     religion_id: int
+    is_smoker: bool
+    wants_children: Optional[bool] = None
 
     # Ensure users are at least 18 years old
     @field_validator('birth_date')

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import String, UniqueConstraint
 from sqlalchemy.orm import Relationship
 from sqlmodel import Field, SQLModel
@@ -19,6 +21,9 @@ class Profile(SQLModel, table=True):
     gender_id: int = Field(foreign_key="genders.id", nullable=False)
     language_id: int = Field(foreign_key="languages.id", nullable=False)
     religion_id: int = Field(foreign_key="religions.id")
+    is_smoker: bool = Field(default=False)
+    wants_children: Optional[bool] = Field(default=None)
+
 
 
 
