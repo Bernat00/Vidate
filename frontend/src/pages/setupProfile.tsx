@@ -1,3 +1,5 @@
+// todo age range, fill existing stuff
+
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { UseFormRegister, FieldErrors } from 'react-hook-form';
@@ -45,7 +47,11 @@ const emptyForm: CombinedOnboardingForm = {
   preferred_religion_ids: [],
 };
 
-export default function SetupProfile() {
+interface SetupProfileProps {
+    isNewUser: boolean;
+}
+
+export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
   const { showToast } = useToast();
   const { refresh } = useAuth() || {};
   const navigate = useNavigate();
@@ -187,7 +193,7 @@ export default function SetupProfile() {
       <Section maxWidth="2xl">
         <form onSubmit={handleSubmit(onSubmitProfile)} className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-textAccent">Complete your profile</h1>
+            <h1 className="text-2xl font-bold text-textAccent">{isNewUser ? "Complete" : "Update"} your profile</h1>
           </div>
 
           {/* Personal Information */}
