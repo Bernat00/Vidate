@@ -4,6 +4,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 from backend.config import Config
 from backend.persistence.model.role import Role
+from backend.persistence.model.gender import Gender
+from backend.persistence.model.religion import Religion
+from backend.persistence.model.language import Language
 
 engine = create_async_engine(
     str(Config.SQL_ALCHEMY_DATABASE_URL),
@@ -32,9 +35,45 @@ async def create_db_and_tables():
     user = Role(name='user')
     admin = Role(name='admin')
 
+    # Create default genders
+    male = Gender(name='Male')
+    female = Gender(name='Female')
+
+    # Create default religions
+    christianity = Religion(name='Christianity')
+    islam = Religion(name='Islam')
+    hinduism = Religion(name='Hinduism')
+    buddhism = Religion(name='Buddhism')
+    judaism = Religion(name='Judaism')
+    atheism = Religion(name='Atheism')
+
+    # Create default languages
+    english = Language(name='English')
+    spanish = Language(name='Spanish')
+    french = Language(name='French')
+    german = Language(name='German')
+    chinese = Language(name='Chinese')
+    arabic = Language(name='Arabic')
+    hindi = Language(name='Hindi')
+
     async with AsyncSession(engine) as session:
         session.add(admin)
         session.add(user)
+        session.add(male)
+        session.add(female)
+        session.add(christianity)
+        session.add(islam)
+        session.add(hinduism)
+        session.add(buddhism)
+        session.add(judaism)
+        session.add(atheism)
+        session.add(english)
+        session.add(spanish)
+        session.add(french)
+        session.add(german)
+        session.add(chinese)
+        session.add(arabic)
+        session.add(hindi)
         await session.commit()
 
 async def reset_db():
