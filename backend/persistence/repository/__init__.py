@@ -1,9 +1,10 @@
 from typing import Any, Generic, List, Optional, Sequence, Type, TypeVar, Coroutine
 
-from sqlalchemy import Row, RowMapping
+from sqlalchemy import Row, RowMapping, inspect
 from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.interfaces import ORMOption
+from sqlalchemy.orm.util import identity_key
 
 from .. import engine
 
@@ -55,6 +56,24 @@ class BaseRepo(Generic[T], BasicRepo):
         """
 
         return await self.session.get(self.model, id, options=options)
+
+
+    async def get_by_id_list(self, id_list: list[Any], options: Sequence[ORMOption] = None) -> List[T]:
+        """
+            Retrieves multiple entites by IDs.
+            WARNING this only works with non-composite primary keys!!!
+            :param id_list: The primary keys.
+            :param options: SQLAlchemy loader options (e.g., selectinload, joinedload)
+        """
+
+        pk = inspect(self.model).primary_key[0]
+
+        stmt = select(self.model).where(pk.in_(id_list))
+
+
+        result = await self.session.scalars(stmt)
+        return result.all()
+
 
 
     async def get_all(self, options: Sequence[ORMOption] = None) -> Sequence[Row[Any] | RowMapping | Any]:
