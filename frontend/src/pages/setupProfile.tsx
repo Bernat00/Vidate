@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import api from '../api.ts';
 import { useToast } from '../context/toastContext.tsx';
 import { useAuth } from '../context/authContext.tsx';
@@ -24,6 +25,7 @@ const emptyForm: SetupProfileForm = {
 export default function SetupProfile() {
   const { showToast } = useToast();
   const { refresh } = useAuth() || {};
+  const navigate = useNavigate();
 
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<SetupProfileForm>({
     defaultValues: emptyForm
@@ -101,6 +103,7 @@ export default function SetupProfile() {
       await api.put('/profile/mine', payload);
       if (refresh) await refresh();
       showToast('Profile saved successfully!', 'success');
+      navigate('/setup-preferences');
     } catch {
       showToast('Failed to save profile. Please try again.', 'error');
     }

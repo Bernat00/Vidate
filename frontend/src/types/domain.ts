@@ -47,6 +47,31 @@ export interface SetupProfilePayload {
   religion_id: number | null;
 }
 
+export interface PreferenceMine {
+  user_id: string;
+  wants_children?: boolean | null;
+  is_smoker?: boolean | null;
+  genders?: ProfileOption[];
+  languages?: ProfileOption[];
+  religions?: ProfileOption[];
+}
+
+export interface SetupPreferencesForm {
+  wants_children: string; // "true", "false", or ""
+  is_smoker: string; // "true", "false", or ""
+  gender_ids: string[]; // keep as string[] for multi-select
+  language_ids: string[];
+  religion_ids: string[];
+}
+
+export interface SetupPreferencesPayload {
+  wants_children: boolean | null;
+  is_smoker: boolean | null;
+  gender_ids: number[];
+  language_ids: number[];
+  religion_ids: number[];
+}
+
 export interface ChatMessage {
   id: number | string;
   sender: string;
