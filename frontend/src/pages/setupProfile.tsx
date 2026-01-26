@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import api from '../api.ts';
 import { useToast } from '../context/toastContext.tsx';
@@ -43,7 +44,7 @@ export default function SetupProfile() {
   const { refresh } = useAuth() || {};
   const navigate = useNavigate();
 
-  const { register, handleSubmit, setValue, watch, trigger, formState: { errors, isSubmitting } } = useForm<CombinedOnboardingForm>({
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<CombinedOnboardingForm>({
     defaultValues: emptyForm
   });
 
@@ -127,8 +128,6 @@ export default function SetupProfile() {
     }
   };
 
-  // No stage navigation
-
   const onSubmitProfile = async (data: CombinedOnboardingForm) => {
     try {
       // Save profile data
@@ -140,6 +139,14 @@ export default function SetupProfile() {
         gender_id: Number(data.gender_id),
         language_id: Number(data.language_id),
         religion_id: Number(data.religion_id),
+        // Include smoker/children flags here too because backend ProfileCreate requires them
+        // (extra fields are casted for TS to match SetupProfilePayload)
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        is_smoker: data.is_smoker === '' ? false : data.is_smoker === 'true',
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        wants_children: data.wants_children === '' ? null : data.wants_children === 'true',
       } as unknown as SetupProfilePayload;
 
       // Save preferences data
@@ -165,9 +172,6 @@ export default function SetupProfile() {
     }
   };
 
-  // Standard submit via form onSubmit
-  const onCompleteOnboarding = () => handleSubmit(onSubmitProfile)();
-
   // No special key handling needed in single-page flow
 
   if (loading) {
@@ -183,8 +187,18 @@ export default function SetupProfile() {
           </div>
 
           {/* Personal Information */}
-          <NameFields register={register} errors={errors} />
-          <DemographicFields register={register} errors={errors} genders={genders} languages={languages} religions={religions} validateAge={validateAge} />
+          <NameFields
+            register={register as unknown as UseFormRegister<SetupProfileForm>}
+            errors={errors as unknown as FieldErrors<SetupProfileForm>}
+          />
+          <DemographicFields
+            register={register as unknown as UseFormRegister<SetupProfileForm>}
+            errors={errors as unknown as FieldErrors<SetupProfileForm>}
+            genders={genders}
+            languages={languages}
+            religions={religions}
+            validateAge={validateAge}
+          />
 
           {/* Preferences */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap mt-app-gap">
@@ -280,7 +294,7 @@ export default function SetupProfile() {
 
           <div className="flex gap-4 mt-app-gap">
             <PrimaryButton type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? 'Saving...' : 'Complete onboarding'}
+              {isSubmitting ? 'Saving...' : 'Save'}
             </PrimaryButton>
           </div>
         </form>
