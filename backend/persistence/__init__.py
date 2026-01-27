@@ -8,6 +8,16 @@ from backend.persistence.model.gender import Gender
 from backend.persistence.model.religion import Religion
 from backend.persistence.model.language import Language
 
+# Import ALL models so SQLAlchemy knows about them
+from backend.persistence.model.user import User
+from backend.persistence.model.profile import Profile
+from backend.persistence.model.match import Match
+from backend.persistence.model.preferences.preferences import Preference
+from backend.persistence.model.preferences.associacions import PreferenceGenderLink, PreferenceLanguageLink, PreferenceReligionLink
+from backend.persistence.model.chat_event import ChatEvent
+from backend.persistence.model.message import Message
+from backend.persistence.model.call import Call
+
 engine = create_async_engine(
     str(Config.SQL_ALCHEMY_DATABASE_URL),
     echo=True,

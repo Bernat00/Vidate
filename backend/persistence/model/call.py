@@ -1,5 +1,5 @@
 from sqlmodel import Field, SQLModel
-from datetime import datetime, timezone
+from datetime import datetime
 
 from backend.persistence.model.chat_event import ChatEvent
 
