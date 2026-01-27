@@ -13,6 +13,7 @@ import ProtectedRoute from './components/routing/ProtectedRoute';
 import PublicOnlyRoute from './components/routing/PublicOnlyRoute';
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import Home from './pages/home';
+import Profile from './pages/profile';
 
 function App(): ReactElement {
   return (
@@ -44,6 +45,7 @@ function App(): ReactElement {
                       <Route path="/home" element={<Home />} />
                       <Route path="/setup-profile" element={<SetupProfile />} />
                       <Route path="/my-matches" element={<MyMatches />} />
+                      <Route path="/profile" element={<Profile />} />
                     </Route>
                 </Routes>
             </AuthProvider>

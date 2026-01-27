@@ -9,7 +9,7 @@ export default function Navbar() {
             >
                 <NavButton to="/home" icon={Video} label="Home" />
                 <NavButton to="/my-matches" icon={MessageSquare} label="My Matches" />
-                <NavButton to="/setup-profile" icon={User} label="Profile" />
+                <NavButton to="/profile" icon={User} label="Profile" />
             </div>
         </div>
     )

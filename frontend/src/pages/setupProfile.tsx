@@ -184,7 +184,10 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
 
       if (refresh) await refresh();
       showToast('Profile and preferences saved successfully!', 'success');
-      navigate('/my-matches');
+      // Only redirect new users after initial setup; existing users stay on the profile page
+      if (isNewUser) {
+        navigate('/home');
+      }
     } catch {
       showToast('Failed to save profile. Please try again.', 'error');
     }
