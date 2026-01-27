@@ -77,47 +77,76 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
   useEffect(() => {
     (async () => {
       try {
-        const [g, l, r, myRes, prefRes] = await Promise.all([
-          api.get<ProfileOption[]>('/profile/genders'),
-          api.get<ProfileOption[]>('/profile/languages'),
-          api.get<ProfileOption[]>('/profile/religions'),
-          api.get<ProfileMine | null>('/profile/mine').catch(() => ({ data: null } as { data: null })),
-          api.get<PreferenceMine | null>('/preferences').catch(() => ({ data: null } as { data: null }))
-        ]);
+        if (isNewUser) {
+          // New users: do not request /preferences; just load option lists and any existing profile if present
+          const [g, l, r, myRes] = await Promise.all([
+            api.get<ProfileOption[]>('/profile/genders'),
+            api.get<ProfileOption[]>('/profile/languages'),
+            api.get<ProfileOption[]>('/profile/religions'),
+            api.get<ProfileMine | null>('/profile/mine').catch(() => ({ data: null } as { data: null })),
+          ]);
 
-        setGenders(g.data ?? []);
-        setLanguages(l.data ?? []);
-        setReligions(r.data ?? []);
+          setGenders(g.data ?? []);
+          setLanguages(l.data ?? []);
+          setReligions(r.data ?? []);
 
-        const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null }) | null;
-        if (my) {
-          setValue('first_name', my.first_name ?? '');
-          setValue('middle_name', my.middle_name ?? '');
-          setValue('last_name', my.last_name ?? '');
-          setValue('birth_date', my.birth_date ? my.birth_date.slice(0, 10) : '');
-          setValue('gender_id', my.gender_id != null ? String(my.gender_id) : '');
-          setValue('language_id', my.language_id != null ? String(my.language_id) : '');
-          setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
-          // Self attributes
-          setValue('self_is_smoker', my.is_smoker != null ? String(my.is_smoker) : '');
-          setValue('self_wants_children', my.wants_children != null ? String(my.wants_children) : '');
-        }
+          const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null }) | null;
+          if (my) {
+            setValue('first_name', my.first_name ?? '');
+            setValue('middle_name', my.middle_name ?? '');
+            setValue('last_name', my.last_name ?? '');
+            setValue('birth_date', my.birth_date ? my.birth_date.slice(0, 10) : '');
+            setValue('gender_id', my.gender_id != null ? String(my.gender_id) : '');
+            setValue('language_id', my.language_id != null ? String(my.language_id) : '');
+            setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
+            // Self attributes
+            setValue('self_is_smoker', my.is_smoker != null ? String(my.is_smoker) : '');
+            setValue('self_wants_children', my.wants_children != null ? String(my.wants_children) : '');
+          }
+        } else {
+          // Existing users: load preferences too
+          const [g, l, r, myRes, prefRes] = await Promise.all([
+            api.get<ProfileOption[]>('/profile/genders'),
+            api.get<ProfileOption[]>('/profile/languages'),
+            api.get<ProfileOption[]>('/profile/religions'),
+            api.get<ProfileMine | null>('/profile/mine').catch(() => ({ data: null } as { data: null })),
+            api.get<PreferenceMine | null>('/preferences').catch(() => ({ data: null } as { data: null }))
+          ]);
 
-        const pref = prefRes.data;
-        if (pref) {
-          setValue('pref_age_min', pref.age_min != null ? String(pref.age_min) : '');
-          setValue('pref_age_max', pref.age_max != null ? String(pref.age_max) : '');
-          setValue('pref_wants_children', pref.wants_children != null ? String(pref.wants_children) : '');
-          setValue('pref_is_smoker', pref.is_smoker != null ? String(pref.is_smoker) : '');
-          setValue('preferred_gender_ids', pref.genders?.map(g => String(g.id)) ?? []);
-          setValue('preferred_language_ids', pref.languages?.map(l => String(l.id)) ?? []);
-          setValue('preferred_religion_ids', pref.religions?.map(r => String(r.id)) ?? []);
+          setGenders(g.data ?? []);
+          setLanguages(l.data ?? []);
+          setReligions(r.data ?? []);
+
+          const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null }) | null;
+          if (my) {
+            setValue('first_name', my.first_name ?? '');
+            setValue('middle_name', my.middle_name ?? '');
+            setValue('last_name', my.last_name ?? '');
+            setValue('birth_date', my.birth_date ? my.birth_date.slice(0, 10) : '');
+            setValue('gender_id', my.gender_id != null ? String(my.gender_id) : '');
+            setValue('language_id', my.language_id != null ? String(my.language_id) : '');
+            setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
+            // Self attributes
+            setValue('self_is_smoker', my.is_smoker != null ? String(my.is_smoker) : '');
+            setValue('self_wants_children', my.wants_children != null ? String(my.wants_children) : '');
+          }
+
+          const pref = prefRes.data;
+          if (pref) {
+            setValue('pref_age_min', pref.age_min != null ? String(pref.age_min) : '');
+            setValue('pref_age_max', pref.age_max != null ? String(pref.age_max) : '');
+            setValue('pref_wants_children', pref.wants_children != null ? String(pref.wants_children) : '');
+            setValue('pref_is_smoker', pref.is_smoker != null ? String(pref.is_smoker) : '');
+            setValue('preferred_gender_ids', pref.genders?.map(g => String(g.id)) ?? []);
+            setValue('preferred_language_ids', pref.languages?.map(l => String(l.id)) ?? []);
+            setValue('preferred_religion_ids', pref.religions?.map(r => String(r.id)) ?? []);
+          }
         }
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [isNewUser, setValue]);
 
   const validateAge = (dateString: string): true | string => {
     const d = new Date(dateString);

@@ -1,5 +1,6 @@
 import asyncio
 from fastapi import APIRouter
+from fastapi import HTTPException, status
 from . import get_and_auth_current_user, repoDep
 from ..schemas.preference import PreferenceCreate, PreferenceRead
 from ..persistence.model.preferences.preferences import Preference
@@ -11,9 +12,15 @@ router = APIRouter(prefix='/preferences', tags=['preferences'])
 @router.get('/', response_model=PreferenceRead)
 async def get_preferences(user: get_and_auth_current_user, repo: repoDep):
     preferences = await repo.preference_repo.get_by_id(user.id)
-    return PreferenceRead(**preferences.model_dump(),
-                          genders=preferences.genders, religions=preferences.religions,
-                          languages=preferences.languages)
+    if not preferences:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Preferences not found")
+
+    return PreferenceRead(
+        **preferences.model_dump(),
+        genders=preferences.genders,
+        religions=preferences.religions,
+        languages=preferences.languages,
+    )
 
 
 @router.put('/', response_model=PreferenceRead)
