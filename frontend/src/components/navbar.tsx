@@ -7,9 +7,9 @@ export default function Navbar() {
             <div
                 className="grid h-full max-w-lg grid-cols-3 mx-auto font-medium"
             >
-                <NavButton to="/home" icon={Video} label="Home" />
                 <NavButton to="/my-matches" icon={MessageSquare} label="My Matches" />
-                <NavButton to="/profile" icon={User} label="Profile" />
+                <NavButton to="/home" icon={Video} label="Home" />
+                <NavButton to="/profile" icon={User} label="Me" />
             </div>
         </div>
     )

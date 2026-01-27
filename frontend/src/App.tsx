@@ -36,6 +36,14 @@ function App(): ReactElement {
                         <Register />
                       </PublicOnlyRoute>
                     } />
+                    <Route path="/setup-profile" element={
+                        <ProtectedRoute>
+                            <SetupProfile/>
+                        </ProtectedRoute>
+                    }>
+                    </Route>
+
+
                     {/* Protected area with shared navbar layout */}
                     <Route element={
                       <ProtectedRoute>
@@ -43,7 +51,6 @@ function App(): ReactElement {
                       </ProtectedRoute>
                     }>
                       <Route path="/home" element={<Home />} />
-                      <Route path="/setup-profile" element={<SetupProfile />} />
                       <Route path="/my-matches" element={<MyMatches />} />
                       <Route path="/profile" element={<Profile />} />
                     </Route>
