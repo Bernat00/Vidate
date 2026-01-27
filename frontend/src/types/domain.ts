@@ -52,6 +52,8 @@ export interface SetupProfilePayload {
 
 export interface PreferenceMine {
   user_id: string;
+  age_min?: number | null;
+  age_max?: number | null;
   wants_children?: boolean | null;
   is_smoker?: boolean | null;
   genders?: ProfileOption[];
@@ -68,6 +70,8 @@ export interface SetupPreferencesForm {
 }
 
 export interface SetupPreferencesPayload {
+  age_min: number | null;
+  age_max: number | null;
   wants_children: boolean | null;
   is_smoker: boolean | null;
   gender_ids: number[];

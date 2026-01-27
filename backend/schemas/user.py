@@ -28,6 +28,7 @@ class UserEdit(BaseModel):
     password: Optional[
         Annotated[SecretStr, BeforeValidator(validate_password)]
     ] = None
+    old_password: Optional[SecretStr] = None
 
 
 class UserOut(BaseModel):

@@ -122,8 +122,8 @@ async def token(repo: repoDep,
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
+    # todo when to expire and handle expiry in frontend
     access_token = create_access_token(
-        data={"sub": user.id}, expires_delta=timedelta(minutes=10))
+        data={"sub": user.id}, expires_delta=timedelta(minutes=100000000))
 
     return Token(access_token=access_token, token_type="bearer")

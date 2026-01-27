@@ -10,7 +10,7 @@ export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
 
   if (loading) return <CenteredLoader />;
 
-  if (user?.is_onboarded) return <Navigate to="/my-matches" replace />;
+  if (user?.is_onboarded) return <Navigate to="/home" replace />;
   if (user && !user.is_onboarded) return <Navigate to="/setup-profile" replace />;
 
   return <>{children}</>;
