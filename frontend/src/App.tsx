@@ -11,6 +11,8 @@ import SetupProfile from "./pages/setupProfile.tsx";
 import { AuthProvider } from './context/authContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import PublicOnlyRoute from './components/routing/PublicOnlyRoute';
+import ProtectedLayout from './components/layout/ProtectedLayout';
+import Home from './pages/home';
 
 function App(): ReactElement {
   return (
@@ -33,16 +35,16 @@ function App(): ReactElement {
                         <Register />
                       </PublicOnlyRoute>
                     } />
-                    <Route path="/setup-profile" element={
+                    {/* Protected area with shared navbar layout */}
+                    <Route element={
                       <ProtectedRoute>
-                        <SetupProfile />
+                        <ProtectedLayout />
                       </ProtectedRoute>
-                    } />
-                    <Route path="/my-matches" element={
-                      <ProtectedRoute>
-                        <MyMatches />
-                      </ProtectedRoute>
-                    } />
+                    }>
+                      <Route path="/home" element={<Home />} />
+                      <Route path="/setup-profile" element={<SetupProfile />} />
+                      <Route path="/my-matches" element={<MyMatches />} />
+                    </Route>
                 </Routes>
             </AuthProvider>
         </ToastProvider>
