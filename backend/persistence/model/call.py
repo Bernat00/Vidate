@@ -10,7 +10,7 @@ class Call(ChatEvent, table=True):
     __tablename__ = "calls"
 
     __mapper_args__ = {
-        "polymorphic_identity": "call",
+        "polymorphic_identity": "calls",
     }
 
     id: int | None = Field(primary_key=True, foreign_key="chat_events.id", default=None)

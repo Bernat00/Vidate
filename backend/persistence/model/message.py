@@ -9,7 +9,7 @@ class Message(ChatEvent, table=True):
     __tablename__ = "messages"
 
     __mapper_args__ = {
-        "polymorphic_identity": "message",
+        "polymorphic_identity": "messages",
     }
 
     id: int | None = Field(primary_key=True, foreign_key="chat_events.id", default=None)
