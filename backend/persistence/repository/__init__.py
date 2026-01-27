@@ -95,6 +95,7 @@ from .religion import ReligionRepo
 from .language import LanguageRepo
 from .role import RoleRepo
 from .preference import PreferenceRepo
+from .chat_event import ChatEventRepo
 
 
 
@@ -111,6 +112,7 @@ class Repo(BasicRepo):
     _religion_repo: ReligionRepo = None
     _role_repo: RoleRepo = None
     _preference_repo: PreferenceRepo = None
+    _chat_event_repo: ChatEventRepo = None
 
 
     @property
@@ -160,6 +162,12 @@ class Repo(BasicRepo):
         if not self._preference_repo:
             self._preference_repo = PreferenceRepo(self.session)
         return self._preference_repo
+
+    @property
+    def chat_event_repo(self) -> ChatEventRepo:
+        if not self._chat_event_repo:
+            self._chat_event_repo = ChatEventRepo(self.session)
+        return self._chat_event_repo
 
 
 

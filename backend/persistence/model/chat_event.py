@@ -11,6 +11,7 @@ class ChatEvent(SQLModel, table=True):
     }
 
     id: int = Field(primary_key=True)
+    match_id: int = Field(foreign_key='matches.id', nullable=False)
     originator_id: int = Field(foreign_key="users.id", nullable=False)  #mi legyen torlesnel
     recipient_id: int = Field(foreign_key="users.id", nullable=False)
     timestamp: datetime = Field(default_factory=lambda: datetime. now(timezone.utc), nullable=False)
