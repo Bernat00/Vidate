@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import {LogOut} from 'lucide-react';
 import api from '../api.ts';
 import GradientPage from '../components/layout/GradientPage';
 import Section from '../components/layout/Section';
@@ -9,6 +10,8 @@ import FormAlert from '../components/form/FormAlert';
 import SetupProfile from './setupProfile';
 import { useToast } from '../context/toastContext.tsx';
 import { useAuth } from '../context/authContext.tsx';
+import { logout } from '../helpers.ts';
+import { useNavigate } from 'react-router-dom';
 
 type AccountFormValues = {
   email: string;
@@ -20,6 +23,7 @@ type AccountFormValues = {
 export default function ProfilePage() {
   const { showToast } = useToast();
   const { refresh } = useAuth() || {};
+  const navigate = useNavigate();
   const [apiError, setApiError] = useState('');
   const currentEmailRef = useRef<string>('');
 
@@ -69,9 +73,26 @@ export default function ProfilePage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      if (refresh) await refresh();
+    } finally {
+      showToast('Logged out successfully', 'success');
+      navigate('/login', { replace: true });
+    }
+  };
+
   return (
     <GradientPage className="p-app-padding">
       <Section maxWidth="2xl">
+        {/* Top actions */}
+        <div className="w-full mb-4">
+            <PrimaryButton type="button" onClick={handleLogout} className="bg-bgSecondary flex items-center justify-center gap-2">
+                <LogOut className="w-4 h-4"/>
+                Log out
+            </PrimaryButton>
+        </div>
         <div className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6 mb-8">
           <h1 className="text-2xl font-bold text-textAccent mb-4">Account settings</h1>
 
@@ -146,6 +167,7 @@ export default function ProfilePage() {
               {isSubmitting ? 'Saving...' : 'Save changes'}
             </PrimaryButton>
           </form>
+
         </div>
 
         {/* Profile Setup section (edit mode) */}
