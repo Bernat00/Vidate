@@ -1,5 +1,3 @@
-// todo age range, fill existing stuff
-
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { UseFormRegister, FieldErrors } from 'react-hook-form';
@@ -23,6 +21,8 @@ type CombinedOnboardingForm = SetupProfileForm & {
   self_wants_children: string; // "true" | "false" | ""
   self_is_smoker: string; // "true" | "false" | "" (required)
   // Preferences for potential matches (Preferences)
+  pref_age_min: string; // "" or number as string
+  pref_age_max: string; // "" or number as string
   pref_wants_children: string; // "true" | "false" | ""
   pref_is_smoker: string; // "true" | "false" | ""
   preferred_gender_ids: string[];
@@ -40,6 +40,8 @@ const emptyForm: CombinedOnboardingForm = {
   religion_id: '',
   self_wants_children: '',
   self_is_smoker: '',
+  pref_age_min: '',
+  pref_age_max: '',
   pref_wants_children: '',
   pref_is_smoker: '',
   preferred_gender_ids: [],
@@ -63,6 +65,8 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
   const selectedPreferredGenderIds = watch('preferred_gender_ids');
   const selectedPreferredLanguageIds = watch('preferred_language_ids');
   const selectedPreferredReligionIds = watch('preferred_religion_ids');
+  const prefAgeMin = watch('pref_age_min');
+  const prefAgeMax = watch('pref_age_max');
 
   const [genders, setGenders] = useState<ProfileOption[]>([]);
   const [languages, setLanguages] = useState<ProfileOption[]>([]);
@@ -101,6 +105,8 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
 
         const pref = prefRes.data;
         if (pref) {
+          setValue('pref_age_min', pref.age_min != null ? String(pref.age_min) : '');
+          setValue('pref_age_max', pref.age_max != null ? String(pref.age_max) : '');
           setValue('pref_wants_children', pref.wants_children != null ? String(pref.wants_children) : '');
           setValue('pref_is_smoker', pref.is_smoker != null ? String(pref.is_smoker) : '');
           setValue('preferred_gender_ids', pref.genders?.map(g => String(g.id)) ?? []);
@@ -161,6 +167,8 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
 
       // Save preferences data
       const preferencesPayload: SetupPreferencesPayload = {
+        age_min: data.pref_age_min === '' ? null : Number(data.pref_age_min),
+        age_max: data.pref_age_max === '' ? null : Number(data.pref_age_max),
         wants_children: data.pref_wants_children === '' ? null : data.pref_wants_children === 'true',
         is_smoker: data.pref_is_smoker === '' ? null : data.pref_is_smoker === 'true',
         gender_ids: data.preferred_gender_ids.map(Number),
@@ -252,6 +260,50 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
+            <FormField id="pref_age_min" label="Preferred minimum age" error={errors.pref_age_min?.message}>
+              <input
+                id="pref_age_min"
+                type="number"
+                min={18}
+                placeholder="Any"
+                className={commonInputClasses}
+                {...register('pref_age_min', {
+                  validate: (val: string) => {
+                    if (!val) return true;
+                    const num = Number(val);
+                    if (isNaN(num)) return 'Enter a valid number';
+                    if (num < 18) return 'Minimum age cannot be less than 18';
+                    if (prefAgeMax) {
+                      const maxNum = Number(prefAgeMax);
+                      if (!isNaN(maxNum) && num >= maxNum) return 'Min age must be less than max age';
+                    }
+                    return true;
+                  }
+                })}
+              />
+            </FormField>
+
+            <FormField id="pref_age_max" label="Preferred maximum age" error={errors.pref_age_max?.message}>
+              <input
+                id="pref_age_max"
+                type="number"
+                placeholder="Any"
+                className={commonInputClasses}
+                {...register('pref_age_max', {
+                  validate: (val: string) => {
+                    if (!val) return true;
+                    const num = Number(val);
+                    if (isNaN(num)) return 'Enter a valid number';
+                    if (prefAgeMin) {
+                      const minNum = Number(prefAgeMin);
+                      if (!isNaN(minNum) && num <= minNum) return 'Max age must be greater than min age';
+                    }
+                    return true;
+                  }
+                })}
+              />
+            </FormField>
+
             <FormField id="pref_wants_children" label="Should they want children?" error={errors.pref_wants_children?.message}>
               <Select
                 id="pref_wants_children"

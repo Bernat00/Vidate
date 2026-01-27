@@ -25,6 +25,9 @@ async def update_preferences(preference: PreferenceCreate, repo: repoDep, user: 
     if not pref_orm:
         pref_orm = Preference(user_id=uid)
 
+    # Simple assignment; validation (e.g., ranges) can be added at schema/validator level if needed
+    pref_orm.age_min = preference.age_min
+    pref_orm.age_max = preference.age_max
     pref_orm.wants_children = preference.wants_children
     pref_orm.is_smoker = preference.is_smoker
 
