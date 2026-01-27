@@ -10,7 +10,7 @@ class ChatEvent(SQLModel, table=True):
         "polymorphic_on": "type",
     }
 
-    id: int = Field(primary_key=True)
+    id: int | None = Field(primary_key=True, default=None)
     match_id: int = Field(foreign_key='matches.id', nullable=False)
     originator_id: int = Field(foreign_key="users.id", nullable=False)  #mi legyen torlesnel
     recipient_id: int = Field(foreign_key="users.id", nullable=False)

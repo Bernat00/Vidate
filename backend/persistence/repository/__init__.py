@@ -96,6 +96,7 @@ from .language import LanguageRepo
 from .role import RoleRepo
 from .preference import PreferenceRepo
 from .chat_event import ChatEventRepo
+from .message import MessageRepo
 
 
 
@@ -113,6 +114,7 @@ class Repo(BasicRepo):
     _role_repo: RoleRepo = None
     _preference_repo: PreferenceRepo = None
     _chat_event_repo: ChatEventRepo = None
+    _message_repo: MessageRepo = None
 
 
     @property
@@ -168,6 +170,12 @@ class Repo(BasicRepo):
         if not self._chat_event_repo:
             self._chat_event_repo = ChatEventRepo(self.session)
         return self._chat_event_repo
+
+    @property
+    def message_repo(self) -> MessageRepo:
+        if not self._message_repo:
+            self._message_repo = MessageRepo(self.session)
+        return self._message_repo
 
 
 

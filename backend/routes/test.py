@@ -22,7 +22,8 @@ async def test2(current_user: get_and_auth_current_user, repo: repoDep):
     message.originator_id = 0
     message.recipient_id = 0
     message.content = "test"
-    await repo.save(message)
+    message.type = 'message'
+    await repo.message_repo.save(message)
 
     return await repo.chat_event_repo.get_by_match_id(0)
 
