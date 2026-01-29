@@ -288,7 +288,7 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
             {/* Preferences */}
             <div className="mt-8">
               <h2 className="text-xl font-semibold text-textAccent mb-3">Preferences</h2>
-              <p className="text-textSecondary text-sm mb-4">These are your preferences for potential matches. You can leave any of these as “Prefer not to say”.</p>
+              <p className="text-textSecondary text-sm mb-4">These are your preferences for potential matches. You can leave any of these as empty, but we recommend changing them for the best experience.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
