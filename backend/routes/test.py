@@ -17,16 +17,3 @@ async def test(current_user: get_and_auth_current_user):
     return 'success'
 
 
-@router.get('/2')
-async def test2(current_user: get_and_auth_current_user, repo: repoDep):
-    message = Message()
-    message.match_id = 1
-    message.originator_id = 1
-    message.recipient_id = 1
-    message.content = "test"
-    message.type = 'messages'
-    #message.timestamp = datetime.now()
-    await repo.message_repo.save(message)
-
-    return await repo.chat_event_repo.get_by_match_id(0)
-

@@ -1,19 +1,17 @@
+from pydantic import model_validator
 from sqlmodel import Field, SQLModel
-from datetime import datetime
-
-from backend.persistence.model import mapper_registry
-from backend.persistence.model.chat_event import ChatEvent
+from datetime import datetime, timezone
 
 
-@mapper_registry.mapped
-class Call(ChatEvent, table=True):
+
+class Call(SQLModel, table=True):
     __tablename__ = "calls"
 
-    __mapper_args__ = {
-        "polymorphic_identity": "calls",
-    }
-
-    id: int | None = Field(primary_key=True, foreign_key="chat_events.id", default=None)
+    id: int | None = Field(primary_key=True, default=None)
+    match_id: int = Field(foreign_key='matches.id', nullable=False)
+    originator_id: int = Field(foreign_key="users.id", nullable=False)
+    recipient_id: int = Field(foreign_key="users.id", nullable=False)
+    timestamp: datetime | None = Field(default=None, nullable=False)
     end_time: datetime = Field(nullable=True)
 
 
