@@ -7,7 +7,7 @@ from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.orm.util import identity_key
 
 from .. import engine
-from ..model.call import Call
+#from ..model.chat_event import Call
 
 T = TypeVar("T", bound=SQLModel)
 
@@ -96,8 +96,9 @@ from .religion import ReligionRepo
 from .language import LanguageRepo
 from .role import RoleRepo
 from .preference import PreferenceRepo
-from .call import CallRepo
-from .message import MessageRepo
+#from .call import CallRepo
+#from .message import MessageRepo
+from .chat_event import ChatEventRepo
 
 
 
@@ -114,8 +115,9 @@ class Repo(BasicRepo):
     _religion_repo: ReligionRepo = None
     _role_repo: RoleRepo = None
     _preference_repo: PreferenceRepo = None
-    _call_repo: CallRepo = None
-    _message_repo: MessageRepo = None
+    #_call_repo: CallRepo = None
+    #_message_repo: MessageRepo = None
+    _chat_event: ChatEventRepo = None
 
 
     @property
@@ -166,17 +168,23 @@ class Repo(BasicRepo):
             self._preference_repo = PreferenceRepo(self.session)
         return self._preference_repo
 
-    @property
-    def call_repo(self) -> CallRepo:
-        if not self._call_repo:
-            self._call_repo = CallRepo(self.session)
-        return self._call_repo
+    #@property
+    #def call_repo(self) -> CallRepo:
+    #    if not self._call_repo:
+    #        self._call_repo = CallRepo(self.session)
+    #    return self._call_repo
+
+    #@property
+    #def message_repo(self) -> MessageRepo:
+    #    if not self._message_repo:
+    #        self._message_repo = MessageRepo(self.session)
+    #    return self._message_repo
 
     @property
-    def message_repo(self) -> MessageRepo:
-        if not self._message_repo:
-            self._message_repo = MessageRepo(self.session)
-        return self._message_repo
+    def chat_event_repo(self) -> ChatEventRepo:
+        if not self._chat_event:
+            self._chat_event = ChatEventRepo(self.session)
+        return self._chat_event
 
 
 
