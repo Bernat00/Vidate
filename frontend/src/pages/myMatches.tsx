@@ -1,8 +1,11 @@
 import type { ReactElement } from 'react';
+import { useState } from 'react';
 import ChatInput from "../components/ChatInput.tsx";
 import ChatColumn from '../components/layout/ChatColumn';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MessageList from '../components/chat/MessageList';
+import EmptyState from '../components/common/EmptyState';
+import { MessageSquare } from 'lucide-react';
 
 const DUMMY_MESSAGES = [
     {
@@ -25,11 +28,27 @@ const DUMMY_MESSAGES = [
 
 
 export default function MyMatches(): ReactElement {
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
   return (
-    <DashboardLayout title="Vidate">
+    <DashboardLayout
+      title="Vidate"
+      selectedUserId={selectedUserId}
+      onSelectUserId={setSelectedUserId}
+    >
       <ChatColumn>
-        <MessageList messages={DUMMY_MESSAGES} />
-        <ChatInput />
+        {selectedUserId ? (
+          <>
+            <MessageList messages={DUMMY_MESSAGES} />
+            <ChatInput />
+          </>
+        ) : (
+          <EmptyState
+            icon={MessageSquare}
+            title="Select a match to start chatting"
+            description="Choose someone from your matches to view the conversation."
+          />
+        )}
       </ChatColumn>
     </DashboardLayout>
   );

@@ -89,10 +89,20 @@ export interface ChatMessage {
 }
 
 export interface MatchItem {
-  id?: string | number;
-  _id?: string | number;
-  name?: string | null;
-  username?: string | null;
-  profilePicture?: string | null;
-  avatar?: string | null;
+  match_id?: number | string | null;
+  profile?: {
+    user_id?: string | null;
+    first_name?: string | null;
+    middle_name?: string | null;
+    last_name?: string | null;
+    birth_date?: string | null;
+    gender_id?: number | null;
+    language_id?: number | null;
+    religion_id?: number | null;
+    is_smoker?: boolean | null;
+    wants_children?: boolean | null;
+    profilePicture?: string | null;
+    avatar?: string | null;
+  } | null;
+  matched_at?: string | null;
 }

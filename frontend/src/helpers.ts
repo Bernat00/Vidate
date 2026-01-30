@@ -40,10 +40,20 @@ export async function getCurrentUser() {
 }
 
 export function getDisplayName(match: MatchItem): string {
-  return match.name || match.username || 'Match';
+  const profile = match.profile;
+  if (!profile) {
+    return 'Match';
+  }
+
+  const parts = [profile.first_name, profile.middle_name, profile.last_name]
+    .filter((part) => Boolean(part))
+    .map((part) => String(part).trim())
+    .filter((part) => part.length > 0);
+
+  return parts.length > 0 ? parts.join(' ') : 'Match';
 }
 
 export function getAvatarUrl(match: MatchItem): string {
-  return match.profilePicture || match.avatar || 'https://via.placeholder.com/150';
+  return match.profile?.profilePicture || match.profile?.avatar || 'https://via.placeholder.com/150';
 }
 

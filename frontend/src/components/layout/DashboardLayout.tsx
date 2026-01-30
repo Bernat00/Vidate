@@ -10,15 +10,27 @@ import GradientPage from './GradientPage';
 interface DashboardLayoutProps {
   children: ReactNode;
   title?: string;
+  selectedUserId?: string | null;
+  onSelectUserId?: (userId: string | null) => void;
 }
 
-export default function DashboardLayout({ children, title = 'Vidate' }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  children,
+  title = 'Vidate',
+  selectedUserId,
+  onSelectUserId,
+}: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <GradientPage>
       <div className="flex min-h-screen relative">
-        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          selectedUserId={selectedUserId}
+          onSelectUserId={onSelectUserId}
+        />
 
         <SidebarOverlay open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
