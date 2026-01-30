@@ -7,3 +7,4 @@ frontend/.flowbite-react/class-list.json
 __pycache__/
 *.pyc
 *.db
+package-lock.json
