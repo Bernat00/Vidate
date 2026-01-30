@@ -15,7 +15,7 @@ from .config import Config
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    from backend.extensions import create_redis, close_redis
+    from backend.helpers import create_redis, close_redis
     await create_db_and_tables()
     try:
         await create_redis()

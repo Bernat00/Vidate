@@ -2,6 +2,7 @@ import asyncio
 from fastapi import APIRouter
 from fastapi import HTTPException, status
 from . import get_and_auth_current_user, repoDep
+from ..helpers import copy_non_none_fields
 from ..schemas.preference import PreferenceCreate, PreferenceRead
 from ..persistence.model.preferences.preferences import Preference
 
@@ -32,11 +33,7 @@ async def update_preferences(preference: PreferenceCreate, repo: repoDep, user: 
     if not pref_orm:
         pref_orm = Preference(user_id=uid)
 
-    # Simple assignment; validation (e.g., ranges) can be added at schema/validator level if needed
-    pref_orm.age_min = preference.age_min
-    pref_orm.age_max = preference.age_max
-    pref_orm.wants_children = preference.wants_children
-    pref_orm.is_smoker = preference.is_smoker
+    copy_non_none_fields(preference, pref_orm)
 
     pref_orm.genders = await repo.gender_repo.get_by_id_list(preference.gender_ids or [])
     pref_orm.languages = await repo.language_repo.get_by_id_list(preference.language_ids or [])

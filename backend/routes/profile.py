@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
+from backend.helpers import copy_non_none_fields
 from backend.persistence.model.gender import Gender
 from backend.persistence.model.language import Language
 from backend.persistence.model.religion import Religion
@@ -84,16 +85,21 @@ async def update_mine(profile: ProfileCreate, repo: repoDep, user: get_and_auth_
     # Capture the user id early to avoid touching an expired instance after commits
     uid = user.id
 
-    existing = await repo.profile_repo.get_by_id(uid)
+    updated = await repo.profile_repo.get_by_id(uid)
 
-    if existing:
-        data = profile.model_dump()
-        for k, v in data.items():
-            setattr(existing, k, v)
-        await repo.save(existing)
-    else:
-        new_profile = Profile(user_id=uid, **profile.model_dump())
-        await repo.save(new_profile)
+    if updated is None:
+        updated = Profile(user_id=uid, **profile.model_dump())
+
+    copy_non_none_fields(profile, updated)
+
+        #updated = updated.model_copy(update=profile.model_dump(exclude_unset=True)) ez meno (ide pont nem jo)
+
+    updated.languages = await repo.language_repo.get_by_id_list(profile.language_ids or [])
+    #todo lehet a tobbi is lista kene h legyen
+
+
+    await repo.save(updated)
+
 
     # mark onboarding complete
     user.is_onboarded = True

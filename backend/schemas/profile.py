@@ -11,7 +11,7 @@ class ProfileCreate(BaseModel):
     last_name: str
     birth_date: datetime
     gender_id: int
-    language_id: int
+    language_ids: int
     religion_id: int
     is_smoker: bool
     wants_children: Optional[bool] = None

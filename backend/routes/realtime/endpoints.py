@@ -1,7 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 import jwt
-from backend.extensions import get_redis
+from backend.helpers import get_redis
 from ...config import Config
 from backend.persistence import engine
 from backend.persistence.repository import Repo

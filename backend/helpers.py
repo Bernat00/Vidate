@@ -14,3 +14,8 @@ async def close_redis():
 
 def get_redis() -> redis.Redis:
     return r
+
+def copy_non_none_fields(source, target):
+    for field, value in source.model_dump(exclude_none=True).items():
+        if field in target.model_fields:
+            setattr(target, field, value)
