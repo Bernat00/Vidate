@@ -1,12 +1,15 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 import jwt
 from backend.extensions import get_redis
 from ...config import Config
-from backend.routes import get_and_auth_current_user, CurrentUserCheckerDependency, repoDep
+from backend.persistence import engine
+from backend.persistence.repository import Repo
+from backend.routes import get_and_auth_current_user, CurrentUserCheckerDependency
 
 router = APIRouter(prefix='/ws')
 
-async def listen_to_user_channel(ws: WebSocket, user, repo):
+async def listen_to_user_channel(ws: WebSocket, user):
     channel = f"user:{user.id}"
     pubsub = get_redis().pubsub()
     await pubsub.subscribe(channel)
@@ -23,15 +26,17 @@ async def listen_to_user_channel(ws: WebSocket, user, repo):
         await pubsub.aclose()
 
 @router.websocket('/main')
-async def ws_endpoint(ws: WebSocket, token:str, repo: repoDep):
-    current_user = CurrentUserCheckerDependency()
-    user = await current_user(token, repo)
+async def ws_endpoint(ws: WebSocket, token: str):
+    async with AsyncSession(engine) as session:
+        repo = Repo(session)
+        current_user = CurrentUserCheckerDependency()
+        user = await current_user(token, repo)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     await ws.accept()
 
-    await listen_to_user_channel(ws, user, repo)
+    await listen_to_user_channel(ws, user)
     print("asd")
 
 
