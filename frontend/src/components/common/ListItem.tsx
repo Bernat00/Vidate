@@ -38,6 +38,7 @@ export default function ListItem({
       onKeyDown={handleKeyDown}
       className={`flex items-center w-full p-2 rounded-lg transition-colors text-left group
         ${active ? 'bg-bgSecondary text-textAccent' : 'text-textPrimary hover:bg-bgSecondary'}
+        ${onClick ? 'cursor-pointer' : ''}
         ${className}`}
     >
       {avatar && (

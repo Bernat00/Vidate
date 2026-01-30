@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import ChatInput from "../components/ChatInput.tsx";
 import ChatColumn from '../components/layout/ChatColumn';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -29,6 +30,14 @@ const DUMMY_MESSAGES = [
 
 export default function MyMatches(): ReactElement {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const stateUserId = (location.state as { selectedUserId?: string | null } | null)?.selectedUserId ?? null;
+    if (stateUserId) {
+      setSelectedUserId(stateUserId);
+    }
+  }, [location.state]);
 
   return (
     <DashboardLayout
