@@ -20,7 +20,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const response = await api.get<MatchItem[]>('/matches');
+        const response = await api.get<MatchItem[]>('/matches/mine');
+        console.log(response.data)
         setMatches(response.data ?? []);
       } catch (error) {
         console.error("Failed to fetch matches:", error);

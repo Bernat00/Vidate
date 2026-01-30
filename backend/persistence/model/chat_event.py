@@ -20,8 +20,8 @@ class ChatEvent(SQLModel, table=True):
 
     # message-specific fields
     content: Optional[str] = Field(default=None)
-    is_received: Optional[bool] = Field(default=None)
-    is_read: Optional[bool] = Field(default=None)
+    # is_received: Optional[bool] = Field(default=None)
+    # is_read: Optional[bool] = Field(default=None)
 
     # call-specific fields
     end_time: Optional[datetime] = Field(default=None)

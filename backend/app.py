@@ -30,7 +30,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 origins = [
-    "*" #todo remove for prod
+    "*", #todo remove for prod
 ]
 
 app.add_middleware(
