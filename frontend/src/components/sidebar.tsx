@@ -1,21 +1,42 @@
 import {useEffect, useState} from "react";
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from "../api.ts";
-import { X } from 'lucide-react';
+import { User, X } from 'lucide-react';
 import type { MatchItem } from '../types/domain.ts';
 import ListItem from './common/ListItem';
 import { Spinner } from 'flowbite-react';
-import { getAvatarUrl, getDisplayName } from '../helpers.ts';
+import { getDisplayName } from '../helpers.ts';
 import EmptyState from './common/EmptyState';
 import { Users } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  selectedUserId?: string | null;
+  onSelectUserId?: (userId: string | null) => void;
 }
 
-const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+const Sidebar = ({ isOpen, onClose, selectedUserId, onSelectUserId }: SidebarProps) => {
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const activeUserId = selectedUserId
+    ?? (location.pathname.startsWith('/my-matches/profile/') ? location.pathname.split('/').pop() : null);
+
+  const formatMatchedAt = (value?: string | null) => {
+    if (!value) {
+      return '';
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return '';
+    }
+
+    return parsed.toLocaleDateString();
+  };
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -62,15 +83,54 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             className="mt-10"
           />
         ) : (
-          matches.map((match) => (
-            <li key={match.id ?? match._id ?? `${match.name ?? match.username ?? ''}` }>
-              <ListItem
-                title={getDisplayName(match)}
-                avatar={getAvatarUrl(match)}
-                onClick={() => {}}
-              />
-            </li>
-          ))
+          matches.map((match, index) => {
+            const userId = match.profile?.user_id ?? null;
+            const matchedAt = formatMatchedAt(match.matched_at);
+
+            const handleSelect = () => {
+              if (!userId) {
+                return;
+              }
+
+              onSelectUserId?.(userId);
+              navigate('/my-matches');
+              onClose();
+            };
+
+            const handleOpenProfile = (event: React.MouseEvent<HTMLButtonElement>) => {
+              event.stopPropagation();
+              if (!userId) {
+                return;
+              }
+
+              onSelectUserId?.(userId);
+              navigate(`/my-matches/profile/${userId}`);
+              onClose();
+            };
+
+            return (
+              <li key={`${match.match_id ?? userId ?? 'match'}-${match.matched_at ?? index}`}>
+                <ListItem
+                  title={getDisplayName(match)}
+                  subtitle={matchedAt ? `Matched ${matchedAt}` : undefined}
+                  onClick={handleSelect}
+                  active={userId !== null && userId === activeUserId}
+                  className="border border-borderAccentLight border-l-4 border-l-borderAccent hover:border-borderAccent shadow-sm"
+                  rightElement={(
+                    <button
+                      type="button"
+                      onClick={handleOpenProfile}
+                      className="flex items-center gap-1 px-2 py-1 rounded-full border border-borderAccentLight text-[11px] font-semibold text-textSecondary transition opacity-0 group-hover:opacity-100 hover:border-borderAccent hover:text-textAccent hover:bg-bgSecondary"
+                      aria-label="Open match profile"
+                    >
+                      <User className="w-3 h-3" />
+                      Profile
+                    </button>
+                  )}
+                />
+              </li>
+            );
+          })
         )}
       </ul>
     </aside>

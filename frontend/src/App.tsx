@@ -5,6 +5,7 @@ import LandingPage from "./pages/landingPage.tsx";
 import Login from "./pages/login.tsx";
 import Register from "./pages/register.tsx";
 import MyMatches from "./pages/myMatches.tsx";
+import MatchProfile from "./pages/matchProfile.tsx";
 import { ToastProvider } from './context/toastContext';
 
 import SetupProfile from "./pages/setupProfile.tsx";
@@ -54,6 +55,7 @@ function App(): ReactElement {
                         }>
                           <Route path="/home" element={<Home />} />
                           <Route path="/my-matches" element={<MyMatches />} />
+                          <Route path="/my-matches/profile/:userId" element={<MatchProfile />} />
                           <Route path="/profile" element={<Profile />} />
                         </Route>
                     </Routes>
