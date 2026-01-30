@@ -27,9 +27,9 @@ router = APIRouter(prefix='/matches')
 
 @router.get('/mine')
 async def mine(repo: repoDep, user: get_and_auth_current_user):
-    users = await  repo.user_repo.get_matched_users(user.id)
-    print(users)
-    return [UserOut(**user.model_dump()) for user in users]
+    profiles = await  repo.profile_repo.get_matched_profiles(user.id)
+    print(profiles)
+    return profiles
 
 
 @router.get('/all')

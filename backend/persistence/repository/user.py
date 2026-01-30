@@ -19,24 +19,24 @@ class UserRepo(BaseRepo[User]):
         return result
 
 
-    async def get_matched_users(self, user_id: str, only_confirmed: bool = True) -> list[User]:
-        Other = aliased(User)
-
-        other_id = case(
-            (Match.user1_id == user_id, Match.user2_id),
-            (Match.user2_id == user_id, Match.user1_id)
-        )
-
-        stmt = (
-            select(Other)
-            .select_from(Match)
-            .join(Other, Other.id == other_id)
-            .where((Match.user1_id == user_id) | (Match.user2_id == user_id))
-        )
-
-        if only_confirmed:
-            stmt = stmt.where(Match.confirmed == True)
-
-        result = await self.session.scalars(stmt)
-        return list(result.all())
+#    async def get_matched_users(self, user_id: str, only_confirmed: bool = True) -> list[User]:
+#        Other = aliased(User)
+#
+#        other_id = case(
+#            (Match.user1_id == user_id, Match.user2_id),
+#            (Match.user2_id == user_id, Match.user1_id)
+#        )
+#
+#        stmt = (
+#            select(Other)
+#            .select_from(Match)
+#            .join(Other, Other.id == other_id)
+#            .where((Match.user1_id == user_id) | (Match.user2_id == user_id))
+#        )
+#
+#        if only_confirmed:
+#            stmt = stmt.where(Match.confirmed == True)
+#
+#        result = await self.session.scalars(stmt)
+#        return list(result.all())
 
