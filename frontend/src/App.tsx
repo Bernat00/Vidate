@@ -14,47 +14,50 @@ import PublicOnlyRoute from './components/routing/PublicOnlyRoute';
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import Home from './pages/home';
 import Profile from './pages/profile';
+import { WebSocketProvider } from './context/webSocketContext';
 
 function App(): ReactElement {
   return (
     <BrowserRouter>
         <ToastProvider>
             <AuthProvider>
-                <Routes>
-                    <Route path="/" element={
-                      <PublicOnlyRoute>
-                        <LandingPage />
-                      </PublicOnlyRoute>
-                    } />
-                    <Route path="/login" element={
-                      <PublicOnlyRoute>
-                        <Login />
-                      </PublicOnlyRoute>
-                    } />
-                    <Route path="/register" element={
-                      <PublicOnlyRoute>
-                        <Register />
-                      </PublicOnlyRoute>
-                    } />
-                    <Route path="/setup-profile" element={
-                        <ProtectedRoute>
-                            <SetupProfile/>
-                        </ProtectedRoute>
-                    }>
-                    </Route>
+                <WebSocketProvider>
+                    <Routes>
+                        <Route path="/" element={
+                          <PublicOnlyRoute>
+                            <LandingPage />
+                          </PublicOnlyRoute>
+                        } />
+                        <Route path="/login" element={
+                          <PublicOnlyRoute>
+                            <Login />
+                          </PublicOnlyRoute>
+                        } />
+                        <Route path="/register" element={
+                          <PublicOnlyRoute>
+                            <Register />
+                          </PublicOnlyRoute>
+                        } />
+                        <Route path="/setup-profile" element={
+                            <ProtectedRoute>
+                                <SetupProfile/>
+                            </ProtectedRoute>
+                        }>
+                        </Route>
 
 
-                    {/* Protected area with shared navbar layout */}
-                    <Route element={
-                      <ProtectedRoute>
-                        <ProtectedLayout />
-                      </ProtectedRoute>
-                    }>
-                      <Route path="/home" element={<Home />} />
-                      <Route path="/my-matches" element={<MyMatches />} />
-                      <Route path="/profile" element={<Profile />} />
-                    </Route>
-                </Routes>
+                        {/* Protected area with shared navbar layout */}
+                        <Route element={
+                          <ProtectedRoute>
+                            <ProtectedLayout />
+                          </ProtectedRoute>
+                        }>
+                          <Route path="/home" element={<Home />} />
+                          <Route path="/my-matches" element={<MyMatches />} />
+                          <Route path="/profile" element={<Profile />} />
+                        </Route>
+                    </Routes>
+                </WebSocketProvider>
             </AuthProvider>
         </ToastProvider>
     </BrowserRouter>
