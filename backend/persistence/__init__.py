@@ -10,6 +10,9 @@ from backend.persistence.model.language import Language
 
 # Import ALL models so SQLAlchemy knows about them
 from backend.persistence.model.user import User
+from backend.persistence.model.gender import Gender
+from backend.persistence.model.religion import Religion
+from backend.persistence.model.language import Language
 from backend.persistence.model.profile import Profile
 from backend.persistence.model.match import Match
 from backend.persistence.model.preferences.preferences import Preference

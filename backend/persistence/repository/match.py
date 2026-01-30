@@ -1,3 +1,5 @@
+from argparse import ArgumentError
+
 from fastapi import HTTPException
 from pydantic import EmailStr
 from watchfiles import awatch
@@ -18,7 +20,7 @@ class MatchRepo(BaseRepo[Match]):
     async def get_by_both_user_ids(self, id1: str, id2:str) -> Match | None:
         stmt = (
             select(Match).where(
-                (Match.user1_id == id1 and Match.user2_id == id2) | (Match.user1_id == id2 and Match.user2_id == id1))
+                ((Match.user1_id == id1) & (Match.user2_id == id2)) | ((Match.user1_id == id2) & (Match.user2_id == id1)))
         )
 
         return await self.session.scalar(stmt)
@@ -33,6 +35,10 @@ class MatchRepo(BaseRepo[Match]):
         return list(results.all())
 
     async def match(self, me: User, to_match: User) -> Match:
+        if me.id == to_match.id:
+            raise SameValueError('Cannot match yourself')
+
+
         match_repo = MatchRepo(session=self.session)
 
         match = await match_repo.get_by_both_user_ids(me.id, to_match.id)
@@ -50,3 +56,9 @@ class MatchRepo(BaseRepo[Match]):
             mach.user2_id = me.id
 
         return await match_repo.save(mach)
+
+
+class SameValueError(ValueError):
+    def __init__(self, value: str):
+        self.value = value
+

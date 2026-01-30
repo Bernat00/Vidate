@@ -36,8 +36,6 @@ class User(SQLModel, table=True):
     password_hash: str = Field(
         sa_type=String(256),
         nullable=False,
-        exclude=True,
-
     )
 
     created_at: datetime = Field(
