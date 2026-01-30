@@ -27,6 +27,7 @@ class ProfileRepo(BaseRepo[Profile]):
             select(
                 Profile,
                 Match.timestamp,
+                Match.id
             )
             .join(
                 Match,
@@ -43,8 +44,8 @@ class ProfileRepo(BaseRepo[Profile]):
         result = await self.session.execute(stmt)
 
         return [
-            {"profile": profile, "matched_at": timestamp}
-            for profile, timestamp in result
+            {"profile": profile, "matched_at": timestamp, "match_id": match_id}
+            for profile, timestamp, match_id in result
         ]
 
 
