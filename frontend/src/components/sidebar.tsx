@@ -93,7 +93,7 @@ const Sidebar = ({ isOpen, onClose, selectedUserId, onSelectUserId }: SidebarPro
               }
 
               onSelectUserId?.(userId);
-              navigate('/my-matches');
+              navigate('/my-matches', { state: { selectedUserId: userId } });
               onClose();
             };
 
@@ -120,7 +120,7 @@ const Sidebar = ({ isOpen, onClose, selectedUserId, onSelectUserId }: SidebarPro
                     <button
                       type="button"
                       onClick={handleOpenProfile}
-                      className="flex items-center gap-1 px-2 py-1 rounded-full border border-borderAccentLight text-[11px] font-semibold text-textSecondary transition opacity-0 group-hover:opacity-100 hover:border-borderAccent hover:text-textAccent hover:bg-bgSecondary"
+                      className="flex items-center gap-1 px-2 py-1 rounded-full border border-borderAccentLight text-[11px] font-semibold text-textSecondary transition hover:border-borderAccent hover:text-textAccent hover:bg-bgSecondary hover:cursor-pointer"
                       aria-label="Open match profile"
                     >
                       <User className="w-3 h-3" />

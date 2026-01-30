@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Spinner } from 'flowbite-react';
-import { Users } from 'lucide-react';
+import { ShieldAlert, Trash2, Users } from 'lucide-react';
 import api from '../api.ts';
 import type { MatchItem } from '../types/domain.ts';
 import { getDisplayName } from '../helpers.ts';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import EmptyState from '../components/common/EmptyState';
-import PrimaryButton from '../components/form/PrimaryButton';
+import InfoItem from '../components/common/InfoItem';
+import Section from '../components/layout/Section';
+import DestructiveButton from '../components/form/DestructiveButton';
 import { useToast } from '../context/toastContext.tsx';
 
 const formatDate = (value?: string | null) => {
@@ -70,76 +72,91 @@ export default function MatchProfile() {
 
   return (
     <DashboardLayout title="Match Profile">
-      <div className="flex-1 flex items-start justify-center px-4 py-6">
+      <div className="flex-1 px-4 py-8">
         {loading ? (
-          <div className="flex justify-center items-center w-full">
+          <div className="flex justify-center items-center w-full min-h-[60vh]">
             <Spinner color="purple" size="lg" />
           </div>
         ) : !match?.profile ? (
-          <EmptyState
-            icon={Users}
-            title="Match not found"
-            description="Select a match from the sidebar to view their profile."
-          />
+          <Section maxWidth="lg">
+            <EmptyState
+              icon={Users}
+              title="Match not found"
+              description="Select a match from the sidebar to view their profile."
+            />
+          </Section>
         ) : (
-          <div className="w-full max-w-2xl bg-bgPrimary border border-borderAccentLight rounded-2xl shadow-2xl p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-textAccent">{getDisplayName(match)}</h1>
-                {matchedAtLabel && (
-                  <p className="text-sm text-textSecondary">Matched {matchedAtLabel}</p>
-                )}
+          <Section maxWidth="2xl">
+            <div className="w-full bg-bgPrimary/95 border border-borderAccentLight rounded-3xl shadow-2xl p-6 md:p-8 space-y-8">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-textSecondary">Match profile</p>
+                  <h1 className="mt-2 text-3xl font-bold text-textAccent">{getDisplayName(match)}</h1>
+                  {matchedAtLabel && (
+                    <p className="mt-2 text-sm text-textSecondary">Matched {matchedAtLabel}</p>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {match.profile?.user_id && (
+                    <span className="inline-flex items-center rounded-full border border-borderAccentLight bg-bgSecondary/60 px-3 py-1 text-xs font-semibold text-textSecondary">
+                      User ID: {match.profile.user_id}
+                    </span>
+                  )}
+                  {matchedAtLabel && (
+                    <span className="inline-flex items-center rounded-full border border-borderAccentLight bg-bgSecondary/60 px-3 py-1 text-xs font-semibold text-textSecondary">
+                      Matched {matchedAtLabel}
+                    </span>
+                  )}
+                </div>
               </div>
-              <span className="text-xs text-textSecondary">User ID: {match.profile?.user_id}</span>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-textSecondary">Birth date</p>
-                <p className="text-textPrimary font-medium">{formatDate(match.profile?.birth_date) || 'Unknown'}</p>
-              </div>
-              <div>
-                <p className="text-textSecondary">Gender</p>
-                <p className="text-textPrimary font-medium">{match.profile?.gender_id ?? 'Unknown'}</p>
-              </div>
-              <div>
-                <p className="text-textSecondary">Language</p>
-                <p className="text-textPrimary font-medium">{match.profile?.language_id ?? 'Unknown'}</p>
-              </div>
-              <div>
-                <p className="text-textSecondary">Religion</p>
-                <p className="text-textPrimary font-medium">{match.profile?.religion_id ?? 'Unknown'}</p>
-              </div>
-              <div>
-                <p className="text-textSecondary">Smoker</p>
-                <p className="text-textPrimary font-medium">
-                  {match.profile?.is_smoker === null || match.profile?.is_smoker === undefined
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <InfoItem
+                  label="Birth date"
+                  value={formatDate(match.profile?.birth_date) || 'Unknown'}
+                />
+                <InfoItem label="Gender" value={match.profile?.gender_id ?? 'Unknown'} />
+                <InfoItem label="Language" value={match.profile?.language_id ?? 'Unknown'} />
+                <InfoItem label="Religion" value={match.profile?.religion_id ?? 'Unknown'} />
+                <InfoItem
+                  label="Smoker"
+                  value={match.profile?.is_smoker === null || match.profile?.is_smoker === undefined
                     ? 'Unknown'
                     : match.profile?.is_smoker
                       ? 'Yes'
                       : 'No'}
-                </p>
-              </div>
-              <div>
-                <p className="text-textSecondary">Wants children</p>
-                <p className="text-textPrimary font-medium">
-                  {match.profile?.wants_children === null || match.profile?.wants_children === undefined
+                />
+                <InfoItem
+                  label="Wants children"
+                  value={match.profile?.wants_children === null || match.profile?.wants_children === undefined
                     ? 'Not sure'
                     : match.profile?.wants_children
                       ? 'Yes'
                       : 'No'}
-                </p>
+                />
+              </div>
+
+              <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className="w-5 h-5 text-red-400 mt-0.5" />
+                  <div className="flex-1">
+                    <h2 className="text-sm font-semibold text-textPrimary">Danger zone</h2>
+                    <p className="text-xs text-textSecondary mt-1">
+                      Removing this match is permanent and will delete your conversation history.
+                    </p>
+                  </div>
+                </div>
+                <DestructiveButton
+                  type="button"
+                  onClick={handleDelete}
+                  className="mt-4 flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete match
+                </DestructiveButton>
               </div>
             </div>
-
-            <PrimaryButton
-              type="button"
-              onClick={handleDelete}
-              className="mt-8 bg-red-600 hover:bg-red-700"
-            >
-              Delete match
-            </PrimaryButton>
-          </div>
+          </Section>
         )}
       </div>
     </DashboardLayout>

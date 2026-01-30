@@ -19,11 +19,26 @@ export default function ListItem({
   active = false,
   className = '',
 }: ListItemProps) {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) {
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
   return (
-    <button
+    <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       className={`flex items-center w-full p-2 rounded-lg transition-colors text-left group
         ${active ? 'bg-bgSecondary text-textAccent' : 'text-textPrimary hover:bg-bgSecondary'}
+        ${onClick ? 'cursor-pointer' : ''}
         ${className}`}
     >
       {avatar && (
@@ -48,6 +63,6 @@ export default function ListItem({
           {rightElement}
         </div>
       )}
-    </button>
+    </div>
   );
 }
