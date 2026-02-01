@@ -1,10 +1,13 @@
 import asyncio
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, status, Depends
+import json
+from datetime import datetime, timezone
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status, Depends
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.helpers import get_redis
 from backend.persistence import engine
 from backend.persistence.repository import Repo
+from backend.persistence.model.chat_event import ChatEvent
 from backend.routes import CurrentUserCheckerDependency
 
 router = APIRouter(prefix='/ws')
@@ -31,6 +34,7 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
         while True:
             data = await ws.receive_json()
             msg_type = data.get("type")
+            payload = data.get("payload", {})
 
             if msg_type == "joined_feed":
                 await r.sadd("matchmaking", user.id)
@@ -39,8 +43,27 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
                 await r.srem("matchmaking", user.id)
 
             elif msg_type == "chat_message":
-                # await r.publish(f"user:{data['to']}", json.dumps(data))
-                pass
+                match_id = payload.get("match_id")
+                recipient_id = payload.get("recipient_id")
+
+                if match_id and recipient_id:
+                    async with AsyncSession(engine) as session:
+                        repo = Repo(session)
+
+                        chat_event = ChatEvent(
+                            type="message",
+                            match_id=match_id,
+                            originator_id=user.id,
+                            recipient_id=recipient_id,
+                            content=payload.get("content")
+                        )
+
+                        await repo.chat_event_repo.save(chat_event)
+                        print("saved chat event")
+                        await r.publish(f"user:{recipient_id}", json.dumps({
+                            "type": msg_type,
+                            "payload": chat_event.model_dump(mode="json")
+                        }))
 
     except (WebSocketDisconnect, asyncio.CancelledError):
         pass

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Literal
 
 from sqlmodel import SQLModel, Field
 
@@ -7,9 +7,13 @@ from sqlmodel import SQLModel, Field
 class ChatEvent(SQLModel, table=True):
     __tablename__ = "chat_events"
 
-    id: int = Field(primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
 
     # discriminator
+    # todo add this back
+    """
+    type: Literal["message", "call"] = Field(index=True, nullable=False)
+    """
     type: str = Field(index=True, nullable=False)
 
     match_id: int = Field(foreign_key="matches.id", nullable=False)
