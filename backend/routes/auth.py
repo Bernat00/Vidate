@@ -34,11 +34,11 @@ def decode_token(token: str, credentials_exception: Exception) -> TokenData:
     return TokenData(user_id=id)
 
 
-def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=60)):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + expires_delta
-
-    to_encode.update({"exp": expire})
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+        to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, Config.JWT_SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
     return encoded_jwt
 
@@ -122,8 +122,6 @@ async def token(repo: repoDep,
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # todo when to expire and handle expiry in frontend
-    access_token = create_access_token(
-        data={"sub": user.id}, expires_delta=timedelta(minutes=100000000))
+    access_token = create_access_token(data={"sub": user.id})
 
     return Token(access_token=access_token, token_type="bearer")
