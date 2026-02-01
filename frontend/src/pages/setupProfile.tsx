@@ -16,6 +16,205 @@ import FormField from '../components/form/FormField';
 import { Select } from 'flowbite-react';
 import { commonInputClasses } from '../components/form/formStyles';
 
+// New sub-component to deduplicate the massive form
+interface CombinedFormFieldsProps {
+  register: UseFormRegister<CombinedOnboardingForm>;
+  errors: FieldErrors<CombinedOnboardingForm>;
+  genders: ProfileOption[];
+  languages: ProfileOption[];
+  religions: ProfileOption[];
+  selectedLanguageIds: string[];
+  selectedPreferredGenderIds: string[];
+  selectedPreferredReligionIds: string[];
+  setValue: any;
+  toggleSelection: (current: string[], val: string) => string[];
+  validateAge: (date: string) => true | string;
+  prefAgeMin: string;
+  prefAgeMax: string;
+}
+
+function CombinedFormFields({
+  register, errors, genders, languages, religions,
+  selectedLanguageIds, selectedPreferredGenderIds, selectedPreferredReligionIds,
+  setValue, toggleSelection, validateAge, prefAgeMin, prefAgeMax
+}: CombinedFormFieldsProps) {
+  return (
+    <>
+      <NameFields
+        register={register as any}
+        errors={errors as any}
+      />
+      <DemographicFields
+        register={register as any}
+        errors={errors as any}
+        genders={genders}
+        religions={religions}
+        validateAge={validateAge}
+      />
+
+      <div className="mt-app-gap">
+        <FormField id="language_ids" label="Languages" error={errors.language_ids?.message}>
+          <input
+            type="hidden"
+            {...register('language_ids', {
+              validate: (val: string[]) => (val && val.length > 0) || 'Select at least one language'
+            })}
+          />
+          <div className="flex flex-wrap gap-2">
+            {languages.map(language => (
+              <button
+                key={language.id}
+                type="button"
+                onClick={() => setValue('language_ids', toggleSelection(selectedLanguageIds, String(language.id)), { shouldValidate: true })}
+                className={`px-4 py-2 rounded-lg border transition-colors ${
+                  selectedLanguageIds.includes(String(language.id))
+                    ? 'bg-accentPrimary text-white border-accentPrimary'
+                    : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
+                }`}
+              >
+                {language.name}
+              </button>
+            ))}
+          </div>
+        </FormField>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-textAccent mb-3">About you</h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
+        <FormField id="self_is_smoker" label="Are you a smoker?" error={errors.self_is_smoker?.message}>
+          <Select
+            id="self_is_smoker"
+            {...register('self_is_smoker', { required: 'Please select an option' })}
+            className={commonInputClasses}
+            color={errors.self_is_smoker ? 'failure' : undefined}
+          >
+            <option value="" disabled>Select one</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </Select>
+        </FormField>
+
+        <FormField id="self_wants_children" label="Do you want children?" error={errors.self_wants_children?.message}>
+          <Select
+            id="self_wants_children"
+            {...register('self_wants_children')}
+            className={commonInputClasses}
+            color={errors.self_wants_children ? 'failure' : undefined}
+          >
+            <option value="">Prefer not to say</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </Select>
+        </FormField>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-textAccent mb-3">Preferences</h2>
+        <p className="text-textSecondary text-sm mb-4">These are your preferences for potential matches.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
+        <FormField id="pref_age_min" label="Preferred minimum age" error={errors.pref_age_min?.message}>
+          <input
+            id="pref_age_min"
+            type="number"
+            min={18}
+            placeholder="Any"
+            className={`${commonInputClasses} p-2`}
+            {...register('pref_age_min', {
+              validate: (val: string) => {
+                if (!val) return true;
+                const num = Number(val);
+                if (num < 18) return 'Minimum age cannot be less than 18';
+                if (prefAgeMax && num >= Number(prefAgeMax)) return 'Min age must be less than max age';
+                return true;
+              }
+            })}
+          />
+        </FormField>
+
+        <FormField id="pref_age_max" label="Preferred maximum age" error={errors.pref_age_max?.message}>
+          <input
+            id="pref_age_max"
+            type="number"
+            placeholder="Any"
+            className={`${commonInputClasses} p-2`}
+            {...register('pref_age_max', {
+              validate: (val: string) => {
+                if (!val) return true;
+                const num = Number(val);
+                if (prefAgeMin && num <= Number(prefAgeMin)) return 'Max age must be greater than min age';
+                return true;
+              }
+            })}
+          />
+        </FormField>
+
+        <FormField id="pref_wants_children" label="Should they want children?" error={errors.pref_wants_children?.message}>
+          <Select id="pref_wants_children" {...register('pref_wants_children')} className={commonInputClasses}>
+            <option value="">Prefer not to say</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </Select>
+        </FormField>
+
+        <FormField id="pref_is_smoker" label="Should they be a smoker?" error={errors.pref_is_smoker?.message}>
+          <Select id="pref_is_smoker" {...register('pref_is_smoker')} className={commonInputClasses}>
+            <option value="">Prefer not to say</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </Select>
+        </FormField>
+      </div>
+
+      <div className="mt-app-gap">
+        <FormField id="preferred_gender_ids" label="Preferred genders" error={errors.preferred_gender_ids?.message}>
+          <div className="flex flex-wrap gap-2">
+            {genders.map(gender => (
+              <button
+                key={gender.id}
+                type="button"
+                onClick={() => setValue('preferred_gender_ids', toggleSelection(selectedPreferredGenderIds, String(gender.id)))}
+                className={`px-4 py-2 rounded-lg border transition-colors ${
+                  selectedPreferredGenderIds.includes(String(gender.id))
+                    ? 'bg-accentPrimary text-white border-accentPrimary'
+                    : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
+                }`}
+              >
+                {gender.name}
+              </button>
+            ))}
+          </div>
+        </FormField>
+      </div>
+
+      <div className="mt-app-gap">
+        <FormField id="preferred_religion_ids" label="Preferred religions" error={errors.preferred_religion_ids?.message}>
+          <div className="flex flex-wrap gap-2">
+            {religions.map(religion => (
+              <button
+                key={religion.id}
+                type="button"
+                onClick={() => setValue('preferred_religion_ids', toggleSelection(selectedPreferredReligionIds, String(religion.id)))}
+                className={`px-4 py-2 rounded-lg border transition-colors ${
+                  selectedPreferredReligionIds.includes(String(religion.id))
+                    ? 'bg-accentPrimary text-white border-accentPrimary'
+                    : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
+                }`}
+              >
+                {religion.name}
+              </button>
+            ))}
+          </div>
+        </FormField>
+      </div>
+    </>
+  );
+}
+
 type CombinedOnboardingForm = SetupProfileForm & {
   // User's own attributes (Profile)
   self_wants_children: string; // "true" | "false" | ""
@@ -232,449 +431,55 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
     }
   };
 
-  // No special key handling needed in single-page flow
+  const sharedProps = {
+    register, errors, genders, languages, religions,
+    selectedLanguageIds, selectedPreferredGenderIds, selectedPreferredReligionIds,
+    setValue, toggleSelection, validateAge, prefAgeMin, prefAgeMax
+  };
+
+  if (loading) {
+    const loadingElem = (
+      <div className="flex items-center justify-center py-8">
+        <CenteredLoader />
+      </div>
+    );
+    if (isNewUser) return <CenteredLoader />;
+    return (
+      <div className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
+        <h1 className="text-2xl font-bold text-textAccent mb-6">Profile settings</h1>
+        {loadingElem}
+      </div>
+    );
+  }
+
+  const formJsx = (
+    <form onSubmit={handleSubmit(onSubmitProfile)}>
+      <CombinedFormFields {...sharedProps} />
+      <div className="flex gap-4 mt-app-gap">
+        <PrimaryButton type="submit" disabled={isSubmitting} className="flex-1">
+          {isSubmitting ? 'Saving...' : 'Save'}
+        </PrimaryButton>
+      </div>
+    </form>
+  );
 
   if (isNewUser) {
-    if (loading) {
-      return <CenteredLoader />;
-    }
     return (
       <GradientPage className="flex items-center justify-center p-app-padding">
         <Section maxWidth="2xl">
-          <form onSubmit={handleSubmit(onSubmitProfile)} className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-textAccent">Complete your profile</h1>
-            </div>
-
-            {/* Personal Information */}
-            <NameFields
-              register={register as unknown as UseFormRegister<SetupProfileForm>}
-              errors={errors as unknown as FieldErrors<SetupProfileForm>}
-            />
-            <DemographicFields
-              register={register as unknown as UseFormRegister<SetupProfileForm>}
-              errors={errors as unknown as FieldErrors<SetupProfileForm>}
-              genders={genders}
-              religions={religions}
-              validateAge={validateAge}
-            />
-
-            <div className="mt-app-gap">
-              <FormField id="language_ids" label="Languages" error={errors.language_ids?.message}>
-                <input
-                  type="hidden"
-                  {...register('language_ids', {
-                    validate: (val: string[]) => (val && val.length > 0) || 'Select at least one language'
-                  })}
-                />
-                <div className="flex flex-wrap gap-2">
-                  {languages.map(language => (
-                    <button
-                      key={language.id}
-                      type="button"
-                      onClick={() => setValue('language_ids', toggleSelection(selectedLanguageIds, String(language.id)), { shouldValidate: true })}
-                      className={`px-4 py-2 rounded-lg border transition-colors ${
-                        selectedLanguageIds.includes(String(language.id))
-                          ? 'bg-accentPrimary text-white border-accentPrimary'
-                          : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
-                      }`}
-                    >
-                      {language.name}
-                    </button>
-                  ))}
-                </div>
-              </FormField>
-            </div>
-
-            {/* Personal attributes (self) */}
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold text-textAccent mb-3">About you</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
-              <FormField id="self_is_smoker" label="Are you a smoker?" error={errors.self_is_smoker?.message}>
-                <Select
-                  id="self_is_smoker"
-                  {...register('self_is_smoker', {
-                    required: 'Please select an option',
-                  })}
-                  className={commonInputClasses}
-                  color={errors.self_is_smoker ? 'failure' : undefined}
-                >
-                  <option value="" disabled>Select one</option>
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </Select>
-              </FormField>
-
-              <FormField id="self_wants_children" label="Do you want children?" error={errors.self_wants_children?.message}>
-                <Select
-                  id="self_wants_children"
-                  {...register('self_wants_children')}
-                  className={commonInputClasses}
-                  color={errors.self_wants_children ? 'failure' : undefined}
-                >
-                  <option value="">Prefer not to say</option>
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </Select>
-              </FormField>
-            </div>
-
-            {/* Preferences */}
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold text-textAccent mb-3">Preferences</h2>
-              <p className="text-textSecondary text-sm mb-4">These are your preferences for potential matches. You can leave any of these as empty, but we recommend changing them for the best experience.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
-              <FormField id="pref_age_min" label="Preferred minimum age" error={errors.pref_age_min?.message}>
-                <input
-                  id="pref_age_min"
-                  type="number"
-                  min={18}
-                  placeholder="Any"
-                  className={commonInputClasses}
-                  {...register('pref_age_min', {
-                    validate: (val: string) => {
-                      if (!val) return true;
-                      const num = Number(val);
-                      if (isNaN(num)) return 'Enter a valid number';
-                      if (num < 18) return 'Minimum age cannot be less than 18';
-                      if (prefAgeMax) {
-                        const maxNum = Number(prefAgeMax);
-                        if (!isNaN(maxNum) && num >= maxNum) return 'Min age must be less than max age';
-                      }
-                      return true;
-                    }
-                  })}
-                />
-              </FormField>
-
-              <FormField id="pref_age_max" label="Preferred maximum age" error={errors.pref_age_max?.message}>
-                <input
-                  id="pref_age_max"
-                  type="number"
-                  placeholder="Any"
-                  className={commonInputClasses}
-                  {...register('pref_age_max', {
-                    validate: (val: string) => {
-                      if (!val) return true;
-                      const num = Number(val);
-                      if (isNaN(num)) return 'Enter a valid number';
-                      if (prefAgeMin) {
-                        const minNum = Number(prefAgeMin);
-                        if (!isNaN(minNum) && num <= minNum) return 'Max age must be greater than min age';
-                      }
-                      return true;
-                    }
-                  })}
-                />
-              </FormField>
-
-              <FormField id="pref_wants_children" label="Should they want children?" error={errors.pref_wants_children?.message}>
-                <Select
-                  id="pref_wants_children"
-                  {...register('pref_wants_children')}
-                  className={commonInputClasses}
-                  color={errors.pref_wants_children ? 'failure' : undefined}
-                >
-                  <option value="">Prefer not to say</option>
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </Select>
-              </FormField>
-
-              <FormField id="pref_is_smoker" label="Should they be a smoker?" error={errors.pref_is_smoker?.message}>
-                <Select
-                  id="pref_is_smoker"
-                  {...register('pref_is_smoker')}
-                  className={commonInputClasses}
-                  color={errors.pref_is_smoker ? 'failure' : undefined}
-                >
-                  <option value="">Prefer not to say</option>
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </Select>
-              </FormField>
-            </div>
-
-            <div className="mt-app-gap">
-              <FormField id="preferred_gender_ids" label="Preferred genders" error={errors.preferred_gender_ids?.message}>
-                <div className="flex flex-wrap gap-2">
-                  {genders.map(gender => (
-                    <button
-                      key={gender.id}
-                      type="button"
-                      onClick={() => setValue('preferred_gender_ids', toggleSelection(selectedPreferredGenderIds, String(gender.id)))}
-                      className={`px-4 py-2 rounded-lg border transition-colors ${
-                        selectedPreferredGenderIds.includes(String(gender.id))
-                          ? 'bg-accentPrimary text-white border-accentPrimary'
-                          : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
-                      }`}
-                    >
-                      {gender.name}
-                    </button>
-                  ))}
-                </div>
-              </FormField>
-            </div>
-
-
-            <div className="mt-app-gap">
-              <FormField id="preferred_religion_ids" label="Preferred religions" error={errors.preferred_religion_ids?.message}>
-                <div className="flex flex-wrap gap-2">
-                  {religions.map(religion => (
-                    <button
-                      key={religion.id}
-                      type="button"
-                      onClick={() => setValue('preferred_religion_ids', toggleSelection(selectedPreferredReligionIds, String(religion.id)))}
-                      className={`px-4 py-2 rounded-lg border transition-colors ${
-                        selectedPreferredReligionIds.includes(String(religion.id))
-                          ? 'bg-accentPrimary text-white border-accentPrimary'
-                          : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
-                      }`}
-                    >
-                      {religion.name}
-                    </button>
-                  ))}
-                </div>
-              </FormField>
-            </div>
-
-            <div className="flex gap-4 mt-app-gap">
-              <PrimaryButton type="submit" disabled={isSubmitting} className="flex-1">
-                {isSubmitting ? 'Saving...' : 'Save'}
-              </PrimaryButton>
-            </div>
-          </form>
+          <div className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
+            <h1 className="text-2xl font-bold text-textAccent mb-6">Complete your profile</h1>
+            {formJsx}
+          </div>
         </Section>
       </GradientPage>
     );
   }
 
-  // Embedded profile editor for existing users on /profile
-  if (loading) {
-    return (
-      <div className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-textAccent">Profile settings</h1>
-        </div>
-        <div className="flex items-center justify-center py-8">
-          <CenteredLoader />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-textAccent">Profile settings</h1>
-      </div>
-      <form onSubmit={handleSubmit(onSubmitProfile)}>
-        {/* Personal Information */}
-        <NameFields
-          register={register as unknown as UseFormRegister<SetupProfileForm>}
-          errors={errors as unknown as FieldErrors<SetupProfileForm>}
-        />
-        <DemographicFields
-          register={register as unknown as UseFormRegister<SetupProfileForm>}
-          errors={errors as unknown as FieldErrors<SetupProfileForm>}
-          genders={genders}
-          religions={religions}
-          validateAge={validateAge}
-        />
-
-        <div className="mt-app-gap">
-          <FormField id="language_ids" label="Languages" error={errors.language_ids?.message}>
-            <input
-              type="hidden"
-              {...register('language_ids', {
-                validate: (val: string[]) => (val && val.length > 0) || 'Select at least one language'
-              })}
-            />
-            <div className="flex flex-wrap gap-2">
-              {languages.map(language => (
-                <button
-                  key={language.id}
-                  type="button"
-                  onClick={() => setValue('language_ids', toggleSelection(selectedLanguageIds, String(language.id)), { shouldValidate: true })}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
-                    selectedLanguageIds.includes(String(language.id))
-                      ? 'bg-accentPrimary text-white border-accentPrimary'
-                      : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
-                  }`}
-                >
-                  {language.name}
-                </button>
-              ))}
-            </div>
-          </FormField>
-        </div>
-
-        {/* Personal attributes (self) */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold text-textAccent mb-3">About you</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
-          <FormField id="self_is_smoker" label="Are you a smoker?" error={errors.self_is_smoker?.message}>
-            <Select
-              id="self_is_smoker"
-              {...register('self_is_smoker', {
-                required: 'Please select an option',
-              })}
-              className={commonInputClasses}
-              color={errors.self_is_smoker ? 'failure' : undefined}
-            >
-              <option value="" disabled>Select one</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </Select>
-          </FormField>
-
-          <FormField id="self_wants_children" label="Do you want children?" error={errors.self_wants_children?.message}>
-            <Select
-              id="self_wants_children"
-              {...register('self_wants_children')}
-              className={commonInputClasses}
-              color={errors.self_wants_children ? 'failure' : undefined}
-            >
-              <option value="">Prefer not to say</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </Select>
-          </FormField>
-        </div>
-
-        {/* Preferences */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold text-textAccent mb-3">Preferences</h2>
-          <p className="text-textSecondary text-sm mb-4">These are your preferences for potential matches. You can leave any of these as “Prefer not to say”.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-app-gap">
-          <FormField id="pref_age_min" label="Preferred minimum age" error={errors.pref_age_min?.message}>
-            <input
-              id="pref_age_min"
-              type="number"
-              min={18}
-              placeholder="Any"
-              className={`${commonInputClasses} p-2`}
-              {...register('pref_age_min', {
-                validate: (val: string) => {
-                  if (!val) return true;
-                  const num = Number(val);
-                  if (isNaN(num)) return 'Enter a valid number';
-                  if (num < 18) return 'Minimum age cannot be less than 18';
-                  if (prefAgeMax) {
-                    const maxNum = Number(prefAgeMax);
-                    if (!isNaN(maxNum) && num >= maxNum) return 'Min age must be less than max age';
-                  }
-                  return true;
-                }
-              })}
-            />
-          </FormField>
-
-          <FormField id="pref_age_max" label="Preferred maximum age" error={errors.pref_age_max?.message}>
-            <input
-              id="pref_age_max"
-              type="number"
-              placeholder="Any"
-              className={`${commonInputClasses} p-2`}
-              {...register('pref_age_max', {
-                validate: (val: string) => {
-                  if (!val) return true;
-                  const num = Number(val);
-                  if (isNaN(num)) return 'Enter a valid number';
-                  if (prefAgeMin) {
-                    const minNum = Number(prefAgeMin);
-                    if (!isNaN(minNum) && num <= minNum) return 'Max age must be greater than min age';
-                  }
-                  return true;
-                }
-              })}
-            />
-          </FormField>
-
-          <FormField id="pref_wants_children" label="Should they want children?" error={errors.pref_wants_children?.message}>
-            <Select
-              id="pref_wants_children"
-              {...register('pref_wants_children')}
-              className={commonInputClasses}
-              color={errors.pref_wants_children ? 'failure' : undefined}
-            >
-              <option value="">Prefer not to say</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </Select>
-          </FormField>
-
-          <FormField id="pref_is_smoker" label="Should they be a smoker?" error={errors.pref_is_smoker?.message}>
-            <Select
-              id="pref_is_smoker"
-              {...register('pref_is_smoker')}
-              className={commonInputClasses}
-              color={errors.pref_is_smoker ? 'failure' : undefined}
-            >
-              <option value="">Prefer not to say</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </Select>
-          </FormField>
-        </div>
-
-        <div className="mt-app-gap">
-          <FormField id="preferred_gender_ids" label="Preferred genders" error={errors.preferred_gender_ids?.message}>
-            <div className="flex flex-wrap gap-2">
-              {genders.map(gender => (
-                <button
-                  key={gender.id}
-                  type="button"
-                  onClick={() => setValue('preferred_gender_ids', toggleSelection(selectedPreferredGenderIds, String(gender.id)))}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
-                    selectedPreferredGenderIds.includes(String(gender.id))
-                      ? 'bg-accentPrimary text-white border-accentPrimary'
-                      : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
-                  }`}
-                >
-                  {gender.name}
-                </button>
-              ))}
-            </div>
-          </FormField>
-        </div>
-
-
-        <div className="mt-app-gap">
-          <FormField id="preferred_religion_ids" label="Preferred religions" error={errors.preferred_religion_ids?.message}>
-            <div className="flex flex-wrap gap-2">
-              {religions.map(religion => (
-                <button
-                  key={religion.id}
-                  type="button"
-                  onClick={() => setValue('preferred_religion_ids', toggleSelection(selectedPreferredReligionIds, String(religion.id)))}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
-                    selectedPreferredReligionIds.includes(String(religion.id))
-                      ? 'bg-accentPrimary text-white border-accentPrimary'
-                      : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
-                  }`}
-                >
-                  {religion.name}
-                </button>
-              ))}
-            </div>
-          </FormField>
-        </div>
-
-        <div className="flex gap-4 mt-app-gap">
-          <PrimaryButton type="submit" disabled={isSubmitting} className="flex-1">
-            {isSubmitting ? 'Saving...' : 'Save'}
-          </PrimaryButton>
-        </div>
-      </form>
+      <h1 className="text-2xl font-bold text-textAccent mb-6">Profile settings</h1>
+      {formJsx}
     </div>
   );
 }
