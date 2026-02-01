@@ -12,7 +12,7 @@ class ProfileCreate(BaseModel):
     birth_date: datetime
     gender_id: int
     language_ids: List[int]
-    religion_id: int
+    religion_id: Optional[int] = None
     is_smoker: bool
     wants_children: Optional[bool] = None
 
@@ -32,17 +32,16 @@ class ProfileCreate(BaseModel):
     @field_validator('middle_name', mode='before')
     @classmethod
     def normalize_middle_name(cls, v: Optional[str]) -> Optional[str]:
-        # Allow explicit nulls
-        if v is None:
+        if v is None or v == "":
             return None
-        # If something non-string sneaks in, coerce to string for safety
-        if not isinstance(v, str):
-            try:
-                v = str(v)
-            except Exception:
-                return None
-        v = v.strip()
-        return v or None
+        return v
+
+    @field_validator('religion_id', mode='before')
+    @classmethod
+    def normalize_religion_id(cls, v: Optional[int]) -> Optional[int]:
+        if v is None or v == "" or v == 0:
+            return None
+        return v
 
 
 
@@ -56,6 +55,4 @@ class ReligionCreate(BaseModel):
 
 class GenderCreate(BaseModel):
     name: str
-
-
 

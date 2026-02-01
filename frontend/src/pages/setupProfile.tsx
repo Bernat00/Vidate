@@ -397,7 +397,7 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
         birth_date: new Date(data.birth_date).toISOString(),
         gender_id: Number(data.gender_id),
         language_ids: data.language_ids.map(Number),
-        religion_id: Number(data.religion_id),
+        religion_id: data.religion_id === '' ? null : Number(data.religion_id),
         // Backend ProfileCreate: is_smoker required boolean, wants_children optional
         is_smoker: data.self_is_smoker === '' ? false : data.self_is_smoker === 'true',
         wants_children: data.self_wants_children === '' ? null : data.self_wants_children === 'true',

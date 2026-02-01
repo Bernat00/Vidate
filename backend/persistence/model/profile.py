@@ -27,7 +27,7 @@ class Profile(SQLModel, table=True):
     last_name: str = Field(nullable=False)
     birth_date: datetime = Field(nullable=False)
     gender_id: int = Field(foreign_key="genders.id", nullable=False)
-    religion_id: int = Field(foreign_key="religions.id")
+    religion_id: int | None = Field(default=None, foreign_key="religions.id", nullable=True)
     is_smoker: bool = Field(default=False)
     wants_children: Optional[bool] = Field(default=None)
 

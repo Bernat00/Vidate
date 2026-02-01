@@ -91,8 +91,10 @@ async def update_mine(profile: ProfileCreate, repo: repoDep, user: get_and_auth_
         updated = Profile(user_id=uid, **profile.model_dump())
 
     copy_non_none_fields(profile, updated)
-
-        #updated = updated.model_copy(update=profile.model_dump(exclude_unset=True)) ez meno (ide pont nem jo)
+    # Explicitly handle nullable fields that copy_non_none_fields might skip
+    updated.religion_id = profile.religion_id
+    updated.middle_name = profile.middle_name
+    updated.wants_children = profile.wants_children
 
     updated.languages = await repo.language_repo.get_by_id_list(profile.language_ids or [])
     #todo lehet a tobbi is lista kene h legyen

@@ -52,14 +52,11 @@ export default function DemographicFields({
       <FormField id="religion_id" label="Religion" error={errors.religion_id?.message}>
         <Select
           id="religion_id"
-          {...register('religion_id', {
-            required: 'Religion is required',
-            validate: (val) => (val && val !== '') || 'Religion is required'
-          })}
+          {...register('religion_id')}
           className={commonInputClasses}
           color={errors.religion_id ? 'failure' : undefined}
         >
-          <option value="" disabled>Select one</option>
+          <option value="">Prefer not to say</option>
           {religions.map(o => (
             <option key={o.id} value={String(o.id)}>
               {o.name}
