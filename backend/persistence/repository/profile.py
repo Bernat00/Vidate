@@ -42,6 +42,7 @@ class ProfileRepo(BaseRepo[Profile]):
             stmt = stmt.where(Match.confirmed.is_(True))
 
         result = await self.session.execute(stmt)
+        result = result.unique()
 
         return [
             {"profile": profile, "matched_at": timestamp, "match_id": match_id}

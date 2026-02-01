@@ -73,8 +73,7 @@ class BaseRepo(Generic[T], BasicRepo):
 
 
         result = await self.session.scalars(stmt)
-        return result.all()
-
+        return result.unique().all()
 
 
     async def get_all(self, options: Sequence[ORMOption] = None) -> Sequence[Row[Any] | RowMapping | Any]:
@@ -83,7 +82,7 @@ class BaseRepo(Generic[T], BasicRepo):
             stmt = stmt.options(*options)
 
         result = await self.session.scalars(stmt)
-        return result.all()
+        return result.unique().all()
 
 
 
