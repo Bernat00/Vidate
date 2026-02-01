@@ -33,9 +33,7 @@ const DUMMY_MESSAGES = [
 
 export default function MyMatches(): ReactElement {
   const location = useLocation();
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(
-    (location.state as { selectedUserId?: string | null } | null)?.selectedUserId ?? null
-  );
+  const navigate = useNavigate();
   const [matches, setMatches] = useState<MatchItem[]>([]);
 
   useEffect(() => {
@@ -50,12 +48,11 @@ export default function MyMatches(): ReactElement {
     fetchMatches();
   }, []);
 
-  useEffect(() => {
-    const stateUserId = (location.state as { selectedUserId?: string | null } | null)?.selectedUserId ?? null;
-    if (stateUserId !== selectedUserId) {
-      setSelectedUserId(stateUserId);
-    }
-  }, [location.state, selectedUserId]);
+  const selectedUserId = (location.state as { selectedUserId?: string | null } | null)?.selectedUserId ?? null;
+
+  const handleSelectUserId = (userId: string | null) => {
+    navigate('/my-matches', { state: { selectedUserId: userId }, replace: true });
+  };
 
   const selectedMatch = matches.find(m => m.profile?.user_id === selectedUserId);
   const title = selectedMatch ? getDisplayName(selectedMatch) : 'Vidate';
@@ -64,7 +61,7 @@ export default function MyMatches(): ReactElement {
     <DashboardLayout
       title={title}
       selectedUserId={selectedUserId}
-      onSelectUserId={setSelectedUserId}
+      onSelectUserId={handleSelectUserId}
     >
       <ChatColumn>
         {selectedUserId ? (

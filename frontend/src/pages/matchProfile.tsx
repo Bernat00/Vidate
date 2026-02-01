@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Spinner } from 'flowbite-react';
-import {ShieldAlert, Trash2, Users, Heart} from 'lucide-react';
+import { ShieldAlert, Trash2, Users, Heart } from 'lucide-react';
 import api from '../api.ts';
 import type { MatchItem } from '../types/domain.ts';
 import { calculateAge, getDisplayName } from '../helpers.ts';
@@ -11,6 +11,7 @@ import InfoItem from '../components/common/InfoItem';
 import Section from '../components/layout/Section';
 import DestructiveButton from '../components/form/DestructiveButton';
 import { useToast } from '../context/toastContext.tsx';
+import { DeleteConfirmationModal } from '../components/common/DeleteConfirmationModal';
 
 const formatDate = (value?: string | null) => {
   if (!value) return '';
@@ -25,6 +26,8 @@ export default function MatchProfile() {
   const { showToast } = useToast();
   const [match, setMatch] = useState<MatchItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!userId) {
@@ -57,16 +60,17 @@ export default function MatchProfile() {
       return;
     }
 
-    const confirmed = window.confirm('Delete this match?');
-    if (!confirmed) return;
-
+    setIsDeleting(true);
     try {
       await api.delete('/matches/match', { params: { match_id: match.match_id } });
       showToast('Match deleted.', 'success');
+      setIsDeleteModalOpen(false);
       navigate('/my-matches', { replace: true });
     } catch (error) {
       console.error('Failed to delete match:', error);
       showToast('Failed to delete match.', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -146,7 +150,7 @@ export default function MatchProfile() {
                 </div>
                 <DestructiveButton
                   type="button"
-                  onClick={handleDelete}
+                  onClick={() => setIsDeleteModalOpen(true)}
                   className="mt-4 flex items-center justify-center gap-2"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -154,6 +158,15 @@ export default function MatchProfile() {
                 </DestructiveButton>
               </div>
             </div>
+
+            <DeleteConfirmationModal
+              isOpen={isDeleteModalOpen}
+              onClose={() => setIsDeleteModalOpen(false)}
+              onConfirm={handleDelete}
+              title="Delete Match"
+              description="Are you sure you want to delete this match? This action is permanent."
+              isDeleting={isDeleting}
+            />
           </Section>
         )}
       </div>
