@@ -3,7 +3,6 @@ import { useState } from 'react';
 import Sidebar from '../sidebar';
 import SidebarOverlay from './SidebarOverlay';
 import MobileTopBar from './MobileTopBar';
-import Navbar from '../navbar';
 import { Menu } from 'lucide-react';
 import GradientPage from './GradientPage';
 
@@ -24,7 +23,7 @@ export default function DashboardLayout({
 
   return (
     <GradientPage>
-      <div className="flex min-h-screen relative">
+      <div className="flex h-full relative">
         <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
@@ -52,7 +51,7 @@ export default function DashboardLayout({
             {children}
           </main>
 
-          <Navbar />
+          {/*<Navbar />*/}
         </div>
       </div>
     </GradientPage>

@@ -1,5 +1,5 @@
-import type { ChatMessage } from '../types/domain';
 import MessageBubble from '../messageBubble';
+import type {ChatMessage} from "../../types/domain.ts";
 
 interface MessageListProps {
   messages: ChatMessage[];
