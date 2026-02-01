@@ -45,25 +45,34 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
     except (WebSocketDisconnect, asyncio.CancelledError):
         pass
 
+
 @router.websocket('/main')
 async def ws_endpoint(ws: WebSocket, token: str, r: Redis = Depends(get_redis)):
     async with AsyncSession(engine) as session:
         repo = Repo(session)
         current_user = CurrentUserCheckerDependency()
         user = await current_user(token, repo)
+
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
 
     await ws.accept()
 
+    writer_task = asyncio.create_task(redis_to_ws_writer(ws, user, r))
+    reader_task = asyncio.create_task(ws_to_redis_reader(ws, user, r))
+
     try:
-        await asyncio.gather(
-            redis_to_ws_writer(ws, user, r),
-            ws_to_redis_reader(ws, user, r)
+        done, pending = await asyncio.wait(
+            [writer_task, reader_task],
+            return_when=asyncio.FIRST_COMPLETED,
         )
     except Exception as e:
         print(f"WS Error for User {user.id}: {e}")
     finally:
+        for task in [writer_task, reader_task]:
+            if not task.done():
+                task.cancel()
+
         await r.srem("matchmaking", user.id)
         print(f"Cleanup: User {user.id} removed from matchmaking.")
-
