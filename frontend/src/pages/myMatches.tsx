@@ -17,7 +17,7 @@ export default function MyMatches(): ReactElement {
   const location = useLocation();
   const navigate = useNavigate();
   const [matches, setMatches] = useState<MatchItem[]>([]);
-  const [allMessages, setAllMessages] = useState<Record<string, ChatMessageType[]>>({});
+  const [messages, setMessages] = useState<ChatMessageType[]>([]);
 
   const ws = useWebSocket();
   const { user } = useAuth()!;
@@ -41,36 +41,35 @@ export default function MyMatches(): ReactElement {
   useEffect(() => {
     if (!ws) return;
 
-    return ws.subscribe((message) => {
-      if (message.type === 'chat_message') {
-        const payload = message.payload as any;
-        const matchId = payload.match_id?.toString();
+    return ws.subscribe('chat_message', (payload: unknown) => {
+      const data = payload as {
+        match_id?: string | number;
+        originator_id?: string;
+        id?: string | number;
+        content?: string;
+        timestamp?: string;
+      };
 
-        if (!matchId) return;
+      const matchId = data.match_id?.toString();
+      if (!matchId || matchId !== selectedMatchId || !selectedMatch) return;
 
-        const senderMatch = matches.find(m => m.match_id?.toString() === matchId);
-        if (!senderMatch && payload.originator_id !== user?.id) return;
+      const newMessage: ChatMessageType = {
+        id: data.id || Date.now(),
+        sender: data.originator_id === user?.id ? 'You' : getDisplayName(selectedMatch),
+        avatar: data.originator_id === user?.id
+          ? 'https://i.pravatar.cc/150?u=me'
+          : 'https://i.pravatar.cc/150?u=match',
+        text: data.content || '',
+        time: data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isMe: data.originator_id === user?.id,
+      };
 
-        const newMessage: ChatMessageType = {
-          id: payload.id || Date.now(),
-          sender: payload.originator_id === user?.id ? 'You' : getDisplayName(senderMatch!),
-          avatar: payload.originator_id === user?.id
-            ? 'https://i.pravatar.cc/150?u=me' // Placeholder for current user
-            : senderMatch?.profile?.avatar || senderMatch?.profile?.profilePicture || 'https://i.pravatar.cc/150?u=unknown',
-          text: payload.content,
-          time: new Date(payload.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          isMe: payload.originator_id === user?.id,
-        };
-
-        setAllMessages(prev => ({
-          ...prev,
-          [matchId]: [...(prev[matchId] || []), newMessage]
-        }));
-      }
+      setMessages(prev => [...prev, newMessage]);
     });
-  }, [ws, matches, user?.id]);
+  }, [ws, selectedMatchId, user?.id, selectedMatch]);
 
   const handleSelectUserId = (userId: string | null) => {
+    setMessages([]); // Clear messages when switching matches
     navigate('/my-matches', { state: { selectedUserId: userId }, replace: true });
   };
 
@@ -99,13 +98,9 @@ export default function MyMatches(): ReactElement {
       isMe: true,
     };
 
-    setAllMessages(prev => ({
-      ...prev,
-      [selectedMatchId]: [...(prev[selectedMatchId] || []), newMessage]
-    }));
+    setMessages(prev => [...prev, newMessage]);
   };
 
-  const currentMessages = selectedMatchId ? (allMessages[selectedMatchId] || []) : [];
   const title = selectedMatch ? getDisplayName(selectedMatch) : 'Vidate';
 
   return (
@@ -118,7 +113,7 @@ export default function MyMatches(): ReactElement {
         {selectedUserId ? (
           <>
             <div className="flex-1 overflow-y-auto mb-4">
-              <MessageList messages={currentMessages} />
+              <MessageList messages={messages} />
             </div>
             <ChatInput onSendMessage={onSendMessage} />
           </>

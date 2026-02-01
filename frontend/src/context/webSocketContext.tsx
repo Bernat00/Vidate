@@ -8,10 +8,10 @@ export type WebSocketMessage = {
   payload: unknown;
 };
 
-type WebSocketHandler = (message: WebSocketMessage) => void;
+type WebSocketHandler = (payload: unknown) => void;
 
 interface WebSocketContextValue {
-  subscribe: (handler: WebSocketHandler) => () => void;
+  subscribe: (type: string, handler: WebSocketHandler) => () => void;
   send: (message: WebSocketMessage) => void;
 }
 
@@ -28,7 +28,7 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
   const auth = useAuth();
   const user = auth?.user;
   const wsRef = useRef<WebSocket | null>(null);
-  const handlersRef = useRef(new Set<WebSocketHandler>());
+  const handlersRef = useRef<Map<string, Set<WebSocketHandler>>>(new Map());
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef<number | null>(null);
   const notifiedRef = useRef(false);
@@ -70,7 +70,10 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     socket.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data) as WebSocketMessage;
-        handlersRef.current.forEach((handler) => handler(message));
+        const typeHandlers = handlersRef.current.get(message.type);
+        if (typeHandlers) {
+          typeHandlers.forEach((handler) => handler(message.payload));
+        }
       } catch {
         // ignore malformed messages
       }
@@ -96,7 +99,9 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 
       const delay = BASE_RECONNECT_DELAY_MS * attempts;
       clearReconnectTimer();
-      reconnectTimerRef.current = window.setTimeout(() => connect(), delay);
+      reconnectTimerRef.current = window.setTimeout(() => {
+        connect();
+      }, delay);
     };
   }, [showToast]);
 
@@ -110,16 +115,23 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     return () => closeSocket();
   }, [closeSocket, connect, user]);
 
-  const subscribe = useCallback((handler: WebSocketHandler) => {
-    handlersRef.current.add(handler);
-    return () => handlersRef.current.delete(handler);
+  const subscribe = useCallback((type: string, handler: WebSocketHandler) => {
+    if (!handlersRef.current.has(type)) {
+      handlersRef.current.set(type, new Set());
+    }
+    handlersRef.current.get(type)!.add(handler);
+    return () => {
+      handlersRef.current.get(type)?.delete(handler);
+    };
   }, []);
 
   const send = useCallback((message: WebSocketMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
+    } else {
+      showToast('Connection error. Could not send message.', 'error');
     }
-  }, []);
+  }, [showToast]);
 
   return (
     <WebSocketContext.Provider value={{ subscribe, send }}>

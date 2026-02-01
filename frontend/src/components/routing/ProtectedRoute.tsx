@@ -14,9 +14,6 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
-    return ws.subscribe((message) => {
-      console.log('WebSocket message:', message);
-    });
   }, [user, ws]);
 
   if (loading) {
