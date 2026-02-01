@@ -66,15 +66,19 @@ export default function MyMatches(): ReactElement {
       <ChatColumn>
         {selectedUserId ? (
           <>
-            <MessageList messages={DUMMY_MESSAGES} />
+            <div className="flex-1 overflow-y-auto mb-4">
+              <MessageList messages={DUMMY_MESSAGES} />
+            </div>
             <ChatInput />
           </>
         ) : (
-          <EmptyState
-            icon={MessageSquare}
-            title="Select a match to start chatting"
-            description="Choose someone from your matches to view the conversation."
-          />
+          <div className="flex items-center justify-center flex-1">
+            <EmptyState
+              icon={MessageSquare}
+              title="Select a match to start chatting"
+              description="Choose someone from your matches to view the conversation."
+            />
+          </div>
         )}
       </ChatColumn>
     </DashboardLayout>

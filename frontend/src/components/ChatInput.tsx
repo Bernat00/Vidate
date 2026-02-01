@@ -3,7 +3,7 @@ import Icon from './common/Icon';
 
 const ChatInput = () => {
   return (
-      <form className="mt-auto w-full px-app-padding mb-4">
+      <form className="w-full px-app-padding">
           <label htmlFor="chat" className="sr-only">Your message</label>
           <div className="relative">
                   <textarea
