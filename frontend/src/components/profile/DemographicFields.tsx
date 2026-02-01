@@ -8,14 +8,12 @@ export default function DemographicFields({
   register,
   errors,
   genders,
-  languages,
   religions,
   validateAge,
 }: {
   register: UseFormRegister<SetupProfileForm>;
   errors: FieldErrors<SetupProfileForm>;
   genders: ProfileOption[];
-  languages: ProfileOption[];
   religions: ProfileOption[];
   validateAge: (dateString: string) => true | string;
 }) {
@@ -45,24 +43,6 @@ export default function DemographicFields({
         >
           <option value="" disabled>Select one</option>
           {genders.map(o => (
-            <option key={o.id} value={String(o.id)}>
-              {o.name}
-            </option>
-          ))}
-        </Select>
-      </FormField>
-      <FormField id="language_id" label="Language" error={errors.language_id?.message}>
-        <Select
-          id="language_id"
-          {...register('language_id', {
-            required: 'Language is required',
-            validate: (val) => (val && val !== '') || 'Language is required'
-          })}
-          className={commonInputClasses}
-          color={errors.language_id ? 'failure' : undefined}
-        >
-          <option value="" disabled>Select one</option>
-          {languages.map(o => (
             <option key={o.id} value={String(o.id)}>
               {o.name}
             </option>

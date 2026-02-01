@@ -26,7 +26,6 @@ type CombinedOnboardingForm = SetupProfileForm & {
   pref_wants_children: string; // "true" | "false" | ""
   pref_is_smoker: string; // "true" | "false" | ""
   preferred_gender_ids: string[];
-  preferred_language_ids: string[];
   preferred_religion_ids: string[];
 };
 
@@ -36,7 +35,7 @@ const emptyForm: CombinedOnboardingForm = {
   last_name: '',
   birth_date: '',
   gender_id: '',
-  language_id: '',
+  language_ids: [],
   religion_id: '',
   self_wants_children: '',
   self_is_smoker: '',
@@ -45,7 +44,6 @@ const emptyForm: CombinedOnboardingForm = {
   pref_wants_children: '',
   pref_is_smoker: '',
   preferred_gender_ids: [],
-  preferred_language_ids: [],
   preferred_religion_ids: [],
 };
 
@@ -63,7 +61,7 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
   });
 
   const selectedPreferredGenderIds = watch('preferred_gender_ids');
-  const selectedPreferredLanguageIds = watch('preferred_language_ids');
+  const selectedLanguageIds = watch('language_ids');
   const selectedPreferredReligionIds = watch('preferred_religion_ids');
   const prefAgeMin = watch('pref_age_min');
   const prefAgeMax = watch('pref_age_max');
@@ -90,14 +88,19 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
           setLanguages(l.data ?? []);
           setReligions(r.data ?? []);
 
-          const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null }) | null;
+          const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null; language_id?: number | null }) | null;
           if (my) {
             setValue('first_name', my.first_name ?? '');
             setValue('middle_name', my.middle_name ?? '');
             setValue('last_name', my.last_name ?? '');
             setValue('birth_date', my.birth_date ? my.birth_date.slice(0, 10) : '');
             setValue('gender_id', my.gender_id != null ? String(my.gender_id) : '');
-            setValue('language_id', my.language_id != null ? String(my.language_id) : '');
+            const myLanguages = my.languages?.map(language => String(language.id)) ?? [];
+            if (myLanguages.length > 0) {
+              setValue('language_ids', myLanguages);
+            } else if (my.language_id != null) {
+              setValue('language_ids', [String(my.language_id)]);
+            }
             setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
             // Self attributes
             setValue('self_is_smoker', my.is_smoker != null ? String(my.is_smoker) : '');
@@ -117,14 +120,19 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
           setLanguages(l.data ?? []);
           setReligions(r.data ?? []);
 
-          const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null }) | null;
+          const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null; language_id?: number | null }) | null;
+          const myLanguageIds = my?.languages?.map(language => String(language.id)) ?? [];
           if (my) {
             setValue('first_name', my.first_name ?? '');
             setValue('middle_name', my.middle_name ?? '');
             setValue('last_name', my.last_name ?? '');
             setValue('birth_date', my.birth_date ? my.birth_date.slice(0, 10) : '');
             setValue('gender_id', my.gender_id != null ? String(my.gender_id) : '');
-            setValue('language_id', my.language_id != null ? String(my.language_id) : '');
+            if (myLanguageIds.length > 0) {
+              setValue('language_ids', myLanguageIds);
+            } else if (my.language_id != null) {
+              setValue('language_ids', [String(my.language_id)]);
+            }
             setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
             // Self attributes
             setValue('self_is_smoker', my.is_smoker != null ? String(my.is_smoker) : '');
@@ -138,8 +146,10 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
             setValue('pref_wants_children', pref.wants_children != null ? String(pref.wants_children) : '');
             setValue('pref_is_smoker', pref.is_smoker != null ? String(pref.is_smoker) : '');
             setValue('preferred_gender_ids', pref.genders?.map(g => String(g.id)) ?? []);
-            setValue('preferred_language_ids', pref.languages?.map(l => String(l.id)) ?? []);
             setValue('preferred_religion_ids', pref.religions?.map(r => String(r.id)) ?? []);
+            if (myLanguageIds.length === 0 && pref.languages?.length) {
+              setValue('language_ids', pref.languages.map(language => String(language.id)));
+            }
           }
         }
       } finally {
@@ -187,7 +197,7 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
         last_name: data.last_name.trim(),
         birth_date: new Date(data.birth_date).toISOString(),
         gender_id: Number(data.gender_id),
-        language_id: Number(data.language_id),
+        language_ids: data.language_ids.map(Number),
         religion_id: Number(data.religion_id),
         // Backend ProfileCreate: is_smoker required boolean, wants_children optional
         is_smoker: data.self_is_smoker === '' ? false : data.self_is_smoker === 'true',
@@ -201,7 +211,7 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
         wants_children: data.pref_wants_children === '' ? null : data.pref_wants_children === 'true',
         is_smoker: data.pref_is_smoker === '' ? null : data.pref_is_smoker === 'true',
         gender_ids: data.preferred_gender_ids.map(Number),
-        language_ids: data.preferred_language_ids.map(Number),
+        language_ids: data.language_ids.map(Number),
         religion_ids: data.preferred_religion_ids.map(Number),
       };
 
@@ -245,10 +255,36 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
               register={register as unknown as UseFormRegister<SetupProfileForm>}
               errors={errors as unknown as FieldErrors<SetupProfileForm>}
               genders={genders}
-              languages={languages}
               religions={religions}
               validateAge={validateAge}
             />
+
+            <div className="mt-app-gap">
+              <FormField id="language_ids" label="Languages" error={errors.language_ids?.message}>
+                <input
+                  type="hidden"
+                  {...register('language_ids', {
+                    validate: (val: string[]) => (val && val.length > 0) || 'Select at least one language'
+                  })}
+                />
+                <div className="flex flex-wrap gap-2">
+                  {languages.map(language => (
+                    <button
+                      key={language.id}
+                      type="button"
+                      onClick={() => setValue('language_ids', toggleSelection(selectedLanguageIds, String(language.id)), { shouldValidate: true })}
+                      className={`px-4 py-2 rounded-lg border transition-colors ${
+                        selectedLanguageIds.includes(String(language.id))
+                          ? 'bg-accentPrimary text-white border-accentPrimary'
+                          : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
+                      }`}
+                    >
+                      {language.name}
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+            </div>
 
             {/* Personal attributes (self) */}
             <div className="mt-8">
@@ -384,26 +420,6 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
               </FormField>
             </div>
 
-            <div className="mt-app-gap">
-              <FormField id="preferred_language_ids" label="Preferred languages" error={errors.preferred_language_ids?.message}>
-                <div className="flex flex-wrap gap-2">
-                  {languages.map(language => (
-                    <button
-                      key={language.id}
-                      type="button"
-                      onClick={() => setValue('preferred_language_ids', toggleSelection(selectedPreferredLanguageIds, String(language.id)))}
-                      className={`px-4 py-2 rounded-lg border transition-colors ${
-                        selectedPreferredLanguageIds.includes(String(language.id))
-                          ? 'bg-accentPrimary text-white border-accentPrimary'
-                          : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
-                      }`}
-                    >
-                      {language.name}
-                    </button>
-                  ))}
-                </div>
-              </FormField>
-            </div>
 
             <div className="mt-app-gap">
               <FormField id="preferred_religion_ids" label="Preferred religions" error={errors.preferred_religion_ids?.message}>
@@ -466,10 +482,36 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
           register={register as unknown as UseFormRegister<SetupProfileForm>}
           errors={errors as unknown as FieldErrors<SetupProfileForm>}
           genders={genders}
-          languages={languages}
           religions={religions}
           validateAge={validateAge}
         />
+
+        <div className="mt-app-gap">
+          <FormField id="language_ids" label="Languages" error={errors.language_ids?.message}>
+            <input
+              type="hidden"
+              {...register('language_ids', {
+                validate: (val: string[]) => (val && val.length > 0) || 'Select at least one language'
+              })}
+            />
+            <div className="flex flex-wrap gap-2">
+              {languages.map(language => (
+                <button
+                  key={language.id}
+                  type="button"
+                  onClick={() => setValue('language_ids', toggleSelection(selectedLanguageIds, String(language.id)), { shouldValidate: true })}
+                  className={`px-4 py-2 rounded-lg border transition-colors ${
+                    selectedLanguageIds.includes(String(language.id))
+                      ? 'bg-accentPrimary text-white border-accentPrimary'
+                      : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
+                  }`}
+                >
+                  {language.name}
+                </button>
+              ))}
+            </div>
+          </FormField>
+        </div>
 
         {/* Personal attributes (self) */}
         <div className="mt-8">
@@ -605,26 +647,6 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
           </FormField>
         </div>
 
-        <div className="mt-app-gap">
-          <FormField id="preferred_language_ids" label="Preferred languages" error={errors.preferred_language_ids?.message}>
-            <div className="flex flex-wrap gap-2">
-              {languages.map(language => (
-                <button
-                  key={language.id}
-                  type="button"
-                  onClick={() => setValue('preferred_language_ids', toggleSelection(selectedPreferredLanguageIds, String(language.id)))}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
-                    selectedPreferredLanguageIds.includes(String(language.id))
-                      ? 'bg-accentPrimary text-white border-accentPrimary'
-                      : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
-                  }`}
-                >
-                  {language.name}
-                </button>
-              ))}
-            </div>
-          </FormField>
-        </div>
 
         <div className="mt-app-gap">
           <FormField id="preferred_religion_ids" label="Preferred religions" error={errors.preferred_religion_ids?.message}>

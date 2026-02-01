@@ -1,16 +1,15 @@
-from typing import Optional
+from typing import Optional, List
 
-from sqlalchemy import String, UniqueConstraint
-from sqlalchemy.orm import Relationship
-from sqlmodel import Field, SQLModel
+from sqlalchemy import String
+from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime, timezone
 
 from backend.persistence import Gender, Religion
 from backend.persistence.model.language import Language
 
 
-class PreferenceLanguageLink(SQLModel, table=False):
-    preference_user_id: str = Field(
+class ProfileLanguageLink(SQLModel, table=True):
+    profile_user_id: str = Field(
         foreign_key="profiles.user_id",
         primary_key=True,
         sa_type=String(256),
@@ -31,6 +30,11 @@ class Profile(SQLModel, table=True):
     religion_id: int = Field(foreign_key="religions.id")
     is_smoker: bool = Field(default=False)
     wants_children: Optional[bool] = Field(default=None)
+
+    languages: Optional[List[Language]] = Relationship(
+        link_model=ProfileLanguageLink,
+        sa_relationship_kwargs={"lazy": "joined"},
+    )
 
     #gender: Gender = Relationship()
     #religion: Religion = Relationship()

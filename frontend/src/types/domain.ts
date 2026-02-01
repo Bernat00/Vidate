@@ -22,7 +22,7 @@ export interface ProfileMine {
   last_name?: string | null;
   birth_date?: string | null; // ISO date/datetime string
   gender_id?: number | null;
-  language_id?: number | null;
+  languages?: ProfileOption[];
   religion_id?: number | null;
   [key: string]: unknown;
 }
@@ -33,7 +33,7 @@ export interface SetupProfileForm {
   last_name: string;
   birth_date: string; // YYYY-MM-DD
   gender_id: string; // keep form state as string
-  language_id: string;
+  language_ids: string[];
   religion_id: string;
 }
 
@@ -43,7 +43,7 @@ export interface SetupProfilePayload {
   last_name: string | null;
   birth_date: string | null; // ISO datetime string
   gender_id: number | null;
-  language_id: number | null;
+  language_ids: number[];
   religion_id: number | null;
   // Updated to match backend ProfileCreate schema
   is_smoker: boolean;
@@ -97,7 +97,7 @@ export interface MatchItem {
     last_name?: string | null;
     birth_date?: string | null;
     gender_id?: number | null;
-    language_id?: number | null;
+    languages?: ProfileOption[];
     religion_id?: number | null;
     is_smoker?: boolean | null;
     wants_children?: boolean | null;

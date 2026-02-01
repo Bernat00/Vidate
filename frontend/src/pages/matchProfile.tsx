@@ -116,7 +116,12 @@ export default function MatchProfile() {
                   value={formatDate(match.profile?.birth_date) || 'Unknown'}
                 />
                 <InfoItem label="Gender" value={match.profile?.gender_id ?? 'Unknown'} />
-                <InfoItem label="Language" value={match.profile?.language_id ?? 'Unknown'} />
+                <InfoItem
+                  label="Languages"
+                  value={match.profile?.languages?.length
+                    ? match.profile.languages.map(language => language.name).join(', ')
+                    : 'Unknown'}
+                />
                 <InfoItem label="Religion" value={match.profile?.religion_id ?? 'Unknown'} />
                 <InfoItem
                   label="Smoker"

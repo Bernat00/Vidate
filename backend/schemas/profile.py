@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, field_validator
-from typing import Optional
+from typing import Optional, List
 
 
 class ProfileCreate(BaseModel):
@@ -11,7 +11,7 @@ class ProfileCreate(BaseModel):
     last_name: str
     birth_date: datetime
     gender_id: int
-    language_ids: int
+    language_ids: List[int]
     religion_id: int
     is_smoker: bool
     wants_children: Optional[bool] = None
