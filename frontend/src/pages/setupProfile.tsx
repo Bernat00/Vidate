@@ -561,7 +561,7 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
               type="number"
               min={18}
               placeholder="Any"
-              className={commonInputClasses}
+              className={`${commonInputClasses} p-2`}
               {...register('pref_age_min', {
                 validate: (val: string) => {
                   if (!val) return true;
@@ -583,7 +583,7 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
               id="pref_age_max"
               type="number"
               placeholder="Any"
-              className={commonInputClasses}
+              className={`${commonInputClasses} p-2`}
               {...register('pref_age_max', {
                 validate: (val: string) => {
                   if (!val) return true;
