@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Spinner } from 'flowbite-react';
-import { ShieldAlert, Trash2, Users } from 'lucide-react';
+import {ShieldAlert, Trash2, Users, Heart} from 'lucide-react';
 import api from '../api.ts';
 import type { MatchItem } from '../types/domain.ts';
-import { getDisplayName } from '../helpers.ts';
+import { calculateAge, getDisplayName } from '../helpers.ts';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import EmptyState from '../components/common/EmptyState';
 import InfoItem from '../components/common/InfoItem';
@@ -90,30 +90,23 @@ export default function MatchProfile() {
             <div className="w-full bg-bgPrimary/95 border border-borderAccentLight rounded-3xl shadow-2xl p-6 md:p-8 space-y-8">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-textSecondary">Match profile</p>
+                  <p className="text-xs font-semibold tracking-wide text-textSecondary/80">Match profile</p>
                   <h1 className="mt-2 text-3xl font-bold text-textAccent">{getDisplayName(match)}</h1>
-                  {matchedAtLabel && (
-                    <p className="mt-2 text-sm text-textSecondary">Matched {matchedAtLabel}</p>
-                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {match.profile?.user_id && (
-                    <span className="inline-flex items-center rounded-full border border-borderAccentLight bg-bgSecondary/60 px-3 py-1 text-xs font-semibold text-textSecondary">
-                      User ID: {match.profile.user_id}
-                    </span>
-                  )}
                   {matchedAtLabel && (
-                    <span className="inline-flex items-center rounded-full border border-borderAccentLight bg-bgSecondary/60 px-3 py-1 text-xs font-semibold text-textSecondary">
-                      Matched {matchedAtLabel}
-                    </span>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-borderAccentLight bg-bgSecondary/60 px-4 py-1.5 text-xs font-semibold text-textSecondary shadow-sm">
+                      <Heart className="w-3.5 h-3.5 text-textAccent" />
+                      Matched on {matchedAtLabel}
+                    </div>
                   )}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <InfoItem
-                  label="Birth date"
-                  value={formatDate(match.profile?.birth_date) || 'Unknown'}
+                  label="Age"
+                  value={calculateAge(match.profile?.birth_date)}
                 />
                 <InfoItem label="Gender" value={match.profile?.gender_id ?? 'Unknown'} />
                 <InfoItem

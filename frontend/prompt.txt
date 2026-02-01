@@ -1,3 +1,5 @@
 in the profile page stop using all uppercase. remove the user id. improve the matched badge. dont make the danger button glow. and display the age of the user instead of their birth date.
 
 in the /my-matches page instead of vidate display the full name of the user on the top.
+
+instead of the default alert create a

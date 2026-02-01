@@ -1,12 +1,15 @@
 import type { ReactElement } from 'react';
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ChatInput from "../components/ChatInput.tsx";
 import ChatColumn from '../components/layout/ChatColumn';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MessageList from '../components/chat/MessageList';
 import EmptyState from '../components/common/EmptyState';
 import { MessageSquare } from 'lucide-react';
+import { getDisplayName } from '../helpers.ts';
+import type { MatchItem } from '../types/domain.ts';
+import api from '../api.ts';
 
 const DUMMY_MESSAGES = [
     {
@@ -29,19 +32,37 @@ const DUMMY_MESSAGES = [
 
 
 export default function MyMatches(): ReactElement {
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const location = useLocation();
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(
+    (location.state as { selectedUserId?: string | null } | null)?.selectedUserId ?? null
+  );
+  const [matches, setMatches] = useState<MatchItem[]>([]);
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const response = await api.get<MatchItem[]>('/matches/mine');
+        setMatches(response.data ?? []);
+      } catch (error) {
+        console.error("Failed to fetch matches:", error);
+      }
+    };
+    fetchMatches();
+  }, []);
 
   useEffect(() => {
     const stateUserId = (location.state as { selectedUserId?: string | null } | null)?.selectedUserId ?? null;
-    if (stateUserId) {
+    if (stateUserId !== selectedUserId) {
       setSelectedUserId(stateUserId);
     }
-  }, [location.state]);
+  }, [location.state, selectedUserId]);
+
+  const selectedMatch = matches.find(m => m.profile?.user_id === selectedUserId);
+  const title = selectedMatch ? getDisplayName(selectedMatch) : 'Vidate';
 
   return (
     <DashboardLayout
-      title="Vidate"
+      title={title}
       selectedUserId={selectedUserId}
       onSelectUserId={setSelectedUserId}
     >

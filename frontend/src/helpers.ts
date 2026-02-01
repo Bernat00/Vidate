@@ -48,12 +48,29 @@ export function getDisplayName(match: MatchItem): string {
   const parts = [profile.first_name, profile.middle_name, profile.last_name]
     .filter((part) => Boolean(part))
     .map((part) => String(part).trim())
-    .filter((part) => part.length > 0);
+    .join(' ');
 
-  return parts.length > 0 ? parts.join(' ') : 'Match';
+  return parts || 'Match';
+}
+
+export function calculateAge(birthDate?: string | null): string {
+  if (!birthDate) return 'Unknown';
+
+  const birth = new Date(birthDate);
+  const today = new Date();
+
+  if (isNaN(birth.getTime())) return 'Unknown';
+
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  return age.toString();
 }
 
 export function getAvatarUrl(match: MatchItem): string {
   return match.profile?.profilePicture || match.profile?.avatar || 'https://via.placeholder.com/150';
 }
-

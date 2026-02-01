@@ -68,8 +68,8 @@ function CombinedFormFields({
                 onClick={() => setValue('language_ids', toggleSelection(selectedLanguageIds, String(language.id)), { shouldValidate: true })}
                 className={`px-4 py-2 rounded-lg border transition-colors ${
                   selectedLanguageIds.includes(String(language.id))
-                    ? 'bg-accentPrimary text-white border-accentPrimary'
-                    : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
+                    ? 'bg-bgAccentPrimary text-textPrimary border-borderAccent'
+                    : 'bg-bgPrimary text-textSecondary border-borderAccentLight hover:border-borderAccent'
                 }`}
               >
                 {language.name}
@@ -180,8 +180,8 @@ function CombinedFormFields({
                 onClick={() => setValue('preferred_gender_ids', toggleSelection(selectedPreferredGenderIds, String(gender.id)))}
                 className={`px-4 py-2 rounded-lg border transition-colors ${
                   selectedPreferredGenderIds.includes(String(gender.id))
-                    ? 'bg-accentPrimary text-white border-accentPrimary'
-                    : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
+                    ? 'bg-bgAccentPrimary text-textPrimary border-borderAccent'
+                    : 'bg-bgPrimary text-textSecondary border-borderAccentLight hover:border-borderAccent'
                 }`}
               >
                 {gender.name}
@@ -201,8 +201,8 @@ function CombinedFormFields({
                 onClick={() => setValue('preferred_religion_ids', toggleSelection(selectedPreferredReligionIds, String(religion.id)))}
                 className={`px-4 py-2 rounded-lg border transition-colors ${
                   selectedPreferredReligionIds.includes(String(religion.id))
-                    ? 'bg-accentPrimary text-white border-accentPrimary'
-                    : 'bg-bgPrimary text-textSecondary border-borderAccent hover:border-accentPrimary'
+                    ? 'bg-bgAccentPrimary text-textPrimary border-borderAccent'
+                    : 'bg-bgPrimary text-textSecondary border-borderAccentLight hover:border-borderAccent'
                 }`}
               >
                 {religion.name}
