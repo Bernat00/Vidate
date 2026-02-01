@@ -73,7 +73,7 @@ const Sidebar = ({ isOpen, onClose, selectedUserId, onSelectUserId }: SidebarPro
       <ul className="space-y-3 mx-2 mt-4 font-medium text-textPrimary overflow-y-auto max-h-[calc(100vh-5rem)]">
         {loading ? (
            <li className="p-4 flex justify-center">
-             <Spinner color="purple" size="md" />
+             <Spinner color="purple" size="md" className="animate-spin" />
            </li>
         ) : matches.length === 0 ? (
            <EmptyState 

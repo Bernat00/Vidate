@@ -75,7 +75,7 @@ export default function MatchProfile() {
       <div className="flex-1 px-4 py-8">
         {loading ? (
           <div className="flex justify-center items-center w-full min-h-[60vh]">
-            <Spinner color="purple" size="lg" />
+            <Spinner color="purple" size="lg" className="animate-spin" />
           </div>
         ) : !match?.profile ? (
           <Section maxWidth="lg">
