@@ -1,5 +1,3 @@
-import { Spinner } from 'flowbite-react';
-
 interface CenteredLoaderProps {
   text?: string;
 }
@@ -7,7 +5,10 @@ interface CenteredLoaderProps {
 export default function CenteredLoader({ text = 'Loading...' }: CenteredLoaderProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-bgPrimary text-textSecondary gap-4">
-      <Spinner size="xl" color="purple" aria-label="Loading" className="animate-spin" />
+      <div
+        aria-label="Loading"
+        className="h-10 w-10 rounded-full border-4 border-borderAccentLight border-t-borderAccent centered-loader-spin"
+      />
       {text && <span className="text-sm font-medium">{text}</span>}
     </div>
   );
