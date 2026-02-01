@@ -7,7 +7,7 @@ type GradientPageProps = {
 
 export default function GradientPage({ children, className = '' }: GradientPageProps): ReactElement {
   return (
-    <div className={`bg-gradient-to-t from-bgAccentPrimary to-bgAccentSecondary min-h-[calc(100vh-4rem)] ${className}`.trim()}>
+    <div className={`bg-gradient-to-t from-bgAccentPrimary to-bgAccentSecondary h-[calc(100vh-4rem)] ${className}`.trim()}>
       {children}
     </div>
   );
