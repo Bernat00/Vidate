@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {LogOut} from 'lucide-react';
 import api from '../api.ts';
-import GradientPage from '../components/layout/GradientPage';
 import Section from '../components/layout/Section';
 import PrimaryButton from '../components/form/PrimaryButton';
 import RHFTextInput from '../components/form/RHFTextInput';
@@ -84,7 +83,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <GradientPage className="p-app-padding">
+    <div className="p-app-padding">
       <Section maxWidth="2xl">
         {/* Top actions */}
         <div className="w-full mb-4">
@@ -173,6 +172,6 @@ export default function ProfilePage() {
         {/* Profile Setup section (edit mode) */}
         <SetupProfile isNewUser={false} />
       </Section>
-    </GradientPage>
+    </div>
   );
 }

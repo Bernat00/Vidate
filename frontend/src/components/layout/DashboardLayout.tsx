@@ -4,7 +4,6 @@ import Sidebar from '../sidebar';
 import SidebarOverlay from './SidebarOverlay';
 import MobileTopBar from './MobileTopBar';
 import { Menu } from 'lucide-react';
-import GradientPage from './GradientPage';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -22,19 +21,18 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <GradientPage>
-      <div className="flex h-full relative">
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          selectedUserId={selectedUserId}
-          onSelectUserId={onSelectUserId}
-        />
+    <div className="flex flex-1 relative min-h-0">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        selectedUserId={selectedUserId}
+        onSelectUserId={onSelectUserId}
+      />
 
-        <SidebarOverlay open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <SidebarOverlay open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-        <div className="flex-1 w-full lg:ml-56 flex flex-col">
-          <MobileTopBar
+      <div className="flex-1 w-full lg:ml-56 flex flex-col">
+        <MobileTopBar
             title={title}
             left={
               <button
@@ -47,13 +45,11 @@ export default function DashboardLayout({
             }
           />
 
-          <main className="flex-1 flex flex-col">
-            {children}
-          </main>
+        <main className="flex-1 flex flex-col">
+          {children}
+        </main>
 
-          {/*<Navbar />*/}
-        </div>
       </div>
-    </GradientPage>
+    </div>
   );
 }

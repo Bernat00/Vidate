@@ -465,7 +465,7 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
 
   if (isNewUser) {
     return (
-      <GradientPage className="flex items-center justify-center p-app-padding">
+      <GradientPage className="flex items-center justify-center p-app-padding" isScrollable={true}>
         <Section maxWidth="2xl">
           <div className="w-full bg-bgPrimary border border-borderAccent rounded-2xl shadow-2xl p-6">
             <h1 className="text-2xl font-bold text-textAccent mb-6">Complete your profile</h1>

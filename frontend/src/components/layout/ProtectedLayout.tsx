@@ -1,11 +1,14 @@
 import { Outlet } from 'react-router-dom';
 import Navbar from '../navbar';
+import GradientPage from './GradientPage';
 
 export default function ProtectedLayout() {
   return (
-    <div className="min-h-screen bg-bgPrimary pb-16">
-      <Outlet />
-      <Navbar />
-    </div>
+    <GradientPage>
+      <div className="min-h-screen pb-16 flex flex-col">
+        <Outlet />
+        <Navbar />
+      </div>
+    </GradientPage>
   );
 }

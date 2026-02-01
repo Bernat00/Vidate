@@ -7,7 +7,7 @@ import Section from '../components/layout/Section';
 
 const LandingPage = () => {
   return (
-    <GradientPage className="flex items-center justify-center px-4 py-8">
+    <GradientPage className="flex items-center justify-center px-4 py-8" isScrollable={true}>
       <Section className="grid lg:grid-cols-12 lg:gap-8 xl:gap-0 lg:py-16">
         <Hero
           title="Find Your Perfect Match, Live!"
