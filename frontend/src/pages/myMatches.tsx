@@ -198,11 +198,11 @@ export default function MyMatches(): ReactElement {
     >
       <ChatColumn>
         {selectedUserId ? (
-      <div className="flex flex-col max-h-[calc(100vh-6rem)] overflow-hidden mb-2">
+      <div className="flex flex-col max-h-[calc(100vh-9rem)] lg:max-h-[calc(100vh-6rem)] overflow-hidden mb-2">
           {/* The MessageList now handles its own scrolling */}
           <MessageList
             messages={messages}
-            className="flex-1 overflow-y-auto"
+            className="flex-1 overflow-y-auto mb-2"
             // scrollRef={scrollContainerRef}
             // onScroll={handleScroll}
           />
