@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional, Literal
+from typing import Optional
 
 from sqlmodel import SQLModel, Field
 
@@ -17,8 +17,8 @@ class ChatEvent(SQLModel, table=True):
     type: str = Field(index=True, nullable=False)
 
     match_id: int = Field(foreign_key="matches.id", nullable=False)
-    originator_id: int = Field(foreign_key="users.id", nullable=False)
-    recipient_id: int = Field(foreign_key="users.id", nullable=False)
+    originator_id: str = Field(foreign_key="users.id", nullable=False)
+    recipient_id: str = Field(foreign_key="users.id", nullable=False)
 
     timestamp: datetime | None = Field(nullable=False, default_factory=lambda: datetime.now(timezone.utc))
 

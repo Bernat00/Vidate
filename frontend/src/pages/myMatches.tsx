@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ChatInput from "../components/ChatInput.tsx";
 import ChatColumn from '../components/layout/ChatColumn';
@@ -8,7 +8,7 @@ import MessageList from '../components/chat/MessageList';
 import EmptyState from '../components/common/EmptyState';
 import { MessageSquare } from 'lucide-react';
 import { getDisplayName } from '../helpers.ts';
-import type { MatchItem, ChatMessage as ChatMessageType } from '../types/domain.ts';
+import type { MatchItem, ChatMessage as ChatMessageType, ChatEventOut } from '../types/domain.ts';
 import api from '../api.ts';
 import { useWebSocket } from '../context/webSocketContext';
 import { useAuth } from '../context/authContext';
@@ -18,9 +18,67 @@ export default function MyMatches(): ReactElement {
   const navigate = useNavigate();
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const ws = useWebSocket();
   const { user } = useAuth()!;
+
+  const selectedUserId = (location.state as { selectedUserId?: string | null } | null)?.selectedUserId ?? null;
+  const selectedMatch = matches.find(m => m.profile?.user_id === selectedUserId);
+  const selectedMatchId = selectedMatch?.match_id?.toString();
+
+  const fetchMessages = useCallback(async (matchId: string, lastId?: number | string) => {
+    if (loadingMessages || (!hasMore && lastId)) return;
+    setLoadingMessages(true);
+    try {
+      const response = await api.get<ChatEventOut[]>(`/matches/${matchId}/events`, {
+        params: { last_id: lastId }
+      });
+      const newChatEvents = response.data || [];
+
+      const mappedMessages: ChatMessageType[] = newChatEvents.map(event => ({
+        id: event.id,
+        sender: event.originator_id === user?.id ? 'You' : getDisplayName(selectedMatch!),
+        avatar: event.originator_id === user?.id
+          ? 'https://i.pravatar.cc/150?u=me'
+          : 'https://i.pravatar.cc/150?u=match',
+        text: event.content || '',
+        time: new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isMe: event.originator_id === user?.id,
+      })).reverse();
+
+      if (lastId) {
+        // Pagination: keep scroll position
+        const container = scrollContainerRef.current;
+        const oldScrollHeight = container?.scrollHeight || 0;
+
+        setMessages(prev => [...mappedMessages, ...prev]);
+
+        // Use timeout to wait for DOM update
+        setTimeout(() => {
+          if (container) {
+            container.scrollTop = container.scrollHeight - oldScrollHeight;
+          }
+        }, 0);
+      } else {
+        setMessages(mappedMessages);
+        // Scroll to bottom on initial load
+        setTimeout(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          }
+        }, 0);
+      }
+
+      setHasMore(newChatEvents.length === 30);
+    } catch (error) {
+      console.error("Failed to fetch messages:", error);
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, [loadingMessages, hasMore, user?.id, selectedMatch]);
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -34,9 +92,23 @@ export default function MyMatches(): ReactElement {
     fetchMatches();
   }, []);
 
-  const selectedUserId = (location.state as { selectedUserId?: string | null } | null)?.selectedUserId ?? null;
-  const selectedMatch = matches.find(m => m.profile?.user_id === selectedUserId);
-  const selectedMatchId = selectedMatch?.match_id?.toString();
+  useEffect(() => {
+    if (selectedMatchId) {
+      setMessages([]);
+      setHasMore(true);
+      fetchMessages(selectedMatchId);
+    }
+  }, [selectedMatchId]);
+
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (container && container.scrollTop === 0 && hasMore && !loadingMessages && selectedMatchId) {
+      const oldestMessage = messages[0];
+      if (oldestMessage && typeof oldestMessage.id === 'number') {
+        fetchMessages(selectedMatchId, oldestMessage.id);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!ws) return;
@@ -65,11 +137,19 @@ export default function MyMatches(): ReactElement {
       };
 
       setMessages(prev => [...prev, newMessage]);
+
+      // Scroll to bottom on receive
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        }
+      }, 0);
     });
   }, [ws, selectedMatchId, user?.id, selectedMatch]);
 
   const handleSelectUserId = (userId: string | null) => {
     setMessages([]); // Clear messages when switching matches
+    setHasMore(true);
     navigate('/my-matches', { state: { selectedUserId: userId }, replace: true });
   };
 
@@ -99,6 +179,13 @@ export default function MyMatches(): ReactElement {
     };
 
     setMessages(prev => [...prev, newMessage]);
+
+    // Scroll to bottom on send
+    setTimeout(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      }
+    }, 0);
   };
 
   const title = selectedMatch ? getDisplayName(selectedMatch) : 'Vidate';
@@ -112,8 +199,12 @@ export default function MyMatches(): ReactElement {
       <ChatColumn>
         {selectedUserId ? (
           <>
-            <div className="flex-1 overflow-y-auto mb-4">
-              <MessageList messages={messages} />
+            <div
+              className="flex-1 overflow-y-auto mb-4"
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+            >
+              <MessageList messages={messages} className="overflow-visible" />
             </div>
             <ChatInput onSendMessage={onSendMessage} />
           </>

@@ -106,3 +106,14 @@ export interface MatchItem {
   } | null;
   matched_at?: string | null;
 }
+
+export interface ChatEventOut {
+  id: number;
+  type: string;
+  match_id: number;
+  originator_id: string; // Adjusted to string as user ID in backend is str
+  recipient_id: string; // Adjusted to string
+  timestamp: string;
+  content?: string | null;
+  end_time?: string | null;
+}

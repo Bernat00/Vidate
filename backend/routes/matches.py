@@ -1,25 +1,13 @@
-import uuid
-
 from typing_extensions import deprecated
-from watchfiles import awatch
 
-from backend.routes import repoDep
-from ..config import Config
-from ..persistence.model.match import Match
-from ..persistence.model.user import User
 from . import repoDep
+from ..persistence.model.match import Match
 from ..persistence.repository.match import SameValueError
-from ..schemas.auth import Token, TokenData
-from ..schemas.user import UserCreate, UserOut
 from ..schemas.chat_event import ChatEventOut
 
-from datetime import datetime, timedelta, timezone
-from typing import Annotated, List, Optional
+from typing import List, Optional
 
-import jwt
-from fastapi import Depends, HTTPException, status, APIRouter
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jwt.exceptions import InvalidTokenError
+from fastapi import HTTPException, status, APIRouter
 
 
 from . import get_and_auth_current_user
