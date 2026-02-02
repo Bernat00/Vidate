@@ -198,7 +198,7 @@ export default function MyMatches(): ReactElement {
     >
       <ChatColumn>
         {selectedUserId ? (
-      <div className="flex flex-col max-h-[calc(100vh-9rem)] lg:max-h-[calc(100vh-6rem)] overflow-hidden mb-2">
+      <div className="flex flex-col max-h-[calc(100vh-8.6rem)] lg:max-h-[calc(100vh-5.5rem)] overflow-hidden mb-2">
           {/* The MessageList now handles its own scrolling */}
           <MessageList
             messages={messages}
