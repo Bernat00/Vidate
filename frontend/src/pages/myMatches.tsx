@@ -21,6 +21,7 @@ export default function MyMatches(): ReactElement {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isFetchingRef = useRef(false);
 
   const ws = useWebSocket();
   const { user } = useAuth()!;
@@ -30,11 +31,16 @@ export default function MyMatches(): ReactElement {
   const selectedMatchId = selectedMatch?.match_id?.toString();
 
   const fetchMessages = useCallback(async (matchId: string, lastId?: number | string) => {
-    if (loadingMessages || (!hasMore && lastId)) return;
+    if (isFetchingRef.current || (!hasMore && lastId)) return;
+
+    isFetchingRef.current = true;
     setLoadingMessages(true);
     try {
       const response = await api.get<ChatEventOut[]>(`/matches/${matchId}/events`, {
-        params: { last_id: lastId }
+        params: {
+          last_id: lastId,
+          limit: 30
+        }
       });
       const newChatEvents = response.data || [];
 
@@ -77,8 +83,9 @@ export default function MyMatches(): ReactElement {
       console.error("Failed to fetch messages:", error);
     } finally {
       setLoadingMessages(false);
+      isFetchingRef.current = false;
     }
-  }, [loadingMessages, hasMore, user?.id, selectedMatch]);
+  }, [hasMore, user?.id, selectedMatch]);
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -98,11 +105,12 @@ export default function MyMatches(): ReactElement {
       setHasMore(true);
       fetchMessages(selectedMatchId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMatchId]);
 
   const handleScroll = () => {
     const container = scrollContainerRef.current;
-    if (container && container.scrollTop === 0 && hasMore && !loadingMessages && selectedMatchId) {
+    if (container && container.scrollTop === 0 && hasMore && !isFetchingRef.current && selectedMatchId) {
       const oldestMessage = messages[0];
       if (oldestMessage && typeof oldestMessage.id === 'number') {
         fetchMessages(selectedMatchId, oldestMessage.id);
@@ -203,8 +211,9 @@ export default function MyMatches(): ReactElement {
           <MessageList
             messages={messages}
             className="flex-1 overflow-y-auto mb-2"
-            // scrollRef={scrollContainerRef}
-            // onScroll={handleScroll}
+            scrollRef={scrollContainerRef}
+            onScroll={handleScroll}
+            loadingTop={loadingMessages && messages.length > 0}
           />
 
           <ChatInput onSendMessage={onSendMessage} />
