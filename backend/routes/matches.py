@@ -11,9 +11,10 @@ from . import repoDep
 from ..persistence.repository.match import SameValueError
 from ..schemas.auth import Token, TokenData
 from ..schemas.user import UserCreate, UserOut
+from ..schemas.chat_event import ChatEventOut
 
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, List, Optional
 
 import jwt
 from fastapi import Depends, HTTPException, status, APIRouter
@@ -70,3 +71,20 @@ async def match(match_id: str, repo: repoDep, user: get_and_auth_current_user):
     await repo.match_repo.delete(match)
 
     return 'deleted'
+
+
+@router.get('/{match_id}/events', response_model=List[ChatEventOut])
+async def get_match_events(
+    match_id: int,
+    repo: repoDep,
+    user: get_and_auth_current_user,
+    last_id: Optional[int] = None
+):
+    match = await repo.match_repo.get_by_id(match_id)
+    if not match:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
+
+    if user.id not in [match.user1_id, match.user2_id]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed to view these events")
+
+    return await repo.chat_event_repo.get_paginated_by_match_id(match_id, last_id=last_id)
