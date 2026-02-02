@@ -198,16 +198,17 @@ export default function MyMatches(): ReactElement {
     >
       <ChatColumn>
         {selectedUserId ? (
-          <>
-            <div
-              className="flex-1 overflow-y-auto mb-4"
-              ref={scrollContainerRef}
-              onScroll={handleScroll}
-            >
-              <MessageList messages={messages} className="overflow-visible" />
-            </div>
-            <ChatInput onSendMessage={onSendMessage} />
-          </>
+      <div className="flex flex-col max-h-[calc(100vh-6rem)] overflow-hidden mb-2">
+          {/* The MessageList now handles its own scrolling */}
+          <MessageList
+            messages={messages}
+            className="flex-1 overflow-y-auto"
+            // scrollRef={scrollContainerRef}
+            // onScroll={handleScroll}
+          />
+
+          <ChatInput onSendMessage={onSendMessage} />
+        </div>
         ) : (
           <div className="flex items-center justify-center flex-1">
             <EmptyState
