@@ -27,8 +27,8 @@ button {
     /* Prevent the inner background from visually filling the rounded corners */
     background-clip: padding-box;
     overflow: hidden; /* clip any inner artifacts to the radius */
-    cursor: pointer;
 }
+
 
 /* Force dark styling for native selects and their option popups for better readability */
 select,
