@@ -6,8 +6,11 @@ from . import repoDep
 from ..persistence.model.match import Match
 from ..persistence.repository.match import SameValueError
 from ..schemas.chat_event import ChatEventOut
+from ..schemas.profile import ProfileRead
 
 from typing import List, Optional
+from pydantic import BaseModel
+from datetime import datetime
 
 from fastapi import HTTPException, status, APIRouter
 
@@ -18,15 +21,20 @@ from . import get_and_auth_current_user
 router = APIRouter(prefix='/matches')
 
 
-@router.get('/mine')
+class MatchResponse(BaseModel):
+    profile: ProfileRead
+    matched_at: datetime
+    match_id: int
+
+
+@router.get('/mine', response_model=List[MatchResponse])
 async def mine(repo: repoDep, user: get_and_auth_current_user):
-    await asyncio.sleep(3)
     profiles = await  repo.profile_repo.get_matched_profiles(user.id)
     print(profiles)
     return profiles
 
 
-@router.get('/profile/{partner_id}')
+@router.get('/profile/{partner_id}', response_model=MatchResponse)
 async def get_match_profile(partner_id: str, repo: repoDep, user: get_and_auth_current_user):
     profile = await repo.profile_repo.get_matched_profile(user.id, partner_id)
     if not profile:

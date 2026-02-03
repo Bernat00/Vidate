@@ -3,7 +3,7 @@ from typing import Optional
 
 from sqlmodel import SQLModel, Field
 
-
+# todo cascade when match is deleted
 class ChatEvent(SQLModel, table=True):
     __tablename__ = "chat_events"
 

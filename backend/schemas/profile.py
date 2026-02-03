@@ -3,6 +3,29 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, field_validator
 from typing import Optional, List
 
+from backend.persistence.model.gender import Gender
+from backend.persistence.model.religion import Religion
+from backend.persistence.model.language import Language
+
+
+class ProfileRead(BaseModel):
+    user_id: str
+    first_name: str
+    middle_name: Optional[str] = None
+    last_name: str
+    birth_date: datetime
+    gender_id: int
+    religion_id: Optional[int] = None
+    is_smoker: bool
+    wants_children: Optional[bool] = None
+
+    gender: Optional[Gender] = None
+    religion: Optional[Religion] = None
+    languages: List[Language] = []
+
+    class Config:
+        from_attributes = True
+
 
 class ProfileCreate(BaseModel):
     first_name: str
