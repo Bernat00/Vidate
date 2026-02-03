@@ -1,0 +1,17 @@
+i need you to start working on the real time video chat application using webRTC.
+the page needs to have these states:
+first of all, get user media permissions for camera and microphone. also get their gps coordinates (approximately).
+then the user will need to test their devices (camera and microphone) to make sure they are working properly. show their camera feed and have a volume meter that tests the microphone input.
+now the user will send a message over websocket when they have joined the feed. /home/zemen/PycharmProjects/Vidate/backend/routes/realtime/endpoints.py
+if they ever leave the feed, send a message over websocket.
+as you can see, there is a matchmaking pool in redis. create a simple placeholder matchmaking algorithm that matches two users together based on their wait times.
+the real algo will be implemented later. while they are in a call, remove them from the pool. when they leave, add them back to the pool.
+you can see how my existing websocket messages are like. follow the same structure to handle sending the offers/answers and ice candidates.
+the frontend needs to know some basic properties of the user they will be talking to. their name, age and distance (approximate from gps coords).
+while the webrtc connection is being established, show a loading spinner with these information as well.
+when they are connected keep showing this information. have a button to end the call. the call must end automatically if the other user leaves.
+and also after 2 minutes. show a countdown timer for this.
+after the call ends in any way, the users must give feedback. a simple thumbs up/thumbs down will do for now.
+if they give a thumbs up, over rest api insert a row into the matches table. as you can see there is a confirmation system.
+so if 1 user gives a thumbs up, the other user must also give a thumbs up within 2 minutes for the match to be confirmed.
+record all conversations in a conversation history table as well. the users can only match if they have had a conversation.
