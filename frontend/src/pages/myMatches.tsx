@@ -24,6 +24,7 @@ export default function MyMatches(): ReactElement {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isFetchingRef = useRef(false);
   const initialScrollRef = useRef(false);
+  const shouldScrollToBottomRef = useRef(false);
 
   const ws = useWebSocket();
   const { user } = useAuth()!;
@@ -149,21 +150,28 @@ export default function MyMatches(): ReactElement {
       };
 
       const container = scrollContainerRef.current;
-      const shouldScroll = container ? (container.scrollHeight - container.scrollTop - container.clientHeight < 150) : false;
+      const isNearBottom = container ? (container.scrollHeight - container.scrollTop - container.clientHeight < 300) : false;
+
+      if (isNearBottom || data.originator_id === user?.id) {
+        shouldScrollToBottomRef.current = true;
+      }
 
       setMessages(prev => [...prev, newMessage]);
-
-      // Scroll to bottom on receive if near bottom or it's my own message
-      if (shouldScroll || data.originator_id === user?.id) {
-        setTimeout(() => {
-          scrollContainerRef.current?.scrollTo({
-            top: scrollContainerRef.current.scrollHeight,
-            behavior: 'smooth'
-          });
-        }, 0);
-      }
     });
   }, [ws, selectedMatchId, user?.id, selectedMatch]);
+
+  useEffect(() => {
+    if (shouldScrollToBottomRef.current && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        });
+      });
+      shouldScrollToBottomRef.current = false;
+    }
+  }, [messages]);
 
   const handleSelectUserId = (userId: string | null) => {
     if (userId === selectedUserId) return;
@@ -197,15 +205,8 @@ export default function MyMatches(): ReactElement {
       isMe: true,
     };
 
+    shouldScrollToBottomRef.current = true;
     setMessages(prev => [...prev, newMessage]);
-
-    // Scroll to bottom on send
-    setTimeout(() => {
-      scrollContainerRef.current?.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }, 0);
   };
 
   const title = selectedMatch ? getDisplayName(selectedMatch) : 'Vidate';
