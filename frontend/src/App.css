@@ -61,6 +61,33 @@ option:checked {
     color: #ffffff;
 }
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-borderAccent);
+    border-radius: 20px;
+    border: 1px solid transparent;
+    background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-textAccent);
+}
+
+/* Firefox support */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-borderAccent) transparent;
+}
+
 @theme {
     /* Backgrounds */
     --color-bgPrimary: #020617;
