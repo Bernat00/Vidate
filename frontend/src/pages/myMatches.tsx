@@ -166,6 +166,7 @@ export default function MyMatches(): ReactElement {
   }, [ws, selectedMatchId, user?.id, selectedMatch]);
 
   const handleSelectUserId = (userId: string | null) => {
+    if (userId === selectedUserId) return;
     setMessages([]); // Clear messages when switching matches
     setHasMore(true);
     navigate('/my-matches', { state: { selectedUserId: userId }, replace: true });
@@ -222,7 +223,7 @@ export default function MyMatches(): ReactElement {
               <CenteredLoader text="Loading conversation..." className="flex flex-col items-center justify-center gap-4" />
             </div>
           ) : (
-            <div className="flex flex-col max-h-[calc(100vh-8.6rem)] lg:max-h-[calc(100vh-5.5rem)] overflow-hidden mb-2">
+            <div className="flex flex-col flex-1 max-h-[calc(100vh-8.6rem)] lg:max-h-[calc(100vh-5.5rem)] overflow-hidden mb-2">
               <MessageList
                 messages={messages}
                 className="flex-1 overflow-y-auto mb-2"
