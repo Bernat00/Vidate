@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ChatInput from "../components/ChatInput.tsx";
 import ChatColumn from '../components/layout/ChatColumn';
@@ -105,7 +105,7 @@ export default function MyMatches(): ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMatchId]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!loadingMessages && initialScrollRef.current && messages.length > 0 && scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
       initialScrollRef.current = false;
