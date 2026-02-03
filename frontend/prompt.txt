@@ -15,3 +15,36 @@ after the call ends in any way, the users must give feedback. a simple thumbs up
 if they give a thumbs up, over rest api insert a row into the matches table. as you can see there is a confirmation system.
 so if 1 user gives a thumbs up, the other user must also give a thumbs up within 2 minutes for the match to be confirmed.
 record all conversations in a conversation history table as well. the users can only match if they have had a conversation.
+
+
+Plan: Real-Time Video Chat with WebRTC
+This plan implements a comprehensive real-time video chat system, including matchmaking, WebRTC signaling, call management, and a conversation-based matching system with atomic operations.
+Steps
+IMPORTANT: VIDEOCHAT.TSX REFERS TO THE /HOME PAGE (HOME.TSX)
+Backend: Conversation Model Create backend/persistence/model/conversation.py. Define a Conversation model with user1_id, user2_id, start_time, end_time to satisfy the requirement that users can only match if they have conversed. Add to Repo in repository/conversation.py.
+Backend: Atomic Matchmaking Worker Create a background task in backend/background/matchmaking.py (orchestrated by app.py).
+Implement an atomic Redis operation (using a pipeline or Lua script) to ZPOP (pop 2 users with lowest score/timestamp) from the matchmaking sorted set.
+If a pair is found, remove them from the pool and publish match_found events to both users via Redis PubSub.
+Backend: Realtime Endpoints & Signaling Update backend/routes/realtime/endpoints.py:
+Join/Leave: Handle joined_feed (accept GPS lat/long, add to Redis matchmaking ZSET with timestamp) and left_feed.
+Signaling: Forward offer, answer, and ice_candidate messages between peers identified by the match.
+Conversation Tracking: Create a Conversation record when the connection is established. Update end_time when the call ends.
+Frontend: Video Chat States & Logic Create frontend/src/pages/VideoChat.tsx managing these states:
+PERMISSIONS: Request Camera/Mic/GPS access.
+TESTING: Show local video feed and a volume meter for mic testing.
+WAITING: Connect to WebSocket, send joined_feed, show "Looking for match...".
+CONNECTING: Receive match_found. Show spinner with peer's Name, Age, Distance. Initiate WebRTC offer.
+IN_CALL: Active video call. Show 2-minute countdown. Handle "End Call" or auto-end.
+Frontend: Feedback Interface In VideoChat.tsx, upon call end (state FEEDBACK):
+Fetch and display the peer's full profile (reusing logic/components from MatchProfile.tsx providing a rich view).
+Show "Thumbs Up" / "Thumbs Down" buttons.
+Backend: Feedback & Matching API Create/Update backend/routes/matches.py:
+Endpoint: POST /feedback.
+Atomic Logic:
+If user sends "Thumbs Up": Check DB for an existing pending match from the other user.
+If request exists: Update to confirmed=True.
+If not: Insert new Match row with confirmed=False.
+Verify Conversation exists between users before allowing match.
+Further Considerations
+Atomic Matchmaking: Using Redis ZSET with timestamps guarantees users are served in order. Accessing and removing two users must happen in a single Redis transaction to avoid race conditions.
+Profile Data: The match_found WebSocket event should send minimal data (Name, Age, Distance) for the loading screen, while restart/feedback state fetches the full profile via REST API api.get('/users/{id}/profile').
