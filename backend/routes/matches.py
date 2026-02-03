@@ -1,3 +1,5 @@
+import asyncio
+
 from typing_extensions import deprecated
 
 from . import repoDep
@@ -18,9 +20,18 @@ router = APIRouter(prefix='/matches')
 
 @router.get('/mine')
 async def mine(repo: repoDep, user: get_and_auth_current_user):
+    await asyncio.sleep(3)
     profiles = await  repo.profile_repo.get_matched_profiles(user.id)
     print(profiles)
     return profiles
+
+
+@router.get('/profile/{partner_id}')
+async def get_match_profile(partner_id: str, repo: repoDep, user: get_and_auth_current_user):
+    profile = await repo.profile_repo.get_matched_profile(user.id, partner_id)
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match profile not found")
+    return profile
 
 
 @deprecated(

@@ -97,8 +97,10 @@ export interface MatchItem {
     last_name?: string | null;
     birth_date?: string | null;
     gender_id?: number | null;
+    gender?: ProfileOption | null;
     languages?: ProfileOption[];
     religion_id?: number | null;
+    religion?: ProfileOption | null;
     is_smoker?: boolean | null;
     wants_children?: boolean | null;
     profilePicture?: string | null;

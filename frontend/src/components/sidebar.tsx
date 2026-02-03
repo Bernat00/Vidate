@@ -4,7 +4,7 @@ import api from "../api.ts";
 import { User, X } from 'lucide-react';
 import type { MatchItem } from '../types/domain.ts';
 import ListItem from './common/ListItem';
-import { Spinner } from 'flowbite-react';
+import CenteredLoader from './layout/CenteredLoader';
 import { getDisplayName } from '../helpers.ts';
 import EmptyState from './common/EmptyState';
 import { Users } from 'lucide-react';
@@ -73,7 +73,11 @@ const Sidebar = ({ isOpen, onClose, selectedUserId, onSelectUserId }: SidebarPro
       <ul className="space-y-3 mx-2 mt-4 font-medium text-textPrimary overflow-y-auto max-h-[calc(100vh-5rem)]">
         {loading ? (
            <li className="p-4 flex justify-center">
-             <Spinner color="purple" size="md" className="animate-spin" />
+             <CenteredLoader
+               text=""
+               className="flex items-center justify-center"
+               spinnerSize="h-8 w-8"
+             />
            </li>
         ) : matches.length === 0 ? (
            <EmptyState 

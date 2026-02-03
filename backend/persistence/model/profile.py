@@ -4,7 +4,8 @@ from sqlalchemy import String
 from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime, timezone
 
-from backend.persistence import Gender, Religion
+from backend.persistence.model.gender import Gender
+from backend.persistence.model.religion import Religion
 from backend.persistence.model.language import Language
 
 
@@ -36,10 +37,6 @@ class Profile(SQLModel, table=True):
         sa_relationship_kwargs={"lazy": "joined"},
     )
 
-    #gender: Gender = Relationship()
-    #religion: Religion = Relationship()
+    gender: Gender = Relationship(sa_relationship_kwargs={"lazy": "joined"})
+    religion: Optional[Religion] = Relationship(sa_relationship_kwargs={"lazy": "joined"})
     #language: list[Language] = Relationship()
-
-
-
-

@@ -12,6 +12,7 @@ import Section from '../components/layout/Section';
 import DestructiveButton from '../components/form/DestructiveButton';
 import { useToast } from '../context/toastContext.tsx';
 import { DeleteConfirmationModal } from '../components/common/DeleteConfirmationModal';
+import CenteredLoader from '../components/layout/CenteredLoader';
 
 const formatDate = (value?: string | null) => {
   if (!value) return '';
@@ -38,9 +39,8 @@ export default function MatchProfile() {
 
     const fetchMatch = async () => {
       try {
-        const response = await api.get<MatchItem[]>('/matches/mine');
-        const found = (response.data ?? []).find((item) => item.profile?.user_id === userId) ?? null;
-        setMatch(found);
+        const response = await api.get<MatchItem>(`/matches/profile/${userId}`);
+        setMatch(response.data);
       } catch (error) {
         console.error('Failed to load match profile:', error);
         setMatch(null);
@@ -78,9 +78,10 @@ export default function MatchProfile() {
     <DashboardLayout title="Match Profile">
       <div className="flex-1 px-4 py-8">
         {loading ? (
-          <div className="flex justify-center items-center w-full min-h-[60vh]">
-            <Spinner color="purple" size="lg" className="animate-spin" />
-          </div>
+          <CenteredLoader
+            text="Loading profile..."
+            className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+          />
         ) : !match?.profile ? (
           <Section maxWidth="lg">
             <EmptyState
@@ -112,14 +113,14 @@ export default function MatchProfile() {
                   label="Age"
                   value={calculateAge(match.profile?.birth_date)}
                 />
-                <InfoItem label="Gender" value={match.profile?.gender_id ?? 'Unknown'} />
+                <InfoItem label="Gender" value={match.profile?.gender?.name ?? 'Unknown'} />
                 <InfoItem
                   label="Languages"
                   value={match.profile?.languages?.length
                     ? match.profile.languages.map(language => language.name).join(', ')
                     : 'Unknown'}
                 />
-                <InfoItem label="Religion" value={match.profile?.religion_id ?? 'Unknown'} />
+                <InfoItem label="Religion" value={match.profile?.religion?.name ?? 'Unknown'} />
                 <InfoItem
                   label="Smoker"
                   value={match.profile?.is_smoker === null || match.profile?.is_smoker === undefined
