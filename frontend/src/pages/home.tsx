@@ -352,7 +352,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4 max-w-lg mx-auto w-full">
 
       {/* State: PERMISSIONS (Setup) */}
-      {viewState === 'PERMISSIONS' && (
+      {(viewState === 'PERMISSIONS' || viewState === 'TESTING') && (
         <PermissionRequest
             onGrantMedia={grantMedia}
             onGrantLocation={grantLocation}
@@ -376,7 +376,8 @@ export default function Home() {
            <button onClick={() => {
                send({ type: 'left_feed', payload: {} });
                setViewState('TESTING');
-           }} className="text-textSecondary text-sm underline">Cancel</button>
+               viewStateRef.current = 'TESTING';
+           }} className="text-textSecondary text-sm underline hover:cursor-pointer">Cancel</button>
         </div>
       )}
 
