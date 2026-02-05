@@ -64,11 +64,11 @@ export default function PermissionRequest({
       </div>
 
       {hasMedia && (
-          <div className="w-full relative aspect-[9/16] bg-black rounded-xl overflow-hidden border border-borderAccentLight shadow-2xl">
+          <div className="w-48 mx-auto relative aspect-[9/16] bg-black rounded-xl overflow-hidden border border-borderAccentLight shadow-lg">
               <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover mirror-mode transform scale-x-[-1]" />
-              <div className="absolute bottom-5 left-5 right-5 text-left">
+              <div className="absolute bottom-3 left-3 right-3 text-left">
                   <div className="text-white text-xs mb-1 font-medium drop-shadow-md">Microphone Check</div>
-                  <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden backdrop-blur-sm">
+                  <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden backdrop-blur-sm">
                       <div className="h-full transition-all duration-100" style={{ width: `${Math.min(micLevel * 2, 100)}%`, backgroundColor: 'var(--color-textAccent)' }}></div>
                   </div>
               </div>
