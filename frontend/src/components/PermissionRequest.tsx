@@ -6,17 +6,21 @@ import PrimaryButton from './form/PrimaryButton';
 interface PermissionRequestProps {
   onGrantMedia: () => Promise<boolean>;
   onGrantLocation: () => Promise<boolean>;
-  onContinue: () => void;
+  onStartMatching: () => void;
   hasMedia: boolean;
   hasLocation: boolean;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  micLevel: number;
 }
 
 export default function PermissionRequest({
   onGrantMedia,
   onGrantLocation,
-  onContinue,
+  onStartMatching,
   hasMedia,
-  hasLocation
+  hasLocation,
+  videoRef,
+  micLevel
 }: PermissionRequestProps) {
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
@@ -47,92 +51,106 @@ export default function PermissionRequest({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] max-w-md mx-auto p-6 space-y-8 animate-fade-in text-center">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] max-w-md mx-auto p-4 space-y-6 animate-fade-in text-center w-full">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-textPrimary">Permissions Required</h2>
+        <h2 className="text-2xl font-bold text-textPrimary">
+            {hasMedia ? "You're All Set!" : "Permissions Required"}
+        </h2>
         <p className="text-textSecondary">
-          To match you with people nearby, we need access to your camera, microphone, and location.
+          {hasMedia
+            ? "Check your camera and microphone below before starting."
+            : "To match you with people nearby, we need access to your camera, microphone, and location."}
         </p>
       </div>
 
-      <div className="w-full space-y-4">
-        {/* Media Permission */}
-        <div className={`p-4 rounded-xl border transition-all ${
-          hasMedia 
-            ? 'bg-bgSuccessSoft border-textSuccess' 
-            : 'bg-bgSecondary border-borderAccentLight'
-        }`}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full ${hasMedia ? 'bg-textSuccess text-bgPrimary' : 'bg-bgAccentPrimary text-textAccent'}`}>
-                <Camera size={20} />
+      {hasMedia && (
+          <div className="w-full relative aspect-[9/16] bg-black rounded-xl overflow-hidden border border-borderAccentLight shadow-2xl">
+              <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover mirror-mode transform scale-x-[-1]" />
+              <div className="absolute bottom-5 left-5 right-5 text-left">
+                  <div className="text-white text-xs mb-1 font-medium drop-shadow-md">Microphone Check</div>
+                  <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden backdrop-blur-sm">
+                      <div className="h-full transition-all duration-100" style={{ width: `${Math.min(micLevel * 2, 100)}%`, backgroundColor: 'var(--color-textAccent)' }}></div>
+                  </div>
               </div>
-              <span className={`font-semibold ${hasMedia ? 'text-textSuccess' : 'text-textPrimary'}`}>
-                Camera & Microphone
-              </span>
-            </div>
-            {hasMedia && <Check className="text-textSuccess" size={20} />}
           </div>
+      )}
 
-          {!hasMedia && (
+      <div className="w-full space-y-3">
+        {/* Media Permission */}
+        {!hasMedia && (
+            <div className={`p-4 rounded-xl border transition-all bg-bgSecondary border-borderAccentLight`}>
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-bgAccentPrimary text-textAccent">
+                    <Camera size={20} />
+                </div>
+                <span className="font-semibold text-textPrimary">
+                    Camera & Microphone
+                </span>
+                </div>
+            </div>
+
             <PrimaryButton
-              onClick={handleMediaClick}
-              disabled={isMediaLoading}
-              className="mt-2 flex items-center justify-center gap-2"
+                onClick={handleMediaClick}
+                disabled={isMediaLoading}
+                className="flex items-center justify-center gap-2"
             >
-              {isMediaLoading ? (
+                {isMediaLoading ? (
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
+                ) : (
                 "Enable Access"
-              )}
+                )}
             </PrimaryButton>
-          )}
-        </div>
+            </div>
+        )}
 
         {/* Location Permission */}
-        <div className={`p-4 rounded-xl border transition-all ${
-           hasLocation
-             ? 'bg-bgSuccessSoft border-textSuccess' 
-             : 'bg-bgSecondary border-borderAccentLight'
-        }`}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full ${hasLocation ? 'bg-textSuccess text-bgPrimary' : 'bg-bgSecondary text-textSecondary'}`}>
-                <MapPin size={20} />
-              </div>
-              <span className={`font-semibold ${hasLocation ? 'text-textSuccess' : 'text-textPrimary'}`}>
-                Location (Optional)
-              </span>
+        {!hasLocation && (
+            <div className={`p-4 rounded-xl border transition-all ${
+                hasMedia ? 'bg-bgSecondary border-borderAccentLight' : 'opacity-50'
+             }`}>
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-bgSecondary text-textSecondary">
+                    <MapPin size={20} />
+                </div>
+                <span className="font-semibold text-textPrimary">
+                    Location (Optional)
+                </span>
+                </div>
             </div>
-            {hasLocation && <Check className="text-textSuccess" size={20} />}
-          </div>
 
-          {!hasLocation && (
              <PrimaryButton
-              onClick={handleLocationClick}
-              disabled={isLocationLoading || !hasMedia}
-              className={`mt-2 flex items-center justify-center gap-2 ${
-                  hasMedia 
-                  ? '!bg-bgSecondary hover:!bg-bgAccentPrimary text-textPrimary border border-borderAccent' 
-                  : '!bg-transparent border border-transparent text-textSecondary cursor-not-allowed shadow-none'
-              }`}
-            >
-              {isLocationLoading ? (
-                <span className="w-5 h-5 border-2 border-textSecondary border-t-textPrimary rounded-full animate-spin" />
-              ) : (
-                "Enable Location"
-              )}
-            </PrimaryButton>
-          )}
-        </div>
+                onClick={handleLocationClick}
+                disabled={isLocationLoading || !hasMedia}
+                className={`flex items-center justify-center gap-2 ${
+                    hasMedia 
+                    ? '!bg-bgSecondary hover:!bg-bgAccentPrimary text-textPrimary border border-borderAccent' 
+                    : '!bg-transparent border border-transparent text-textSecondary cursor-not-allowed shadow-none'
+                }`}
+                >
+                {isLocationLoading ? (
+                    <span className="w-5 h-5 border-2 border-textSecondary border-t-textPrimary rounded-full animate-spin" />
+                ) : (
+                    "Enable Location"
+                )}
+                </PrimaryButton>
+            </div>
+        )}
       </div>
+
+       {hasMedia && hasLocation && (
+           <div className="flex gap-2 items-center text-textSuccess text-sm bg-bgSuccessSoft px-3 py-1 rounded-full border border-textSuccess/20">
+               <Check size={14} /> Location Enabled
+           </div>
+       )}
 
       {hasMedia && (
         <PrimaryButton
-          onClick={onContinue}
-          className="!bg-textAccent hover:!bg-opacity-90 text-white text-lg font-bold !rounded-full shadow-lg hover:shadow-xl hover:scale-105"
+          onClick={onStartMatching}
+          className="!bg-textAccent hover:!bg-opacity-90 text-white text-lg font-bold !rounded-full shadow-lg hover:shadow-xl hover:scale-105 w-full py-4 mt-4 animate-pulse-gentle"
         >
-          Continue
+          Let's Go
         </PrimaryButton>
       )}
 

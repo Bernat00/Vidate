@@ -4,7 +4,8 @@ import api from '../api';
 import { Video, MapPin, ThumbsUp, ThumbsDown, PhoneOff } from 'lucide-react';
 import { useToast } from '../context/toastContext';
 import PermissionRequest from '../components/PermissionRequest';
-import PrimaryButton from '../components/form/PrimaryButton';
+// PrimaryButton removed
+
 
 type ViewState = 'PERMISSIONS' | 'TESTING' | 'WAITING' | 'CONNECTING' | 'IN_CALL' | 'FEEDBACK';
 
@@ -108,15 +109,9 @@ export default function Home() {
               }
             );
       });
-  };
+      };
 
-  const handleContinue = () => {
-       setViewState('TESTING');
-       viewStateRef.current = 'TESTING';
-  };
-
-
-  // Update local video element when stream changes
+      // Update local video element when stream changes
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
@@ -159,16 +154,15 @@ export default function Home() {
 
 
   const startSearching = () => {
-    if (!coords) {
-         showToast("Waiting for location...", "info");
-         return;
-    }
+    // Fallback coords if location not granted
+    const finalCoords = coords || { lat: 0, lon: 0 };
+
     setViewState('WAITING');
     viewStateRef.current = 'WAITING';
     peerProfileRef.current = null;
     send({
       type: 'joined_feed',
-      payload: { lat: coords.lat, lon: coords.lon }
+      payload: { lat: finalCoords.lat, lon: finalCoords.lon }
     });
   };
 
@@ -339,36 +333,17 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4 max-w-lg mx-auto w-full">
 
-      {/* State: PERMISSIONS */}
+      {/* State: PERMISSIONS (Setup) */}
       {viewState === 'PERMISSIONS' && (
         <PermissionRequest
             onGrantMedia={grantMedia}
             onGrantLocation={grantLocation}
-            onContinue={handleContinue}
+            onStartMatching={startSearching}
             hasMedia={!!localStream}
             hasLocation={!!coords}
+            videoRef={localVideoRef}
+            micLevel={micLevel}
         />
-      )}
-
-      {/* State: TESTING */}
-      {viewState === 'TESTING' && (
-        <div className="w-full flex flex-col gap-4">
-          <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden border border-borderAccentLight shadow-2xl">
-             <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover mirror-mode transform scale-x-[-1]" />
-             <div className="absolute bottom-5 left-5 right-5">
-                 <div className="text-white text-sm mb-1">Microphone Check</div>
-                 <div className="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
-                     <div className="h-full transition-all duration-100" style={{ width: `${Math.min(micLevel * 2, 100)}%`, backgroundColor: 'var(--color-textAccent)' }}></div>
-                 </div>
-             </div>
-          </div>
-          <PrimaryButton
-             onClick={startSearching}
-             className="w-full"
-             >
-             Start Matching
-          </PrimaryButton>
-        </div>
       )}
 
       {/* State: WAITING */}
@@ -468,3 +443,4 @@ export default function Home() {
         </div>
       );
     }
+
