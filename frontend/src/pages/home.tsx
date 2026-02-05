@@ -442,7 +442,7 @@ export default function Home() {
                <div className="flex gap-8">
                    <button
                        onClick={() => handleFeedback(false)}
-                       className="flex flex-col items-center gap-2 group"
+                       className="flex flex-col items-center gap-2 group hover:cursor-pointer"
                    >
                        <div className="w-16 h-16 rounded-full bg-bgSecondary flex items-center justify-center border border-borderAccent group-hover:bg-red-500/20 transition-colors">
                            <ThumbsDown className="text-textSecondary group-hover:text-red-500" size={32} />
@@ -452,7 +452,7 @@ export default function Home() {
 
                    <button
                        onClick={() => handleFeedback(true)}
-                       className="flex flex-col items-center gap-2 group"
+                       className="flex flex-col items-center gap-2 group hover:cursor-pointer"
                        >
                            <div className="w-16 h-16 rounded-full bg-bgSecondary flex items-center justify-center border border-borderAccent group-hover:bg-green-500/20 transition-colors">
                                <ThumbsUp className="text-textSecondary group-hover:text-green-500" size={32} />
