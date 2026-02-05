@@ -1,64 +1,11 @@
-i need you to start working on the real time video chat application using webRTC.
-the page needs to have these states:
-first of all, get user media permissions for camera and microphone. also get their gps coordinates (approximately).
-then the user will need to test their devices (camera and microphone) to make sure they are working properly. show their camera feed and have a volume meter that tests the microphone input.
-now the user will send a message over websocket when they have joined the feed. /home/zemen/PycharmProjects/Vidate/backend/routes/realtime/endpoints.py
-if they ever leave the feed, send a message over websocket.
-as you can see, there is a matchmaking pool in redis. create a simple placeholder matchmaking algorithm that matches two users together based on their wait times.
-the real algo will be implemented later. while they are in a call, remove them from the pool. when they leave, add them back to the pool.
-you can see how my existing websocket messages are like. follow the same structure to handle sending the offers/answers and ice candidates.
-the frontend needs to know some basic properties of the user they will be talking to. their name, age and distance (approximate from gps coords).
-while the webrtc connection is being established, show a loading spinner with these information as well.
-when they are connected keep showing this information. have a button to end the call. the call must end automatically if the other user leaves.
-and also after 2 minutes. show a countdown timer for this.
-after the call ends in any way, the users must give feedback. a simple thumbs up/thumbs down will do for now.
-if they give a thumbs up, over rest api insert a row into the matches table. as you can see there is a confirmation system.
-so if 1 user gives a thumbs up, the other user must also give a thumbs up within 2 minutes for the match to be confirmed.
-record all conversations in a conversation history table as well. the users can only match if they have had a conversation.
+on mobile for some reason the location tracking sometimes needs a long time to load, sometimes it is instant. so display some sort of loading indicator while waiting for location data.
 
+in the matchprofile page use an outlet for the profile itself so that the sidebar doesnt reload
 
-Plan: Real-Time Video Chat with WebRTC
-This plan implements a comprehensive real-time video chat system, including matchmaking, WebRTC signaling, call management, and a conversation-based matching system with atomic operations.
-Steps
-IMPORTANT: VIDEOCHAT.TSX REFERS TO THE /HOME PAGE (HOME.TSX)
-Backend: Conversation Model Create backend/persistence/model/conversation.py. Define a Conversation model with user1_id, user2_id, start_time, end_time to satisfy the requirement that users can only match if they have conversed. Add to Repo in repository/conversation.py.
-Backend: Atomic Matchmaking Worker Create a background task in backend/background/matchmaking.py (orchestrated by app.py).
-Implement an atomic Redis operation (using a pipeline or Lua script) to ZPOP (pop 2 users with lowest score/timestamp) from the matchmaking sorted set.
-If a pair is found, remove them from the pool and publish match_found events to both users via Redis PubSub.
-Backend: Realtime Endpoints & Signaling Update backend/routes/realtime/endpoints.py:
-Join/Leave: Handle joined_feed (accept GPS lat/long, add to Redis matchmaking ZSET with timestamp) and left_feed.
-Signaling: Forward offer, answer, and ice_candidate messages between peers identified by the match.
-Conversation Tracking: Create a Conversation record when the connection is established. Update end_time when the call ends.
-Frontend: Video Chat States & Logic Create frontend/src/pages/VideoChat.tsx managing these states:
-PERMISSIONS: Request Camera/Mic/GPS access.
-TESTING: Show local video feed and a volume meter for mic testing.
-WAITING: Connect to WebSocket, send joined_feed, show "Looking for match...".
-CONNECTING: Receive match_found. Show spinner with peer's Name, Age, Distance. Initiate WebRTC offer.
-IN_CALL: Active video call. Show 2-minute countdown. Handle "End Call" or auto-end.
-Frontend: Feedback Interface In VideoChat.tsx, upon call end (state FEEDBACK):
-Fetch and display the peer's full profile (reusing logic/components from MatchProfile.tsx providing a rich view).
-Show "Thumbs Up" / "Thumbs Down" buttons.
-Backend: Feedback & Matching API Create/Update backend/routes/matches.py:
-Endpoint: POST /feedback.
-Atomic Logic:
-If user sends "Thumbs Up": Check DB for an existing pending match from the other user.
-If request exists: Update to confirmed=True.
-If not: Insert new Match row with confirmed=False.
-Verify Conversation exists between users before allowing match.
-Further Considerations
-Atomic Matchmaking: Using Redis ZSET with timestamps guarantees users are served in order. Accessing and removing two users must happen in a single Redis transaction to avoid race conditions.
-Profile Data: The match_found WebSocket event should send minimal data (Name, Age, Distance) for the loading screen, while restart/feedback state fetches the full profile via REST API api.get('/users/{id}/profile').
+i need you to style the in call state better. the video must take up exactly all the remaining height that is not the bottom navbar. the page must not scroll. on mobile make the experience seemless immersive by making the video take up exactly all the remaining space on the sceen that is not the navbar. if there is a problem with aspect ratios, use object-fit: cover
 
-make location tracking optional. do not use precise location. if the location fails/the user doesnt provide it handle that case too. but tell the user that if they provide their location, they will get better suited matches
-
-dont just handle offers and answers. also handle trickling ice. so handle ice canditates that are send, after the answer/offer.
 
 
 kesobb: matchmaking
-
-
 show me where i would place the actual matchmaking instead of this placeholder one
-
-redis has utils that can calculate geo distance. send the distance to the frontend instead, not the coordinates.
-
 how is the 2 minute call enforced on the server? does it need to be enforced?

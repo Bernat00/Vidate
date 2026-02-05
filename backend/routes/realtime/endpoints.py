@@ -40,7 +40,7 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
                 lat = payload.get("lat")
                 lon = payload.get("lon")
                 if lat is not None and lon is not None:
-                     await r.set(f"user:{user.id}:geo", json.dumps({"lat": lat, "lon": lon}), ex=3600)
+                    await r.geoadd("user_geo", (lon, lat, user.id))
 
                 # ZADD with timestamp
                 await r.zadd("matchmaking", {user.id: datetime.now(timezone.utc).timestamp()})

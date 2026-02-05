@@ -4,8 +4,6 @@ import api from '../api';
 import { Video, MapPin, ThumbsUp, ThumbsDown, PhoneOff } from 'lucide-react';
 import { useToast } from '../context/toastContext';
 import PermissionRequest from '../components/PermissionRequest';
-// PrimaryButton removed
-
 
 type ViewState = 'PERMISSIONS' | 'TESTING' | 'WAITING' | 'CONNECTING' | 'IN_CALL' | 'FEEDBACK';
 
@@ -13,7 +11,7 @@ type PeerProfile = {
   peer_id: string;
   peer_name: string;
   peer_age: number;
-  distance_km: number;
+  distance_km?: number;
   initiator: boolean;
   conversation_id: number;
 };
@@ -173,7 +171,7 @@ export default function Home() {
 
   const startSearching = () => {
     // Fallback coords if location not granted or disabled
-    const finalCoords = (useLocation && coords) ? coords : { lat: 0, lon: 0 };
+    const finalCoords = (useLocation && coords) ? coords : { lat: null, lon: null };
 
     setViewState('WAITING');
     viewStateRef.current = 'WAITING';
@@ -345,7 +343,7 @@ export default function Home() {
 
   // Render Helpers
   const renderDistance = () => {
-      if (!peerProfile) return "Unknown distance";
+      if (!peerProfile?.distance_km) return "Unknown distance";
       return `${peerProfile.distance_km.toFixed(1)} km away`;
   };
 

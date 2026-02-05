@@ -43,7 +43,7 @@ async def matchmaking_worker():
                     # Calculate distance via Redis GEODIST
                     dist = await r.geodist("user_geo", user1_id, user2_id, unit="km")
                     # dist is None if one of the members is missing
-                    distance_km = dist if dist is not None else 0.0
+                    # distance_km = dist if dist is not None else 0.0
 
                 # Prepare payloads
                 def make_payload(peer_profile, distance, initiator):
@@ -74,8 +74,8 @@ async def matchmaking_worker():
                         "conversation_id": conversation.id
                     }
 
-                payload1 = make_payload(p2, distance_km, True)
-                payload2 = make_payload(p1, distance_km, False)
+                payload1 = make_payload(p2, dist, True)
+                payload2 = make_payload(p1, dist, False)
 
                 await r.publish(f"user:{user1_id}", json.dumps({
                     "type": "match_found",
@@ -90,6 +90,7 @@ async def matchmaking_worker():
                 # Put back the single user
                 user_id, score = users[0]
                 await r.zadd("matchmaking", {user_id: score})
+                # todo something more elegant
                 await asyncio.sleep(1) # Wait for more users
             else:
                 await asyncio.sleep(1) # No users

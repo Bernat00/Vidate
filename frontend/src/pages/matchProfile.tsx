@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Spinner } from 'flowbite-react';
 import { ShieldAlert, Trash2, Users, Heart } from 'lucide-react';
 import api from '../api.ts';
 import type { MatchItem } from '../types/domain.ts';
