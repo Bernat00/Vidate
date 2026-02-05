@@ -37,10 +37,25 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
             payload = data.get("payload", {})
 
             if msg_type == "joined_feed":
-                await r.sadd("matchmaking", user.id)
+                lat = payload.get("lat")
+                lon = payload.get("lon")
+                if lat is not None and lon is not None:
+                     await r.set(f"user:{user.id}:geo", json.dumps({"lat": lat, "lon": lon}), ex=3600)
+
+                # ZADD with timestamp
+                await r.zadd("matchmaking", {user.id: datetime.now(timezone.utc).timestamp()})
 
             elif msg_type == "left_feed":
-                await r.srem("matchmaking", user.id)
+                await r.zrem("matchmaking", user.id)
+
+            elif msg_type in ["offer", "answer", "ice_candidate", "end_call"]:
+                peer_id = payload.get("peer_id")
+                if peer_id:
+                    # Forward signaling message to peer
+                    await r.publish(f"user:{peer_id}", json.dumps({
+                        "type": msg_type,
+                        "payload": payload
+                    }))
 
             elif msg_type == "chat_message":
                 match_id = payload.get("match_id")
@@ -97,5 +112,6 @@ async def ws_endpoint(ws: WebSocket, token: str, r: Redis = Depends(get_redis)):
             if not task.done():
                 task.cancel()
 
-        await r.srem("matchmaking", user.id)
+        await r.zrem("matchmaking", user.id)
+        await r.zrem("user_geo", user.id)
         print(f"Cleanup: User {user.id} removed from matchmaking.")

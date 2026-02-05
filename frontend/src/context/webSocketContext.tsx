@@ -19,8 +19,10 @@ const WebSocketContext = createContext<WebSocketContextValue | undefined>(undefi
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY_MS = 1000;
-const baseUrl = 'ws://localhost:8000/ws/main'
+const hostname = window.location.hostname;
 
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const baseUrl = `${wsProtocol}//${hostname}:8000/ws/main`;
 const getStoredToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
 
 export const WebSocketProvider = ({ children }: { children: ReactNode }) => {

@@ -48,3 +48,7 @@ Verify Conversation exists between users before allowing match.
 Further Considerations
 Atomic Matchmaking: Using Redis ZSET with timestamps guarantees users are served in order. Accessing and removing two users must happen in a single Redis transaction to avoid race conditions.
 Profile Data: The match_found WebSocket event should send minimal data (Name, Age, Distance) for the loading screen, while restart/feedback state fetches the full profile via REST API api.get('/users/{id}/profile').
+
+make location tracking optional. do not use precise location. if the location fails/the user doesnt provide it handle that case too. but tell the user that if they provide their location, they will get better suited matches
+
+dont just handle offers and answers. also handle trickling ice. so handle ice canditates that are send, after the answer/offer.

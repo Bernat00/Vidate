@@ -98,6 +98,7 @@ from .preference import PreferenceRepo
 #from .call import CallRepo
 #from .message import MessageRepo
 from .chat_event import ChatEventRepo
+from .conversation import ConversationRepo
 
 
 
@@ -117,6 +118,7 @@ class Repo(BasicRepo):
     #_call_repo: CallRepo = None
     #_message_repo: MessageRepo = None
     _chat_event: ChatEventRepo = None
+    _conversation_repo: ConversationRepo = None
 
 
     @property
@@ -184,6 +186,12 @@ class Repo(BasicRepo):
         if not self._chat_event:
             self._chat_event = ChatEventRepo(self.session)
         return self._chat_event
+
+    @property
+    def conversation_repo(self) -> ConversationRepo:
+        if not self._conversation_repo:
+            self._conversation_repo = ConversationRepo(self.session)
+        return self._conversation_repo
 
 
 

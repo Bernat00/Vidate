@@ -1,6 +1,9 @@
 import axios, { AxiosHeaders } from 'axios';
 
-const baseUrl = 'http://localhost:8000/api'
+const hostname = window.location.hostname;
+
+// Construct the backend URL using the same hostname but port 8000
+const baseUrl = `${window.location.protocol}//${hostname}:8000/api`;
 
 const api = axios.create({
   baseURL: baseUrl,
