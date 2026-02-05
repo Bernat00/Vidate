@@ -40,7 +40,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
       useEffect(() => {
         const getPermissions = async () => {
           try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                width: { ideal: 1920, max: 1920 },
+                height: { ideal: 1080, max: 1080 },
+                frameRate: { ideal: 30, max: 30 }
+              },
+              audio: true
+            });
             setLocalStream(stream);
 
             // Setup Audio Analysis for Testing
