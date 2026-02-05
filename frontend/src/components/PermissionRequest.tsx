@@ -49,7 +49,7 @@ export default function PermissionRequest({
       showToast("Location access granted", "success");
     } catch {
        // location is optional, so maybe just toast info
-      showToast("Location access denied. Matching will be random.", "info");
+      showToast("Location access denied or failed", "info");
     } finally {
       setIsLocationLoading(false);
     }
@@ -150,7 +150,7 @@ export default function PermissionRequest({
                          </div>
                          <div className="flex flex-col items-start text-left">
                              <span className="font-semibold text-textPrimary">Location Access</span>
-                             <span className="text-xs text-textSecondary">Use for matching</span>
+                             <span className="text-xs text-textSecondary">Enable to get more personalized matches</span>
                          </div>
                      </div>
                      <Toggle
