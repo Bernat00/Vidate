@@ -12,7 +12,9 @@ from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
 from sqlalchemy import select, or_, and_
+from sqlalchemy.orm import selectinload
 from ..persistence.model.conversation import Conversation
+from ..persistence.model.profile import Profile
 
 from fastapi import HTTPException, status, APIRouter
 
@@ -40,7 +42,7 @@ async def mine(repo: repoDep, user: get_and_auth_current_user):
     return profiles
 
 
-@router.get('/profile/{partner_id}', response_model=MatchResponse)
+@router.get('/match-profile/{partner_id}', response_model=MatchResponse)
 async def get_match_profile(partner_id: str, repo: repoDep, user: get_and_auth_current_user):
     profile = await repo.profile_repo.get_matched_profile(user.id, partner_id)
     if not profile:
@@ -162,3 +164,33 @@ async def feedback(
         return {"status": "pending"}
 
     return {"status": "pending"}
+
+
+@router.get('/feedback-profile/{partner_id}', response_model=ProfileRead)
+async def get_feedback_profile(partner_id: str, repo: repoDep, user: get_and_auth_current_user):
+    # Ensure users have had a conversation
+    stmt = select(Conversation).where(
+        or_(
+            and_(Conversation.user1_id == user.id, Conversation.user2_id == partner_id),
+            and_(Conversation.user1_id == partner_id, Conversation.user2_id == user.id)
+        )
+    )
+    result = await repo.session.scalars(stmt)
+    conversation = result.first()
+
+    if not conversation:
+        raise HTTPException(status_code=400, detail="No conversation found between users")
+
+    profile = await repo.profile_repo.get_by_id(
+        partner_id,
+        options=[
+            selectinload(Profile.gender),
+            selectinload(Profile.religion),
+            selectinload(Profile.languages)
+        ]
+    )
+
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+    return profile

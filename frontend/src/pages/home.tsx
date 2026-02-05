@@ -4,6 +4,8 @@ import api from '../api';
 import { Video, MapPin, ThumbsUp, ThumbsDown, PhoneOff } from 'lucide-react';
 import { useToast } from '../context/toastContext';
 import PermissionRequest from '../components/PermissionRequest';
+import InfoItem from '../components/common/InfoItem';
+import { calculateAge } from '../helpers';
 
 type ViewState = 'PERMISSIONS' | 'TESTING' | 'WAITING' | 'CONNECTING' | 'IN_CALL' | 'FEEDBACK';
 
@@ -16,6 +18,19 @@ type PeerProfile = {
   conversation_id: number;
 };
 
+type FeedbackProfile = {
+  user_id: string;
+  first_name: string;
+  middle_name?: string | null;
+  last_name: string;
+  birth_date: string;
+  gender?: { name?: string | null } | null;
+  religion?: { name?: string | null } | null;
+  languages?: { name: string }[];
+  is_smoker?: boolean | null;
+  wants_children?: boolean | null;
+};
+
 export default function Home() {
   const { send, subscribe } = useWebSocket();
   const { showToast } = useToast();
@@ -26,6 +41,9 @@ export default function Home() {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [peerProfile, setPeerProfile] = useState<PeerProfile | null>(null);
   const peerProfileRef = useRef<PeerProfile | null>(null);
+  const [feedbackProfile, setFeedbackProfile] = useState<FeedbackProfile | null>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [useLocation, setUseLocation] = useState(true);
   const [timeLeft, setTimeLeft] = useState<number>(120); // 2 minutes
@@ -203,7 +221,6 @@ export default function Home() {
               liked
           });
           // After feedback, return to matchmaking
-          setPeerProfile(null);
           startSearching();
       } catch (e) {
           console.error(e);
@@ -341,6 +358,42 @@ export default function Home() {
   }, [subscribe, createPeerConnection, send]); // Removed peerProfile dependency
 
 
+  // Load match details for feedback
+  useEffect(() => {
+    const partnerId = peerProfile?.peer_id;
+    if (viewState !== 'FEEDBACK' || !partnerId) {
+      return;
+    }
+
+    let isActive = true;
+    setFeedbackLoading(true);
+    setFeedbackError(null);
+
+    api
+      .get<FeedbackProfile>(`/matches/feedback-profile/${partnerId}`)
+      .then((response) => {
+        if (isActive) {
+          setFeedbackProfile(response.data);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load feedback profile:', error);
+        if (isActive) {
+          setFeedbackProfile(null);
+          setFeedbackError('Could not load profile details.');
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setFeedbackLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [peerProfile?.peer_id, viewState]);
+
   // Render Helpers
   const renderDistance = () => {
       if (!peerProfile?.distance_km) return "Unknown distance";
@@ -435,8 +488,56 @@ export default function Home() {
 
       {/* State: FEEDBACK */}
       {viewState === 'FEEDBACK' && (
-          <div className="flex flex-col items-center gap-6 text-center animate-fade-in">
-              <h2 className="text-2xl font-bold text-textPrimary">How was your chat with {peerProfile?.peer_name}?</h2>
+          <div className="flex flex-col items-center gap-6 text-center animate-fade-in w-full">
+              <h2 className="text-2xl font-bold text-textPrimary">
+                How was your chat with {peerProfile?.peer_name ?? 'your match'}?
+              </h2>
+
+              {feedbackLoading && (
+                <p className="text-sm text-textSecondary">Loading profile details...</p>
+              )}
+
+              {feedbackError && (
+                <p className="text-sm text-textError">{feedbackError}</p>
+              )}
+
+              {feedbackProfile && (
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                  <InfoItem
+                    label="Name"
+                    value={[feedbackProfile.first_name, feedbackProfile.middle_name, feedbackProfile.last_name]
+                      .filter((part) => Boolean(part))
+                      .map((part) => String(part).trim())
+                      .join(' ') || 'Match'}
+                  />
+                  <InfoItem label="Age" value={calculateAge(feedbackProfile.birth_date)} />
+                  <InfoItem label="Gender" value={feedbackProfile.gender?.name ?? 'Unknown'} />
+                  <InfoItem label="Religion" value={feedbackProfile.religion?.name ?? 'Unknown'} />
+                  <InfoItem
+                    label="Languages"
+                    value={feedbackProfile.languages?.length
+                      ? feedbackProfile.languages.map(language => language.name).join(', ')
+                      : 'Unknown'}
+                  />
+                  <InfoItem
+                    label="Smoker"
+                    value={feedbackProfile.is_smoker === null || feedbackProfile.is_smoker === undefined
+                      ? 'Unknown'
+                      : feedbackProfile.is_smoker
+                        ? 'Yes'
+                        : 'No'}
+                  />
+                  <InfoItem
+                    label="Wants children"
+                    value={feedbackProfile.wants_children === null || feedbackProfile.wants_children === undefined
+                      ? 'Not sure'
+                      : feedbackProfile.wants_children
+                        ? 'Yes'
+                        : 'No'}
+                  />
+                </div>
+              )}
+
                <div className="flex gap-8">
                    <button
                        onClick={() => handleFeedback(false)}

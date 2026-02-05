@@ -1,10 +1,11 @@
 import axios, { AxiosHeaders } from 'axios';
 
-const hostname = window.location.hostname;
+export const hostname = window.location.hostname;
+const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(hostname);
+const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+export const backendPort = (!isIP && !isLocalhost) ? '' : ':8000';
 
-// Construct the backend URL using the same hostname but port 8000
-const baseUrl = `${window.location.protocol}//${hostname}:8000/api`;
-
+export const baseUrl = `${window.location.protocol}//${hostname}${backendPort}/api`;
 const api = axios.create({
   baseURL: baseUrl,
   headers: {

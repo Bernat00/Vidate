@@ -4,8 +4,13 @@ in the matchprofile page use an outlet for the profile itself so that the sideba
 
 i need you to style the in call state better. the video must take up exactly all the remaining height that is not the bottom navbar. the page must not scroll. on mobile make the experience seemless immersive by making the video take up exactly all the remaining space on the sceen that is not the navbar. if there is a problem with aspect ratios, use object-fit: cover
 
+ping backend from frontend every 45s
 
+if we leave the feed, send the left feed message to the backend
+
+make the feedback profile be more mobile friendly and space efficient so that ideally it fits without scrolling on a mobile screen
+
+call end time is never set. does it need to be set???
 
 kesobb: matchmaking
 show me where i would place the actual matchmaking instead of this placeholder one
-how is the 2 minute call enforced on the server? does it need to be enforced?

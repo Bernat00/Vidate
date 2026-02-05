@@ -38,7 +38,7 @@ export default function MatchProfile() {
 
     const fetchMatch = async () => {
       try {
-        const response = await api.get<MatchItem>(`/matches/profile/${userId}`);
+        const response = await api.get<MatchItem>(`/matches/match-profile/${userId}`);
         setMatch(response.data);
       } catch (error) {
         console.error('Failed to load match profile:', error);
