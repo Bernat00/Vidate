@@ -101,6 +101,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
         }
       }, [localStream, viewState]);
 
+      // Update remote video element when stream changes
+      useEffect(() => {
+        if (remoteVideoRef.current && remoteStream) {
+          remoteVideoRef.current.srcObject = remoteStream;
+        }
+      }, [remoteStream, viewState]);
+
       // Clean up PeerConnection on unmount
       useEffect(() => {
         return () => {
