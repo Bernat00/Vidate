@@ -185,6 +185,9 @@ export default function Home() {
   };
 
   const endCall = () => {
+    const currentState = viewStateRef.current;
+    if (currentState !== 'IN_CALL' && currentState !== 'CONNECTING') return;
+
     if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
@@ -201,11 +204,9 @@ export default function Home() {
               partner_id: peerProfile.peer_id,
               liked
           });
-          // After feedback, go back to testing or waiting
+          // After feedback, return to matchmaking
           setPeerProfile(null);
-          peerProfileRef.current = null;
-          setViewState('TESTING');
-          viewStateRef.current = 'TESTING';
+          startSearching();
       } catch (e) {
           console.error(e);
           showToast("Failed to submit feedback", "error");
