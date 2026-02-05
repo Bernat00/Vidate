@@ -29,6 +29,7 @@ export default function Home() {
   const [peerProfile, setPeerProfile] = useState<PeerProfile | null>(null);
   const peerProfileRef = useRef<PeerProfile | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [useLocation, setUseLocation] = useState(true);
   const [timeLeft, setTimeLeft] = useState<number>(120); // 2 minutes
   const [micLevel, setMicLevel] = useState(0);
 
@@ -77,7 +78,7 @@ export default function Home() {
     };
   }, [localStream]);
 
-  const grantMedia = async (): Promise<boolean> => {
+  const grantMedia = useCallback(async (): Promise<boolean> => {
        try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -93,9 +94,9 @@ export default function Home() {
         console.error("Media permission error", err);
         throw err;
       }
-  };
+  }, []);
 
-  const grantLocation = async (): Promise<boolean> => {
+  const grantLocation = useCallback(async (): Promise<boolean> => {
       return new Promise((resolve, reject) => {
            navigator.geolocation.getCurrentPosition(
               (pos) => {
@@ -109,7 +110,24 @@ export default function Home() {
               }
             );
       });
-      };
+  }, []);
+
+  // Automatically check for existing location permission
+  useEffect(() => {
+      if (navigator.permissions && navigator.permissions.query) {
+          navigator.permissions.query({ name: 'geolocation' as any }).then((result) => {
+              if (result.state === 'granted') {
+                  grantLocation();
+              }
+              // Optional: Listen for changes
+              result.onchange = () => {
+                  if (result.state === 'granted') {
+                      grantLocation();
+                  }
+              };
+          });
+      }
+  }, [grantLocation]);
 
       // Update local video element when stream changes
   useEffect(() => {
@@ -154,8 +172,8 @@ export default function Home() {
 
 
   const startSearching = () => {
-    // Fallback coords if location not granted
-    const finalCoords = coords || { lat: 0, lon: 0 };
+    // Fallback coords if location not granted or disabled
+    const finalCoords = (useLocation && coords) ? coords : { lat: 0, lon: 0 };
 
     setViewState('WAITING');
     viewStateRef.current = 'WAITING';
@@ -343,6 +361,8 @@ export default function Home() {
             hasLocation={!!coords}
             videoRef={localVideoRef}
             micLevel={micLevel}
+            useLocation={useLocation}
+            onToggleLocation={setUseLocation}
         />
       )}
 
@@ -443,4 +463,3 @@ export default function Home() {
         </div>
       );
     }
-

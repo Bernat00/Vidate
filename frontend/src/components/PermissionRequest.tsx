@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Camera, MapPin, Check, AlertCircle } from 'lucide-react';
+import { Camera, MapPin, AlertCircle } from 'lucide-react';
 import { useToast } from '../context/toastContext';
 import PrimaryButton from './form/PrimaryButton';
+import Toggle from './common/Toggle';
 
 interface PermissionRequestProps {
   onGrantMedia: () => Promise<boolean>;
@@ -11,6 +12,8 @@ interface PermissionRequestProps {
   hasLocation: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   micLevel: number;
+  useLocation: boolean;
+  onToggleLocation: (enabled: boolean) => void;
 }
 
 export default function PermissionRequest({
@@ -20,7 +23,9 @@ export default function PermissionRequest({
   hasMedia,
   hasLocation,
   videoRef,
-  micLevel
+  micLevel,
+  useLocation,
+  onToggleLocation
 }: PermissionRequestProps) {
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
@@ -105,7 +110,7 @@ export default function PermissionRequest({
         )}
 
         {/* Location Permission */}
-        {!hasLocation && (
+        {!hasLocation ? (
             <div className={`p-4 rounded-xl border transition-all ${
                 hasMedia ? 'bg-bgSecondary border-borderAccentLight' : 'opacity-50'
              }`}>
@@ -136,14 +141,28 @@ export default function PermissionRequest({
                 )}
                 </PrimaryButton>
             </div>
+        ) : (
+             <div className="p-4 rounded-xl border transition-all bg-bgSecondary border-borderAccentLight">
+                 <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                         <div className={`p-2 rounded-full ${useLocation ? 'bg-textSuccess text-bgPrimary' : 'bg-bgAccentPrimary text-textSecondary'}`}>
+                             <MapPin size={20} />
+                         </div>
+                         <div className="flex flex-col items-start text-left">
+                             <span className="font-semibold text-textPrimary">Location Access</span>
+                             <span className="text-xs text-textSecondary">Use for matching</span>
+                         </div>
+                     </div>
+                     <Toggle
+                        checked={useLocation}
+                        onChange={onToggleLocation}
+                     />
+                 </div>
+             </div>
         )}
       </div>
 
-       {hasMedia && hasLocation && (
-           <div className="flex gap-2 items-center text-textSuccess text-sm bg-bgSuccessSoft px-3 py-1 rounded-full border border-textSuccess/20">
-               <Check size={14} /> Location Enabled
-           </div>
-       )}
+
 
       {hasMedia && (
         <PrimaryButton

@@ -52,3 +52,13 @@ Profile Data: The match_found WebSocket event should send minimal data (Name, Ag
 make location tracking optional. do not use precise location. if the location fails/the user doesnt provide it handle that case too. but tell the user that if they provide their location, they will get better suited matches
 
 dont just handle offers and answers. also handle trickling ice. so handle ice canditates that are send, after the answer/offer.
+
+
+kesobb: matchmaking
+
+
+show me where i would place the actual matchmaking instead of this placeholder one
+
+redis has utils that can calculate geo distance. send the distance to the frontend instead, not the coordinates.
+
+how is the 2 minute call enforced on the server? does it need to be enforced?
