@@ -1,2 +1,5 @@
-kesobb: matchmaking
-show me where i would place the actual matchmaking instead of this placeholder one
+block and report
+ban users
+admin page for reporting and banning, languages, genders, religions
+
+matchmaking
