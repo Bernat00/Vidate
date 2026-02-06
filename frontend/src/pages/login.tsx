@@ -68,9 +68,9 @@ const Login = () => {
 
         <div className="flex items-center justify-between">
           <RHFCheckbox label="Remember me" registerProps={register('rememberMe')} />
-          <Link to="/forgot-password" className="text-textAccent hover:underline text-sm">
-            Forgot password?
-          </Link>
+          {/*<Link to="/forgot-password" className="text-textAccent hover:underline text-sm">*/}
+          {/*  Forgot password?*/}
+          {/*</Link>*/}
         </div>
 
         <PrimaryButton type="submit">Sign in</PrimaryButton>
