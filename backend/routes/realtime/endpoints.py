@@ -75,10 +75,12 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
 
                         await repo.chat_event_repo.save(chat_event)
                         print("saved chat event")
-                        await r.publish(f"user:{recipient_id}", json.dumps({
+                        message_payload = json.dumps({
                             "type": msg_type,
                             "payload": chat_event.model_dump(mode="json")
-                        }))
+                        })
+                        await r.publish(f"user:{recipient_id}", message_payload)
+                        await r.publish(f"user:{user.id}", message_payload)
 
             elif msg_type == "ping":
                 continue

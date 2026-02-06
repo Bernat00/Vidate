@@ -192,19 +192,6 @@ export default function MyMatches(): ReactElement {
         content
       }
     });
-
-    // Optimistically add to UI
-    const newMessage: ChatMessageType = {
-      id: `temp-${Date.now()}`,
-      sender: 'You',
-      avatar: 'https://i.pravatar.cc/150?u=me',
-      text: content,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isMe: true,
-    };
-
-    shouldScrollToBottomRef.current = true;
-    setMessages(prev => [...prev, newMessage]);
   };
 
   const title = selectedMatch ? getDisplayName(selectedMatch) : 'Vidate';

@@ -1,13 +1,13 @@
 import type { ChatMessage } from '../types/domain.ts';
 
 const MessageBubble = ({ message }: { message: ChatMessage }) => {
-  const { isMe, text, time, sender, avatar } = message;
+  const { isMe, text, time, sender } = message;
 
   return (
     <div className={`flex items-start gap-2.5 w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
-      {!isMe && (
-        <img className="w-8 h-8 rounded-full object-cover flex-shrink-0" src={avatar} alt={sender} />
-      )}
+      {/*{!isMe && (*/}
+      {/*  <img className="w-8 h-8 rounded-full object-cover flex-shrink-0" src={avatar} alt={sender} />*/}
+      {/*)}*/}
 
       {/* 1. Removed w-full
           2. Added items-start for the other party to prevent stretching
@@ -29,9 +29,9 @@ const MessageBubble = ({ message }: { message: ChatMessage }) => {
         </div>
       </div>
 
-      {isMe && (
-        <img className="w-8 h-8 rounded-full object-cover flex-shrink-0" src={avatar} alt="Me" />
-      )}
+      {/*{isMe && (*/}
+      {/*  <img className="w-8 h-8 rounded-full object-cover flex-shrink-0" src={avatar} alt="Me" />*/}
+      {/*)}*/}
     </div>
   );
 };

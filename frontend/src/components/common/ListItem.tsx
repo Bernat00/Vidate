@@ -11,7 +11,6 @@ interface ListItemProps {
 }
 
 export default function ListItem({
-  avatar,
   title,
   subtitle,
   onClick,
@@ -41,13 +40,13 @@ export default function ListItem({
         ${onClick ? 'cursor-pointer' : ''}
         ${className}`}
     >
-      {avatar && (
-        <img
-          src={avatar}
-          alt={title}
-          className="w-10 h-10 rounded-full mr-3 object-cover border border-borderAccentLight group-hover:border-borderAccent transition-colors"
-        />
-      )}
+      {/*{avatar && (*/}
+      {/*  <img*/}
+      {/*    src={avatar}*/}
+      {/*    alt={title}*/}
+      {/*    className="w-10 h-10 rounded-full mr-3 object-cover border border-borderAccentLight group-hover:border-borderAccent transition-colors"*/}
+      {/*  />*/}
+      {/*)}*/}
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-semibold truncate ${active ? 'text-textAccent' : 'text-textPrimary'}`}>
           {title}

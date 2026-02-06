@@ -482,7 +482,7 @@ export default function Home() {
                   <div className="flex justify-center mt-2">
                       <button
                         onClick={endCall}
-                        className="bg-red-500 hover:bg-red-600 text-white p-5 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all hover:scale-110 active:scale-95"
+                        className="bg-red-500 hover:bg-red-600 hover:cursor-pointer text-white p-5 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all hover:scale-110 active:scale-95"
                       >
                           <PhoneOff size={28} />
                       </button>
