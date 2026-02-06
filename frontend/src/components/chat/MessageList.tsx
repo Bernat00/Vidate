@@ -16,7 +16,7 @@ export default function MessageList({ messages, className = '', scrollRef, onScr
     <div
       ref={scrollRef}
       onScroll={onScroll}
-      className={`flex-1 w-full overflow-y-auto flex flex-col gap-app-gap justify-start items-start ${className}`.trim()}
+      className={`flex-1 w-full overflow-y-auto pr-2 flex flex-col gap-app-gap justify-start items-start ${className}`.trim()}
     >
       {loadingTop && (
         <CenteredLoader
