@@ -80,6 +80,9 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
                             "payload": chat_event.model_dump(mode="json")
                         }))
 
+            elif msg_type == "ping":
+                continue
+
     except (WebSocketDisconnect, asyncio.CancelledError):
         pass
 

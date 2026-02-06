@@ -34,6 +34,7 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
   const handlersRef = useRef<Map<string, Set<WebSocketHandler>>>(new Map());
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef<number | null>(null);
+  const pingIntervalRef = useRef<number | null>(null);
   const notifiedRef = useRef(false);
 
   const clearReconnectTimer = () => {
@@ -43,8 +44,16 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const clearPingInterval = () => {
+    if (pingIntervalRef.current) {
+      window.clearInterval(pingIntervalRef.current);
+      pingIntervalRef.current = null;
+    }
+  };
+
   const closeSocket = useCallback(() => {
     clearReconnectTimer();
+    clearPingInterval();
     if (wsRef.current) {
       wsRef.current.onclose = null;
       wsRef.current.onmessage = null;
@@ -68,6 +77,13 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
       reconnectAttemptsRef.current = 0;
       notifiedRef.current = false;
       console.log("Connected to ws")
+
+      clearPingInterval();
+      pingIntervalRef.current = window.setInterval(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'ping', payload: {} }));
+        }
+      }, 45000);
     };
 
     socket.onmessage = (event) => {
@@ -87,6 +103,7 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     };
 
     socket.onclose = () => {
+      clearPingInterval();
       if (!getStoredToken()) return;
       console.log("Disconnected from ws")
       const attempts = reconnectAttemptsRef.current + 1;
