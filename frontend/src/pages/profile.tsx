@@ -121,7 +121,6 @@ export default function ProfilePage() {
                 placeholder="••••••••"
                 register={register('oldPassword', {
                   validate: (val) => {
-                    // If changing password, old password is required
                     if (getValues('newPassword') && !val) return 'Enter your old password';
                     return true;
                   }

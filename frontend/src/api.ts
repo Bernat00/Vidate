@@ -13,7 +13,6 @@ const api = axios.create({
   },
 });
 
-// Add a request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -35,14 +34,12 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Add a response interceptor to centralize 401 handling (optional)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401) {
       localStorage.clear();
       sessionStorage.clear();
-      // Optionally redirect: window.location.href = '/login';
     }
     return Promise.reject(error);
   }

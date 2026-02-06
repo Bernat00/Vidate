@@ -3,7 +3,6 @@
 @source "../.flowbite-react/class-list.json";
 @source "../node_modules/flowbite";
 
-/* Centered loader animation */
 @keyframes centered-loader-spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -13,19 +12,16 @@
     animation: centered-loader-spin 1s linear infinite;
 }
 
-/* Ensure native form controls (like the select dropdown popup) use dark UI when possible */
 :root, html, body {
     color-scheme: dark;
 }
 
-/* Restore pleasant rounded corners on native controls */
 input,
 select,
 button {
-    border-radius: 0.5rem; /* matches rounded-lg/2xl look */
-    /* Prevent the inner background from visually filling the rounded corners */
+    border-radius: 0.5rem;
     background-clip: padding-box;
-    overflow: hidden; /* clip any inner artifacts to the radius */
+    overflow: hidden;
 }
 
 textarea {
@@ -34,7 +30,6 @@ textarea {
 }
 
 
-/* Force dark styling for native selects and their option popups for better readability */
 select,
 select:focus {
     background-color: var(--color-bgSecondary) !important;
@@ -42,26 +37,22 @@ select:focus {
     border-color: var(--color-borderAccentLight) !important;
 }
 
-/* If the select currently shows a disabled placeholder option, make it subtle */
 select:has(option[disabled]:checked) {
     color: var(--color-textSecondary) !important;
 }
 
-/* Many browsers use <option> backgrounds/text for the dropdown list */
 option {
     background-color: var(--color-bgSecondary);
     color: var(--color-textPrimary);
 }
 
-/* Placeholder/disabled option appears subtly */
 option:disabled {
     color: var(--color-textSecondary);
 }
 
-/* Improve readability for hovered/selected options (where supported) */
 option:hover,
 option:checked {
-    background-color: #3b82f6; /* blue-500 */
+    background-color: #3b82f6;
     color: #ffffff;
 }
 
@@ -86,7 +77,7 @@ option:checked {
     background: var(--color-textAccent);
 }
 
-/* Firefox support */
+/* Firefox */
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--color-borderAccent) transparent;
@@ -107,8 +98,8 @@ option:checked {
     --color-textSecondary: #9ca3af;
     --color-textAccent: #a21caf;
     --color-textError: #ef4444;
-    --color-textSuccess: #4ade80; /* bright green */
-    --color-textWarning: #facc15; /* yellow/orange */
+    --color-textSuccess: #4ade80;
+    --color-textWarning: #facc15;
 
     /* Borders / highlights */
     --color-borderAccent: #701a75;

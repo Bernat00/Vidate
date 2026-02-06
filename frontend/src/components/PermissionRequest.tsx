@@ -10,6 +10,7 @@ interface PermissionRequestProps {
   onStartMatching: () => void;
   hasMedia: boolean;
   hasLocation: boolean;
+  locationLoading?: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   micLevel: number;
   useLocation: boolean;
@@ -22,13 +23,13 @@ export default function PermissionRequest({
   onStartMatching,
   hasMedia,
   hasLocation,
+  locationLoading,
   videoRef,
   micLevel,
   useLocation,
   onToggleLocation
 }: PermissionRequestProps) {
   const [isMediaLoading, setIsMediaLoading] = useState(false);
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
   const { showToast } = useToast();
 
   const handleMediaClick = async () => {
@@ -43,15 +44,11 @@ export default function PermissionRequest({
   };
 
   const handleLocationClick = async () => {
-    setIsLocationLoading(true);
     try {
       await onGrantLocation();
       showToast("Location access granted", "success");
     } catch {
-       // location is optional, so maybe just toast info
       showToast("Location access denied or failed", "info");
-    } finally {
-      setIsLocationLoading(false);
     }
   };
 
@@ -127,14 +124,14 @@ export default function PermissionRequest({
 
              <PrimaryButton
                 onClick={handleLocationClick}
-                disabled={isLocationLoading || !hasMedia}
+                disabled={locationLoading || !hasMedia}
                 className={`flex items-center justify-center gap-2 ${
                     hasMedia 
                     ? '!bg-bgSecondary hover:!bg-bgAccentPrimary text-textPrimary border border-borderAccent' 
                     : '!bg-transparent border border-transparent text-textSecondary cursor-not-allowed shadow-none'
                 }`}
                 >
-                {isLocationLoading ? (
+                {locationLoading ? (
                     <span className="w-5 h-5 border-2 border-textSecondary border-t-textPrimary rounded-full animate-spin" />
                 ) : (
                     "Enable Location"

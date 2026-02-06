@@ -65,7 +65,6 @@ export default function MyMatches(): ReactElement {
 
         setMessages(prev => [...mappedMessages, ...prev]);
 
-        // Use timeout to wait for DOM update
         setTimeout(() => {
           if (container) {
             container.scrollTop = container.scrollHeight - oldScrollHeight;
@@ -103,7 +102,6 @@ export default function MyMatches(): ReactElement {
       initialScrollRef.current = true;
       fetchMessages(selectedMatchId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMatchId]);
 
   useLayoutEffect(() => {
@@ -175,7 +173,7 @@ export default function MyMatches(): ReactElement {
 
   const handleSelectUserId = (userId: string | null) => {
     if (userId === selectedUserId) return;
-    setMessages([]); // Clear messages when switching matches
+    setMessages([]);
     setHasMore(true);
     navigate('/my-matches', { state: { selectedUserId: userId }, replace: true });
   };

@@ -47,7 +47,6 @@ function App(): ReactElement {
                         </Route>
 
 
-                        {/* Protected area with shared navbar layout */}
                         <Route element={
                           <ProtectedRoute>
                             <ProtectedLayout />

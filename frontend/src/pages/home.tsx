@@ -45,6 +45,7 @@ export default function Home() {
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [useLocation, setUseLocation] = useState(true);
   const [timeLeft, setTimeLeft] = useState<number>(120); // 2 minutes
   const [micLevel, setMicLevel] = useState(0);
@@ -56,7 +57,6 @@ export default function Home() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Audio Analysis Setup
   useEffect(() => {
     if (!localStream) return;
 
@@ -113,29 +113,29 @@ export default function Home() {
   }, []);
 
   const grantLocation = useCallback(async (): Promise<boolean> => {
+      setLocationLoading(true);
       return new Promise((resolve, reject) => {
            navigator.geolocation.getCurrentPosition(
               (pos) => {
                 setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                setLocationLoading(false);
                 resolve(true);
               },
               (err) => {
                 console.error("GPS error", err);
-                // We don't block on error, but we reject the promise so UI knows it failed (optional)
+                setLocationLoading(false);
                 reject(err);
               }
             );
       });
   }, []);
 
-  // Automatically check for existing location permission
   useEffect(() => {
       if (navigator.permissions && navigator.permissions.query) {
           navigator.permissions.query({ name: 'geolocation' as any }).then((result) => {
               if (result.state === 'granted') {
                   grantLocation();
               }
-              // Optional: Listen for changes
               result.onchange = () => {
                   if (result.state === 'granted') {
                       grantLocation();
@@ -145,30 +145,37 @@ export default function Home() {
       }
   }, [grantLocation]);
 
-      // Update local video element when stream changes
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
   }, [localStream, viewState]);
 
-  // Update remote video element when stream changes
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
     }
   }, [remoteStream, viewState]);
 
-  // Clean up PeerConnection on unmount
-  useEffect(() => {
+    useEffect(() => {
     return () => {
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+
+      send({ type: 'left_feed', payload: {} });
+
+      const currentState = viewStateRef.current;
+      if (currentState === 'IN_CALL' || currentState === 'CONNECTING') {
+        const peerId = peerProfileRef.current?.peer_id;
+        if (peerId) {
+          send({ type: 'end_call', payload: { peer_id: peerId } });
+        }
       }
     };
-  }, []);
+    }, [send]);
 
-  // Call Timer
   useEffect(() => {
     let interval: number;
     if (viewState === 'IN_CALL') {
@@ -188,7 +195,6 @@ export default function Home() {
 
 
   const startSearching = () => {
-    // Fallback coords if location not granted or disabled
     const finalCoords = (useLocation && coords) ? coords : { lat: null, lon: null };
 
     setViewState('WAITING');
@@ -220,7 +226,6 @@ export default function Home() {
               partner_id: peerProfile.peer_id,
               liked
           });
-          // After feedback, return to matchmaking
           startSearching();
       } catch (e) {
           console.error(e);
@@ -259,7 +264,6 @@ export default function Home() {
         });
     }
 
-    // Safety timeout ensuring state change
     pc.onconnectionstatechange = () => {
         console.log("Connection State Change:", pc.connectionState);
         if (pc.connectionState === 'connected') {
@@ -272,10 +276,9 @@ export default function Home() {
 
     peerConnectionRef.current = pc;
     return pc;
-  }, [localStream, send]); // Removed viewState dependency
+  }, [localStream, send]);
 
 
-  // Subscribe to WS events
   useEffect(() => {
       const unsubMatch = subscribe('match_found', async (payload: any) => {
           console.log("Match Found:", payload);
@@ -355,10 +358,9 @@ export default function Home() {
           unsubIce();
           unsubEnd();
       };
-  }, [subscribe, createPeerConnection, send]); // Removed peerProfile dependency
+  }, [subscribe, createPeerConnection, send]);
 
 
-  // Load match details for feedback
   useEffect(() => {
     const partnerId = peerProfile?.peer_id;
     if (viewState !== 'FEEDBACK' || !partnerId) {
@@ -394,14 +396,13 @@ export default function Home() {
     };
   }, [peerProfile?.peer_id, viewState]);
 
-  // Render Helpers
   const renderDistance = () => {
       if (!peerProfile?.distance_km) return "Unknown distance";
       return `${peerProfile.distance_km.toFixed(1)} km away`;
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4 max-w-lg mx-auto w-full">
+    <div className={`flex flex-col items-center ${viewState === 'IN_CALL' ? 'h-[calc(100vh-4rem)] justify-start' : 'justify-center min-h-[calc(100vh-4rem)] p-4'} max-w-lg mx-auto w-full overflow-hidden`}>
 
       {/* State: PERMISSIONS (Setup) */}
       {(viewState === 'PERMISSIONS' || viewState === 'TESTING') && (
@@ -411,6 +412,7 @@ export default function Home() {
             onStartMatching={startSearching}
             hasMedia={!!localStream}
             hasLocation={!!coords}
+            locationLoading={locationLoading}
             videoRef={localVideoRef}
             micLevel={micLevel}
             useLocation={useLocation}
@@ -447,7 +449,7 @@ export default function Home() {
 
       {/* State: IN_CALL */}
       {viewState === 'IN_CALL' && (
-          <div className="relative w-full aspect-[9/16] bg-black rounded-lg overflow-hidden shadow-2xl border border-borderAccentLight">
+          <div className="relative w-full h-full bg-black overflow-hidden shadow-2xl border-x border-borderAccentLight">
               {/* Remote Video */}
               <video
                   ref={remoteVideoRef}
@@ -458,18 +460,21 @@ export default function Home() {
               />
 
               {/* Local Video Overlay */}
-              <div className="absolute top-4 right-4 w-24 h-32 bg-black rounded-lg overflow-hidden border border-white/20 shadow-lg">
+              <div className="absolute top-4 right-4 w-28 h-40 bg-black rounded-lg overflow-hidden border border-white/20 shadow-lg">
                   <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]" />
               </div>
 
               {/* Controls Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent flex flex-col gap-2">
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col gap-4">
                   <div className="flex justify-between items-end">
                       <div className="text-white">
-                          <h3 className="font-bold text-lg drop-shadow-md">{peerProfile?.peer_name}, {peerProfile?.peer_age}</h3>
-                          <p className="text-sm opacity-90 drop-shadow-md">{renderDistance()}</p>
+                          <h3 className="font-bold text-xl drop-shadow-md">{peerProfile?.peer_name}, {peerProfile?.peer_age}</h3>
+                          <p className="text-sm opacity-90 drop-shadow-md font-medium flex items-center gap-1">
+                              <MapPin size={14} />
+                              {renderDistance()}
+                          </p>
                       </div>
-                      <div className="text-white font-mono text-xl bg-black/40 px-2 rounded">
+                      <div className="text-white font-mono text-xl bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
                           {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                       </div>
                   </div>
@@ -477,9 +482,9 @@ export default function Home() {
                   <div className="flex justify-center mt-2">
                       <button
                         onClick={endCall}
-                        className="bg-red-500 hover:bg-red-600 text-white p-4 rounded-full shadow-lg transition-transform hover:scale-105"
+                        className="bg-red-500 hover:bg-red-600 text-white p-5 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all hover:scale-110 active:scale-95"
                       >
-                          <PhoneOff size={24} />
+                          <PhoneOff size={28} />
                       </button>
                   </div>
               </div>
@@ -488,8 +493,8 @@ export default function Home() {
 
       {/* State: FEEDBACK */}
       {viewState === 'FEEDBACK' && (
-          <div className="flex flex-col items-center gap-6 text-center animate-fade-in w-full">
-              <h2 className="text-2xl font-bold text-textPrimary">
+          <div className="flex flex-col items-center gap-4 text-center animate-fade-in w-full overflow-y-auto px-2 pb-4">
+              <h2 className="text-xl font-bold text-textPrimary">
                 How was your chat with {peerProfile?.peer_name ?? 'your match'}?
               </h2>
 
@@ -502,43 +507,51 @@ export default function Home() {
               )}
 
               {feedbackProfile && (
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-                  <InfoItem
-                    label="Name"
-                    value={[feedbackProfile.first_name, feedbackProfile.middle_name, feedbackProfile.last_name]
-                      .filter((part) => Boolean(part))
-                      .map((part) => String(part).trim())
-                      .join(' ') || 'Match'}
-                  />
-                  <InfoItem label="Age" value={calculateAge(feedbackProfile.birth_date)} />
-                  <InfoItem label="Gender" value={feedbackProfile.gender?.name ?? 'Unknown'} />
-                  <InfoItem label="Religion" value={feedbackProfile.religion?.name ?? 'Unknown'} />
-                  <InfoItem
-                    label="Languages"
-                    value={feedbackProfile.languages?.length
-                      ? feedbackProfile.languages.map(language => language.name).join(', ')
-                      : 'Unknown'}
-                  />
-                  <InfoItem
-                    label="Smoker"
-                    value={feedbackProfile.is_smoker === null || feedbackProfile.is_smoker === undefined
+                <div className="w-full grid grid-cols-2 gap-2 text-left">
+                  <div className="col-span-2">
+                    <InfoItem
+                      label="Name"
+                      value={[feedbackProfile.first_name, feedbackProfile.middle_name, feedbackProfile.last_name]
+                        .filter((part) => Boolean(part))
+                        .map((part) => String(part).trim())
+                        .join(' ') || 'Match'}
+                      className="!p-2"
+                    />
+                  </div>
+                  <InfoItem label="Age" value={calculateAge(feedbackProfile.birth_date)} className="!p-2" />
+                  <InfoItem label="Gender" value={feedbackProfile.gender?.name ?? 'Unknown'} className="!p-2" />
+                  <InfoItem label="Religion" value={feedbackProfile.religion?.name ?? 'Unknown'} className="!p-2" />
+                  <InfoItem label="Smoker" value={feedbackProfile.is_smoker === null || feedbackProfile.is_smoker === undefined
                       ? 'Unknown'
                       : feedbackProfile.is_smoker
                         ? 'Yes'
                         : 'No'}
+                    className="!p-2"
                   />
-                  <InfoItem
-                    label="Wants children"
-                    value={feedbackProfile.wants_children === null || feedbackProfile.wants_children === undefined
-                      ? 'Not sure'
-                      : feedbackProfile.wants_children
-                        ? 'Yes'
-                        : 'No'}
-                  />
+                  <div className="col-span-2">
+                    <InfoItem
+                      label="Languages"
+                      value={feedbackProfile.languages?.length
+                        ? feedbackProfile.languages.map(language => language.name).join(', ')
+                        : 'Unknown'}
+                      className="!p-2"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <InfoItem
+                      label="Wants children"
+                      value={feedbackProfile.wants_children === null || feedbackProfile.wants_children === undefined
+                        ? 'Not sure'
+                        : feedbackProfile.wants_children
+                          ? 'Yes'
+                          : 'No'}
+                      className="!p-2"
+                    />
+                  </div>
                 </div>
               )}
 
-               <div className="flex gap-8">
+               <div className="flex gap-12 mt-2">
                    <button
                        onClick={() => handleFeedback(false)}
                        className="flex flex-col items-center gap-2 group hover:cursor-pointer"

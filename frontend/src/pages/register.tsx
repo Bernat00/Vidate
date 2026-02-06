@@ -17,7 +17,6 @@ type RegisterFormValues = {
   confirmPassword: string;
 };
 
-// type RegisterErrorBody = { detail?: string };
 
 type RegisterRouteState = {
   toastMessage: string;

@@ -16,7 +16,6 @@ import FormField from '../components/form/FormField';
 import { Select } from 'flowbite-react';
 import { commonInputClasses } from '../components/form/formStyles';
 
-// New sub-component to deduplicate the massive form
 interface CombinedFormFieldsProps {
   register: UseFormRegister<CombinedOnboardingForm>;
   errors: FieldErrors<CombinedOnboardingForm>;
@@ -216,10 +215,8 @@ function CombinedFormFields({
 }
 
 type CombinedOnboardingForm = SetupProfileForm & {
-  // User's own attributes (Profile)
   self_wants_children: string; // "true" | "false" | ""
   self_is_smoker: string; // "true" | "false" | "" (required)
-  // Preferences for potential matches (Preferences)
   pref_age_min: string; // "" or number as string
   pref_age_max: string; // "" or number as string
   pref_wants_children: string; // "true" | "false" | ""
@@ -269,13 +266,11 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
   const [languages, setLanguages] = useState<ProfileOption[]>([]);
   const [religions, setReligions] = useState<ProfileOption[]>([]);
   const [loading, setLoading] = useState(true);
-  // Single-page onboarding (no stages)
 
   useEffect(() => {
     (async () => {
       try {
         if (isNewUser) {
-          // New users: do not request /preferences; just load option lists and any existing profile if present
           const [g, l, r, myRes] = await Promise.all([
             api.get<ProfileOption[]>('/profile/genders'),
             api.get<ProfileOption[]>('/profile/languages'),
@@ -301,12 +296,10 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
               setValue('language_ids', [String(my.language_id)]);
             }
             setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
-            // Self attributes
             setValue('self_is_smoker', my.is_smoker != null ? String(my.is_smoker) : '');
             setValue('self_wants_children', my.wants_children != null ? String(my.wants_children) : '');
           }
         } else {
-          // Existing users: load preferences too
           const [g, l, r, myRes, prefRes] = await Promise.all([
             api.get<ProfileOption[]>('/profile/genders'),
             api.get<ProfileOption[]>('/profile/languages'),
@@ -333,7 +326,6 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
               setValue('language_ids', [String(my.language_id)]);
             }
             setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
-            // Self attributes
             setValue('self_is_smoker', my.is_smoker != null ? String(my.is_smoker) : '');
             setValue('self_wants_children', my.wants_children != null ? String(my.wants_children) : '');
           }
@@ -365,7 +357,6 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
     const today = new Date();
     if (d > today) return 'Birth date cannot be in the future';
     
-    // Age must be at least 18
     const birth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
     const now = new Date();
     const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -389,7 +380,6 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
 
   const onSubmitProfile = async (data: CombinedOnboardingForm) => {
     try {
-      // Save profile data
       const profilePayload: SetupProfilePayload = {
         first_name: data.first_name.trim(),
         middle_name: data.middle_name.trim() || null,
@@ -398,12 +388,10 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
         gender_id: Number(data.gender_id),
         language_ids: data.language_ids.map(Number),
         religion_id: data.religion_id === '' ? null : Number(data.religion_id),
-        // Backend ProfileCreate: is_smoker required boolean, wants_children optional
         is_smoker: data.self_is_smoker === '' ? false : data.self_is_smoker === 'true',
         wants_children: data.self_wants_children === '' ? null : data.self_wants_children === 'true',
       };
 
-      // Save preferences data
       const preferencesPayload: SetupPreferencesPayload = {
         age_min: data.pref_age_min === '' ? null : Number(data.pref_age_min),
         age_max: data.pref_age_max === '' ? null : Number(data.pref_age_max),
@@ -414,7 +402,6 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
         religion_ids: data.preferred_religion_ids.map(Number),
       };
 
-      // Submit both in parallel
       await Promise.all([
         api.put('/profile/mine', profilePayload),
         api.put('/preferences', preferencesPayload)
@@ -422,7 +409,6 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
 
       if (refresh) await refresh();
       showToast('Profile and preferences saved successfully!', 'success');
-      // Only redirect new users after initial setup; existing users stay on the profile page
       if (isNewUser) {
         navigate('/home');
       }

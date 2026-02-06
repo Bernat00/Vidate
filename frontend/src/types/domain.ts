@@ -1,6 +1,5 @@
 export type ToastStatus = 'success' | 'error' | 'warning' | 'info';
 
-// Backend: UserMe(BaseModel) but any field may be null.
 export interface UserMe {
   id: string | null;
   email: string | null;
@@ -15,7 +14,6 @@ export interface ProfileOption {
   name: string;
 }
 
-// Backend: /profile/mine may include more fields; we only model the ones we use.
 export interface ProfileMine {
   first_name?: string | null;
   middle_name?: string | null;
@@ -45,7 +43,6 @@ export interface SetupProfilePayload {
   gender_id: number | null;
   language_ids: number[];
   religion_id: number | null;
-  // Updated to match backend ProfileCreate schema
   is_smoker: boolean;
   wants_children: boolean | null;
 }
@@ -113,8 +110,8 @@ export interface ChatEventOut {
   id: number;
   type: string;
   match_id: number;
-  originator_id: string; // Adjusted to string as user ID in backend is str
-  recipient_id: string; // Adjusted to string
+  originator_id: string;
+  recipient_id: string;
   timestamp: string;
   content?: string | null;
   end_time?: string | null;
