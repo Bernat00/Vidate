@@ -21,12 +21,16 @@
 /* Restore pleasant rounded corners on native controls */
 input,
 select,
-textarea,
 button {
     border-radius: 0.5rem; /* matches rounded-lg/2xl look */
     /* Prevent the inner background from visually filling the rounded corners */
     background-clip: padding-box;
     overflow: hidden; /* clip any inner artifacts to the radius */
+}
+
+textarea {
+    border-radius: 0.5rem;
+    background-clip: padding-box;
 }
 
 
