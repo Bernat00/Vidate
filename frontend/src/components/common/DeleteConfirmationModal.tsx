@@ -1,5 +1,4 @@
 import { Modal } from './Modal';
-import { Button } from 'flowbite-react';
 import { AlertTriangle } from 'lucide-react';
 
 interface DeleteConfirmationModalProps {

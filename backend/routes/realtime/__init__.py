@@ -7,10 +7,11 @@ from fastapi.logger import logger
 
 from backend.routes.auth import decode_token
 
+from backend.config import Config
 import redis.asyncio as redis
 
 
-r = redis.Redis(host='localhost', port=6379)
+r = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT)
 
 
 class ConnectionManager:

@@ -1,10 +1,9 @@
 import { NavLink } from 'react-router-dom';
-import type { LucideIcon } from 'lucide-react';
 import Icon from './Icon';
 
 interface NavButtonProps {
   to: string;
-  icon: LucideIcon;
+  icon: any;
   label: string;
 }
 

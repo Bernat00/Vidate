@@ -1,0 +1,46 @@
+# Git
+.env
+# Environment variables
+
+.dockerignore
+docker-compose.yml
+# Docker
+
+backend/
+# Backend is built separately, but we still exclude it from the nginx/frontend build context to save space
+
+frontend/.env.production.local
+frontend/.env.test.local
+frontend/.env.development.local
+frontend/.env.local
+frontend/coverage
+frontend/dist
+frontend/node_modules
+backend/venv
+# Dependencies and Local files
+
+vidate/postgres_data
+*.db
+# Database
+
+build
+dist
+*.egg-info
+.Python
+*.pyd
+*.pyo
+*.pyc
+__pycache__
+venv
+# Python
+
+*.iml
+.settings
+.project
+.vscode
+.idea
+# IDEs
+
+.gitignore
+.git
+

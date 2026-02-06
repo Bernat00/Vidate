@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useRef } from 'react
 import type { ReactNode } from 'react';
 import { useToast } from './toastContext';
 import { useAuth } from './authContext';
-import {backendPort, hostname} from "../api.ts";
 
 export type WebSocketMessage = {
   type: string;
@@ -22,7 +21,7 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY_MS = 1000;
 
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const baseUrl = `${wsProtocol}//${hostname}${backendPort}/ws/main`;
+const baseUrl = `${wsProtocol}//${window.location.host}/ws/main`;
 
 const getStoredToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
 

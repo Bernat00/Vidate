@@ -1,11 +1,6 @@
 import axios, { AxiosHeaders } from 'axios';
 
-export const hostname = window.location.hostname;
-const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(hostname);
-const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-export const backendPort = (!isIP && !isLocalhost) ? '' : ':8000';
-
-export const baseUrl = `${window.location.protocol}//${hostname}${backendPort}/api`;
+export const baseUrl = `/api`;
 const api = axios.create({
   baseURL: baseUrl,
   headers: {

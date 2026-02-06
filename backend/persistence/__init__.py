@@ -19,10 +19,13 @@ from backend.persistence.model.preferences.preferences import Preference
 from backend.persistence.model.preferences.associacions import PreferenceGenderLink, PreferenceLanguageLink, PreferenceReligionLink
 
 
+engine_kwargs = {"echo": True}
+if str(Config.SQL_ALCHEMY_DATABASE_URL).startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+
 engine = create_async_engine(
     str(Config.SQL_ALCHEMY_DATABASE_URL),
-    echo=True,
-    connect_args={"check_same_thread": False}
+    **engine_kwargs
 )
 
 async def create_db_and_tables():

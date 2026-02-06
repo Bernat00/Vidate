@@ -1,7 +1,5 @@
-import type { LucideIcon } from 'lucide-react';
-
 interface IconProps {
-  icon: LucideIcon;
+  icon: any;
   className?: string;
   size?: number | string;
 }

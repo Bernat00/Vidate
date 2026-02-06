@@ -2,7 +2,7 @@ from platform import machine
 from uuid import uuid4
 from pydantic import SecretStr, EmailStr, computed_field
 
-from sqlalchemy import String
+from sqlalchemy import String, DateTime
 from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime, timezone
 from typing import List, Callable, TYPE_CHECKING
@@ -41,12 +41,14 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(
         default_factory=lambda: datetime. now(timezone.utc),
         nullable=False,
+        sa_type=DateTime(timezone=True)
     )
 
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone. utc),
         sa_column_kwargs={"onupdate":  lambda: datetime.now(timezone. utc)},
         nullable=False,
+        sa_type=DateTime(timezone=True)
     )
 
     disabled: bool = Field(nullable=False, default=False)

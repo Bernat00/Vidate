@@ -1,4 +1,4 @@
-from sqlalchemy import String, UniqueConstraint
+from sqlalchemy import String, UniqueConstraint, DateTime
 from sqlmodel import Field, SQLModel
 from datetime import datetime, timezone
 
@@ -18,6 +18,7 @@ class Match(SQLModel, table=True):
 
     timestamp: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
+        sa_type=DateTime(timezone=True)
     )
 
     confirmed: bool = Field(
@@ -36,5 +37,3 @@ class Match(SQLModel, table=True):
         sa_type=String(255),
         nullable=False,
     )
-
-

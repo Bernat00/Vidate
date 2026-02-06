@@ -1,0 +1,80 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    networks:
+      - vidate_net
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: vidate
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d vidate"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    networks:
+      - vidate_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 3
+    networks:
+      - vidate_net
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/vidate
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET_KEY=dev_secret_key_change_me
+      - PSW_SECRET_KEY=dev_psw_key_change_me
+      - PWD_SALT=helikopter
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - vidate_net
+    depends_on:
+      - backend
+    restart: always
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --url http://nginx:8080
+    networks:
+      - vidate_net
+    depends_on:
+      - nginx
+    restart: always
+
+# No named volumes needed.
+
+networks:
+  vidate_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+

@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from sqlalchemy import String
+from sqlalchemy import String, DateTime
 from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime, timezone
 
@@ -26,7 +26,7 @@ class Profile(SQLModel, table=True):
     first_name: str = Field(nullable=False)
     middle_name: str | None = Field(default=None, nullable=True)
     last_name: str = Field(nullable=False)
-    birth_date: datetime = Field(nullable=False)
+    birth_date: datetime = Field(nullable=False, sa_type=DateTime(timezone=True))
     gender_id: int = Field(foreign_key="genders.id", nullable=False)
     religion_id: int | None = Field(default=None, foreign_key="religions.id", nullable=True)
     is_smoker: bool = Field(default=False)
