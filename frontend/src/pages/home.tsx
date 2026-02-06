@@ -5,6 +5,7 @@ import { Video, MapPin, ThumbsUp, ThumbsDown, PhoneOff } from 'lucide-react';
 import { useToast } from '../context/toastContext';
 import PermissionRequest from '../components/PermissionRequest';
 import InfoItem from '../components/common/InfoItem';
+import DestructiveButton from '../components/form/DestructiveButton';
 import { calculateAge } from '../helpers';
 
 type ViewState = 'PERMISSIONS' | 'TESTING' | 'WAITING' | 'CONNECTING' | 'IN_CALL' | 'FEEDBACK';
@@ -460,32 +461,36 @@ export default function Home() {
               />
 
               {/* Local Video Overlay */}
-              <div className="absolute top-4 right-4 w-28 h-40 bg-black rounded-lg overflow-hidden border border-white/20 shadow-lg">
+              <div className="absolute top-4 right-4 w-28 h-40 bg-black/80 rounded-lg overflow-hidden shadow-2xl shadow-black/50">
                   <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]" />
               </div>
 
               {/* Controls Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col gap-4">
-                  <div className="flex justify-between items-end">
-                      <div className="text-white">
-                          <h3 className="font-bold text-xl drop-shadow-md">{peerProfile?.peer_name}, {peerProfile?.peer_age}</h3>
-                          <p className="text-sm opacity-90 drop-shadow-md font-medium flex items-center gap-1">
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      <div className="min-w-0 text-white">
+                          <h3 className="font-semibold text-lg leading-tight break-words whitespace-normal">
+                            {peerProfile?.peer_name}, {peerProfile?.peer_age}
+                          </h3>
+                          <p className="text-sm opacity-90 font-medium flex items-center gap-1">
                               <MapPin size={14} />
                               {renderDistance()}
                           </p>
                       </div>
-                      <div className="text-white font-mono text-xl bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+
+                      <DestructiveButton
+                        type="button"
+                        onClick={endCall}
+                        fullWidth={false}
+                        className="!rounded-full !p-3 !w-12 !h-12 flex items-center justify-center justify-self-center"
+                        aria-label="End call"
+                      >
+                          <PhoneOff size={20} />
+                      </DestructiveButton>
+
+                      <div className="justify-self-end text-white text-sm bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 whitespace-nowrap">
                           {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                       </div>
-                  </div>
-
-                  <div className="flex justify-center mt-2">
-                      <button
-                        onClick={endCall}
-                        className="bg-red-500 hover:bg-red-600 hover:cursor-pointer text-white p-5 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all hover:scale-110 active:scale-95"
-                      >
-                          <PhoneOff size={28} />
-                      </button>
                   </div>
               </div>
           </div>
