@@ -1,8 +1,2 @@
-in the matchprofile page use an outlet for the profile itself so that the sidebar doesnt reload
-
-
-publish send chats to self as well (logged in on other devices for example)
-
-
 kesobb: matchmaking
 show me where i would place the actual matchmaking instead of this placeholder one

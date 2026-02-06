@@ -1,9 +1,8 @@
 import type { ReactElement } from 'react';
 import { useEffect, useState, useRef, useCallback, useLayoutEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import ChatInput from "../components/ChatInput.tsx";
 import ChatColumn from '../components/layout/ChatColumn';
-import DashboardLayout from '../components/layout/DashboardLayout';
 import MessageList from '../components/chat/MessageList';
 import EmptyState from '../components/common/EmptyState';
 import { MessageSquare } from 'lucide-react';
@@ -13,10 +12,10 @@ import api from '../api.ts';
 import { useWebSocket } from '../context/webSocketContext';
 import { useAuth } from '../context/authContext';
 import CenteredLoader from '../components/layout/CenteredLoader';
+import type { MatchesOutletContext } from '../components/layout/MatchesLayout';
 
 export default function MyMatches(): ReactElement {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const { selectedUserId } = useOutletContext<MatchesOutletContext>();
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -29,7 +28,6 @@ export default function MyMatches(): ReactElement {
   const ws = useWebSocket();
   const { user } = useAuth()!;
 
-  const selectedUserId = (location.state as { selectedUserId?: string | null } | null)?.selectedUserId ?? null;
   const selectedMatch = matches.find(m => m.profile?.user_id === selectedUserId);
   const selectedMatchId = selectedMatch?.match_id?.toString();
 
@@ -171,13 +169,6 @@ export default function MyMatches(): ReactElement {
     }
   }, [messages]);
 
-  const handleSelectUserId = (userId: string | null) => {
-    if (userId === selectedUserId) return;
-    setMessages([]);
-    setHasMore(true);
-    navigate('/my-matches', { state: { selectedUserId: userId }, replace: true });
-  };
-
   const onSendMessage = (content: string) => {
     if (!selectedMatch || !selectedMatchId || !ws) return;
 
@@ -194,42 +185,34 @@ export default function MyMatches(): ReactElement {
     });
   };
 
-  const title = selectedMatch ? getDisplayName(selectedMatch) : 'Vidate';
-
   return (
-    <DashboardLayout
-      title={title}
-      selectedUserId={selectedUserId}
-      onSelectUserId={handleSelectUserId}
-    >
-      <ChatColumn>
-        {selectedUserId ? (
-          loadingMessages && messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1 h-[calc(100vh-8.6rem)] lg:h-[calc(100vh-5.5rem)]">
-              <CenteredLoader text="Loading conversation..." className="flex flex-col items-center justify-center gap-4" />
-            </div>
-          ) : (
-            <div className="flex flex-col flex-1 max-h-[calc(100vh-8.6rem)] lg:max-h-[calc(100vh-5.5rem)] overflow-hidden mb-2">
-              <MessageList
-                messages={messages}
-                className="flex-1 overflow-y-auto mb-2"
-                scrollRef={scrollContainerRef}
-                onScroll={handleScroll}
-                loadingTop={loadingMessages && messages.length > 0}
-              />
-              <ChatInput onSendMessage={onSendMessage} />
-            </div>
-          )
-        ) : (
-          <div className="flex items-center justify-center flex-1">
-            <EmptyState
-              icon={MessageSquare}
-              title="Select a match to start chatting"
-              description="Choose someone from your matches to view the conversation."
-            />
+    <ChatColumn>
+      {selectedUserId ? (
+        loadingMessages && messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center flex-1 h-[calc(100vh-8.6rem)] lg:h-[calc(100vh-5.5rem)]">
+            <CenteredLoader text="Loading conversation..." className="flex flex-col items-center justify-center gap-4" />
           </div>
-        )}
-      </ChatColumn>
-    </DashboardLayout>
+        ) : (
+          <div className="flex flex-col flex-1 max-h-[calc(100vh-8.6rem)] lg:max-h-[calc(100vh-5.5rem)] overflow-hidden mb-2">
+            <MessageList
+              messages={messages}
+              className="flex-1 overflow-y-auto mb-2"
+              scrollRef={scrollContainerRef}
+              onScroll={handleScroll}
+              loadingTop={loadingMessages && messages.length > 0}
+            />
+            <ChatInput onSendMessage={onSendMessage} />
+          </div>
+        )
+      ) : (
+        <div className="flex items-center justify-center flex-1">
+          <EmptyState
+            icon={MessageSquare}
+            title="Select a match to start chatting"
+            description="Choose someone from your matches to view the conversation."
+          />
+        </div>
+      )}
+    </ChatColumn>
   );
 }

@@ -16,6 +16,7 @@ import ProtectedLayout from './components/layout/ProtectedLayout';
 import Home from './pages/home';
 import Profile from './pages/profile';
 import { WebSocketProvider } from './context/webSocketContext';
+import MatchesLayout from './components/layout/MatchesLayout';
 
 function App(): ReactElement {
   return (
@@ -53,8 +54,10 @@ function App(): ReactElement {
                           </ProtectedRoute>
                         }>
                           <Route path="/home" element={<Home />} />
-                          <Route path="/my-matches" element={<MyMatches />} />
-                          <Route path="/my-matches/profile/:userId" element={<MatchProfile />} />
+                          <Route path="/my-matches" element={<MatchesLayout />}>
+                            <Route index element={<MyMatches />} />
+                            <Route path="profile/:userId" element={<MatchProfile />} />
+                          </Route>
                           <Route path="/profile" element={<Profile />} />
                         </Route>
                     </Routes>
