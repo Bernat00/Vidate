@@ -1,6 +1,16 @@
 import axios, { AxiosHeaders } from 'axios';
 
-export const baseUrl = `/api`;
+export const getBaseUrl = () => {
+  const { hostname, protocol, port } = window.location;
+  if (port === '5173') {
+    return `${protocol}//${hostname}:8000/api`;
+  }
+
+  return '/api';
+};
+
+const baseUrl = getBaseUrl()
+
 const api = axios.create({
   baseURL: baseUrl,
   headers: {

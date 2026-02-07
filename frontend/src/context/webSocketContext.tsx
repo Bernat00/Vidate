@@ -20,8 +20,18 @@ const WebSocketContext = createContext<WebSocketContextValue | undefined>(undefi
 const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY_MS = 1000;
 
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const baseUrl = `${wsProtocol}//${window.location.host}/ws/main`;
+const getWsUrl = () => {
+  const { hostname, protocol, port } = window.location;
+
+  const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+  if (port === '5173') {
+    return `${wsProtocol}//${hostname}:8000/ws/main`;
+  }
+
+  return `${wsProtocol}//${window.location.host}/ws/main`;
+};
+
+const wsUrl = getWsUrl()
 
 const getStoredToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
 
@@ -67,7 +77,7 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     if (!token) return;
     if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) return;
     // const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = new URL(baseUrl);
+    const url = new URL(wsUrl);
     url.searchParams.set('token', token);
     const socket = new WebSocket(url.toString());
     wsRef.current = socket;
