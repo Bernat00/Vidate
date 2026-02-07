@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import axios from 'axios';
 import api from '../api';
 import type { UserMe } from '../types/domain';
 
@@ -27,8 +28,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const res = await api.get<UserMe>('/users/me');
       setUser(res.data);
-    } catch {
-      setUser(null);
+    } catch (error) {
+       if (axios.isAxiosError(error) && error.response?.status === 401) {
+          setUser(null);
+       }
     } finally {
       setLoading(false);
     }
