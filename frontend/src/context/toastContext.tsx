@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import Toast from '../components/toast';
 import type { ToastStatus } from '../types/domain';
@@ -19,9 +19,9 @@ export const useToast = (): ToastContextValue => {
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toast, setToast] = useState<{ message: string; status: ToastStatus } | null>(null);
 
-  const showToast = (message: string, status: ToastStatus = 'success') => {
+  const showToast = useCallback((message: string, status: ToastStatus = 'success') => {
     setToast({ message, status });
-  };
+  }, []);
 
   const closeToast = () => setToast(null);
 
@@ -31,8 +31,10 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     return () => clearTimeout(timer);
   }, [toast]);
 
+  const value = useMemo(() => ({ showToast }), [showToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={value}>
       {children}
       {toast && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 lg:left-auto lg:right-5 lg:translate-x-0 z-50 w-full max-w-sm px-4 lg:px-0 transition-all duration-300">
