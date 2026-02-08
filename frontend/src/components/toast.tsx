@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { ToastStatus } from '../types/domain';
-import { AlertTriangle, Check, Info, X } from 'lucide-react';
+import { AlertTriangle, Check, Info, X, Heart } from 'lucide-react';
 
 type ToastConfig = {
   iconColor: string;
@@ -35,6 +35,11 @@ const Toast = ({ text, status = 'info', onClose }: ToastProps) => {
       iconColor: 'text-textAccent',
       iconBg: 'bg-bgAccentPrimary',
       icon: <Info className="w-5 h-5" aria-hidden="true" />,
+    },
+    match: {
+      iconColor: 'text-white',
+      iconBg: 'bg-gradient-to-br from-textAccent to-purple-600', // Making it special/purple as requested
+      icon: <Heart className="w-5 h-5 fill-current" aria-hidden="true" />,
     },
   };
 

@@ -18,6 +18,7 @@ import Profile from './pages/profile';
 import { WebSocketProvider } from './context/webSocketContext';
 import MatchesLayout from './components/layout/MatchesLayout';
 import { MatchesProvider } from './context/matchesContext';
+import { NotificationListener } from './components/NotificationListener';
 
 function App(): ReactElement {
   return (
@@ -26,6 +27,7 @@ function App(): ReactElement {
             <AuthProvider>
                 <WebSocketProvider>
                     <MatchesProvider>
+                        <NotificationListener />
                         <Routes>
                             <Route path="/" element={
                               <PublicOnlyRoute>

@@ -1,7 +1,6 @@
-import asyncio
-
 from typing_extensions import deprecated
 
+import json
 from . import repoDep
 from ..persistence.model.match import Match
 from ..persistence.repository.match import SameValueError
@@ -16,8 +15,9 @@ from sqlalchemy.orm import selectinload
 from ..persistence.model.conversation import Conversation
 from ..persistence.model.profile import Profile
 
-from fastapi import HTTPException, status, APIRouter
-
+from fastapi import HTTPException, status, APIRouter, Depends
+from backend.helpers import get_redis
+from redis.asyncio import Redis
 
 from . import get_and_auth_current_user
 
@@ -61,13 +61,40 @@ async def all(repo: repoDep, user: get_and_auth_current_user):
 
 
 @router.post('/match')
-async def match(userid: str, repo: repoDep, user: get_and_auth_current_user) -> Match:
+async def match(userid: str, repo: repoDep, user: get_and_auth_current_user, r: Redis = Depends(get_redis)) -> Match:
     to_match = await repo.user_repo.get_by_id(userid)
     if not to_match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    current_user_id = user.id
+
     try:
-        return await repo.match_repo.match(user, to_match)
+        m = await repo.match_repo.match(user, to_match)
+        if m.confirmed:
+            # Notify both users
+            my_profile = await repo.profile_repo.get_by_id(current_user_id)
+            peer_profile = await repo.profile_repo.get_by_id(userid)
+
+            # To the peer
+            await r.publish(f"user:{userid}", json.dumps({
+                "type": "match_confirmed",
+                "payload": {
+                    "peer_id": current_user_id,
+                    "peer_name": my_profile.first_name if my_profile else "Someone",
+                    "match_id": m.id
+                }
+            }))
+            # To the current user
+            await r.publish(f"user:{current_user_id}", json.dumps({
+                "type": "match_confirmed",
+                "payload": {
+                    "peer_id": userid,
+                    "peer_name": peer_profile.first_name if peer_profile else "Someone",
+                    "match_id": m.id
+                }
+            }))
+            print("published match confirmation")
+        return m
     except SameValueError as err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
@@ -108,7 +135,8 @@ async def get_match_events(
 async def feedback(
     req: FeedbackRequest,
     repo: repoDep,
-    user: get_and_auth_current_user
+    user: get_and_auth_current_user,
+    r: Redis = Depends(get_redis)
 ):
     if not req.liked:
         return {"status": "ok"}
@@ -137,10 +165,36 @@ async def feedback(
     result = await repo.session.scalars(stmt)
     existing_match = result.first()
 
+    current_user_id = user.id
+
     if existing_match:
         if not existing_match.confirmed:
             existing_match.confirmed = True
-            await repo.save(existing_match)
+            await repo.match_repo.save(existing_match)
+
+            # Notify both users
+            my_profile = await repo.profile_repo.get_by_id(current_user_id)
+            peer_profile = await repo.profile_repo.get_by_id(req.partner_id)
+
+            # To the peer
+            await r.publish(f"user:{req.partner_id}", json.dumps({
+                "type": "match_confirmed",
+                "payload": {
+                    "peer_id": current_user_id,
+                    "peer_name": my_profile.first_name if my_profile else "Someone",
+                    "match_id": existing_match.id
+                }
+            }))
+            # To the current user
+            await r.publish(f"user:{current_user_id}", json.dumps({
+                "type": "match_confirmed",
+                "payload": {
+                    "peer_id": req.partner_id,
+                    "peer_name": peer_profile.first_name if peer_profile else "Someone",
+                    "match_id": existing_match.id
+                }
+            }))
+
             return {"status": "matched"}
         else:
              return {"status": "already_matched"}

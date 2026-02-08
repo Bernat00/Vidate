@@ -1,4 +1,4 @@
-export type ToastStatus = 'success' | 'error' | 'warning' | 'info';
+export type ToastStatus = 'success' | 'error' | 'warning' | 'info' | 'match';
 
 export interface UserMe {
   id: string | null;
