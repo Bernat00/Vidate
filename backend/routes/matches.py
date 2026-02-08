@@ -73,7 +73,7 @@ async def match(userid: str, repo: repoDep, user: get_and_auth_current_user) -> 
 
 
 @router.delete('/match')
-async def match(match_id: str, repo: repoDep, user: get_and_auth_current_user):
+async def match(match_id: int, repo: repoDep, user: get_and_auth_current_user):
     match = await repo.match_repo.get_by_id(match_id)
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found.")

@@ -7,16 +7,17 @@ import MessageList from '../components/chat/MessageList';
 import EmptyState from '../components/common/EmptyState';
 import { MessageSquare } from 'lucide-react';
 import { getDisplayName } from '../helpers.ts';
-import type { MatchItem, ChatMessage as ChatMessageType, ChatEventOut } from '../types/domain.ts';
+import type { ChatMessage as ChatMessageType, ChatEventOut } from '../types/domain.ts';
 import api from '../api.ts';
 import { useWebSocket } from '../context/webSocketContext';
 import { useAuth } from '../context/authContext';
+import { useMatches } from '../context/matchesContext';
 import CenteredLoader from '../components/layout/CenteredLoader';
 import type { MatchesOutletContext } from '../components/layout/MatchesLayout';
 
 export default function MyMatches(): ReactElement {
   const { selectedUserId } = useOutletContext<MatchesOutletContext>();
-  const [matches, setMatches] = useState<MatchItem[]>([]);
+  const { matches } = useMatches();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -80,18 +81,6 @@ export default function MyMatches(): ReactElement {
       isFetchingRef.current = false;
     }
   }, [hasMore, user?.id, selectedMatch]);
-
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const response = await api.get<MatchItem[]>('/matches/mine');
-        setMatches(response.data ?? []);
-      } catch (error) {
-        console.error("Failed to fetch matches:", error);
-      }
-    };
-    fetchMatches();
-  }, []);
 
   useEffect(() => {
     if (selectedMatchId) {

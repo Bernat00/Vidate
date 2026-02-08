@@ -9,6 +9,7 @@ import InfoItem from '../components/common/InfoItem';
 import Section from '../components/layout/Section';
 import DestructiveButton from '../components/form/DestructiveButton';
 import { useToast } from '../context/toastContext.tsx';
+import { useMatches } from '../context/matchesContext';
 import { DeleteConfirmationModal } from '../components/common/DeleteConfirmationModal';
 import CenteredLoader from '../components/layout/CenteredLoader';
 
@@ -23,6 +24,7 @@ export default function MatchProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { refreshMatches } = useMatches();
   const [match, setMatch] = useState<MatchItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -61,6 +63,7 @@ export default function MatchProfile() {
     setIsDeleting(true);
     try {
       await api.delete('/matches/match', { params: { match_id: match.match_id } });
+      await refreshMatches();
       showToast('Match deleted.', 'success');
       setIsDeleteModalOpen(false);
       navigate('/my-matches', { replace: true });

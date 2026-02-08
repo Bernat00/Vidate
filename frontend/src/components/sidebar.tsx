@@ -1,13 +1,10 @@
-import {useEffect, useState} from "react";
 import { useLocation, useNavigate } from 'react-router-dom';
-import api from "../api.ts";
-import { User, X } from 'lucide-react';
-import type { MatchItem } from '../types/domain.ts';
+import { User, X, Users } from 'lucide-react';
 import ListItem from './common/ListItem';
 import CenteredLoader from './layout/CenteredLoader';
 import { getDisplayName } from '../helpers.ts';
 import EmptyState from './common/EmptyState';
-import { Users } from 'lucide-react';
+import { useMatches } from '../context/matchesContext';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -17,8 +14,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen, onClose, selectedUserId, onSelectUserId }: SidebarProps) => {
-  const [matches, setMatches] = useState<MatchItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { matches, loading } = useMatches();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -37,22 +33,6 @@ const Sidebar = ({ isOpen, onClose, selectedUserId, onSelectUserId }: SidebarPro
 
     return parsed.toLocaleDateString();
   };
-
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const response = await api.get<MatchItem[]>('/matches/mine');
-        console.log(response.data)
-        setMatches(response.data ?? []);
-      } catch (error) {
-        console.error("Failed to fetch matches:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMatches();
-  }, []);
 
   return (
     <aside

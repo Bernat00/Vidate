@@ -17,6 +17,7 @@ import Home from './pages/home';
 import Profile from './pages/profile';
 import { WebSocketProvider } from './context/webSocketContext';
 import MatchesLayout from './components/layout/MatchesLayout';
+import { MatchesProvider } from './context/matchesContext';
 
 function App(): ReactElement {
   return (
@@ -24,43 +25,45 @@ function App(): ReactElement {
         <ToastProvider>
             <AuthProvider>
                 <WebSocketProvider>
-                    <Routes>
-                        <Route path="/" element={
-                          <PublicOnlyRoute>
-                            <LandingPage />
-                          </PublicOnlyRoute>
-                        } />
-                        <Route path="/login" element={
-                          <PublicOnlyRoute>
-                            <Login />
-                          </PublicOnlyRoute>
-                        } />
-                        <Route path="/register" element={
-                          <PublicOnlyRoute>
-                            <Register />
-                          </PublicOnlyRoute>
-                        } />
-                        <Route path="/setup-profile" element={
-                            <ProtectedRoute>
-                                <SetupProfile/>
-                            </ProtectedRoute>
-                        }>
-                        </Route>
+                    <MatchesProvider>
+                        <Routes>
+                            <Route path="/" element={
+                              <PublicOnlyRoute>
+                                <LandingPage />
+                              </PublicOnlyRoute>
+                            } />
+                            <Route path="/login" element={
+                              <PublicOnlyRoute>
+                                <Login />
+                              </PublicOnlyRoute>
+                            } />
+                            <Route path="/register" element={
+                              <PublicOnlyRoute>
+                                <Register />
+                              </PublicOnlyRoute>
+                            } />
+                            <Route path="/setup-profile" element={
+                                <ProtectedRoute>
+                                    <SetupProfile/>
+                                </ProtectedRoute>
+                            }>
+                            </Route>
 
 
-                        <Route element={
-                          <ProtectedRoute>
-                            <ProtectedLayout />
-                          </ProtectedRoute>
-                        }>
-                          <Route path="/home" element={<Home />} />
-                          <Route path="/my-matches" element={<MatchesLayout />}>
-                            <Route index element={<MyMatches />} />
-                            <Route path="profile/:userId" element={<MatchProfile />} />
-                          </Route>
-                          <Route path="/profile" element={<Profile />} />
-                        </Route>
-                    </Routes>
+                            <Route element={
+                              <ProtectedRoute>
+                                <ProtectedLayout />
+                              </ProtectedRoute>
+                            }>
+                              <Route path="/home" element={<Home />} />
+                              <Route path="/my-matches" element={<MatchesLayout />}>
+                                <Route index element={<MyMatches />} />
+                                <Route path="profile/:userId" element={<MatchProfile />} />
+                              </Route>
+                              <Route path="/profile" element={<Profile />} />
+                            </Route>
+                        </Routes>
+                    </MatchesProvider>
                 </WebSocketProvider>
             </AuthProvider>
         </ToastProvider>
