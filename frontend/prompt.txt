@@ -1,8 +1,7 @@
 block and report
 ban users
 admin page for reporting and banning, languages, genders, religions
-chat message notifications
-match notifications
-order mymatches by last message
+
+message read receipts, alert unread messages
 
 matchmaking

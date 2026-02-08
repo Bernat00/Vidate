@@ -104,6 +104,8 @@ export interface MatchItem {
     avatar?: string | null;
   } | null;
   matched_at?: string | null;
+  last_message?: string | null;
+  last_message_at?: string | null;
 }
 
 export interface ChatEventOut {

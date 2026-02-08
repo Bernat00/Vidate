@@ -29,6 +29,8 @@ class MatchResponse(BaseModel):
     profile: ProfileRead
     matched_at: datetime
     match_id: int
+    last_message: Optional[str] = None
+    last_message_at: Optional[datetime] = None
 
 class FeedbackRequest(BaseModel):
     partner_id: str

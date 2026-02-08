@@ -1,9 +1,10 @@
-from sqlalchemy import case, func, select
+from sqlalchemy import case, select
 from sqlalchemy.orm import selectinload
 
 from . import BaseRepo
 from .. import Match
 from ..model.profile import Profile
+from ..model.chat_event import ChatEvent
 
 
 class ProfileRepo(BaseRepo[Profile]):
@@ -27,7 +28,9 @@ class ProfileRepo(BaseRepo[Profile]):
             select(
                 Profile,
                 Match.timestamp,
-                Match.id
+                Match.id,
+                select(ChatEvent.content).where(ChatEvent.match_id == Match.id).order_by(ChatEvent.timestamp.desc()).limit(1).scalar_subquery().label("last_message"),
+                select(ChatEvent.timestamp).where(ChatEvent.match_id == Match.id).order_by(ChatEvent.timestamp.desc()).limit(1).scalar_subquery().label("last_message_at")
             )
             .join(
                 Match,
@@ -50,8 +53,14 @@ class ProfileRepo(BaseRepo[Profile]):
         result = result.unique()
 
         return [
-            {"profile": profile, "matched_at": timestamp, "match_id": match_id}
-            for profile, timestamp, match_id in result
+            {
+                "profile": profile,
+                "matched_at": timestamp,
+                "match_id": match_id,
+                "last_message": last_message,
+                "last_message_at": last_message_at
+            }
+            for profile, timestamp, match_id, last_message, last_message_at in result
         ]
 
     async def get_matched_profile(

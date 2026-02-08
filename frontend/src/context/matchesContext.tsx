@@ -21,7 +21,13 @@ export const MatchesProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const response = await api.get<MatchItem[]>('/matches/mine');
-      setMatches(response.data ?? []);
+      const data = response.data ?? [];
+      const sortedMatches = data.sort((a, b) => {
+        const dateA = a.last_message_at ? new Date(a.last_message_at) : (a.matched_at ? new Date(a.matched_at) : new Date(0));
+        const dateB = b.last_message_at ? new Date(b.last_message_at) : (b.matched_at ? new Date(b.matched_at) : new Date(0));
+        return dateB.getTime() - dateA.getTime();
+      });
+      setMatches(sortedMatches);
     } catch (error) {
       console.error('Failed to fetch matches:', error);
     } finally {
@@ -51,4 +57,3 @@ export const useMatches = () => {
   }
   return context;
 };
-
