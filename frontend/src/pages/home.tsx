@@ -236,7 +236,16 @@ export default function Home() {
 
   const createPeerConnection = useCallback((profile: PeerProfile) => {
     const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        // todo configure for prod
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' },
+        {
+          urls: [
+            'stun:85.214.181.184:3478',
+            'turn:85.214.181.184:3478'
+          ],
+          username: 'prosztata',
+          credential: 'prosztata'
+        }]
     });
 
     pc.onicecandidate = (event) => {
