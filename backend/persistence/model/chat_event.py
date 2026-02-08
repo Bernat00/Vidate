@@ -4,7 +4,6 @@ from typing import Optional
 from sqlmodel import SQLModel, Field
 from sqlalchemy import DateTime
 
-# todo cascade when match is deleted
 class ChatEvent(SQLModel, table=True):
     __tablename__ = "chat_events"
 
@@ -17,7 +16,7 @@ class ChatEvent(SQLModel, table=True):
     """
     type: str = Field(index=True, nullable=False)
 
-    match_id: int = Field(foreign_key="matches.id", nullable=False)
+    match_id: int = Field(foreign_key="matches.id", nullable=False, ondelete="CASCADE")
     originator_id: str = Field(foreign_key="users.id", nullable=False)
     recipient_id: str = Field(foreign_key="users.id", nullable=False)
 
