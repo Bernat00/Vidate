@@ -93,10 +93,10 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
     my_history_ids = user_data.get("history_ids", "").split("|")
 
     age_min_str = user_data.get("pref_age_min")
-    my_age_min = int(age_min_str) if age_min_str else 0
+    my_age_min = int(age_min_str) if age_min_str else None
 
     age_max_str = user_data.get("pref_age_max")
-    my_age_max = int(age_max_str) if age_max_str else sys.maxsize
+    my_age_max = int(age_max_str) if age_max_str else None
 
     # --- BUILD QUERY ---
     filters = []
@@ -130,9 +130,9 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
 
     # My attributes for matching
     my_langs = set(user_data.get("languages", "").split(",")) if user_data.get("languages") else set()
-    my_religion = user_data.get("religion")
-    my_smoker = user_data.get("is_smoker")
-    my_kids = user_data.get("wants_children")
+    my_pref_religions = set(user_data.get("pref_religions", "").split(",")) if user_data.get("pref_religions") else set()
+    my_pref_is_smoker = user_data.get("pref_is_smoker") if user_data.get("pref_is_smoker") else ""
+    my_pref_wants_children = user_data.get("pref_wants_children") if user_data.get("pref_wants_children") else ""
 
     for doc in res.docs:
         uid = doc.user_id
@@ -160,16 +160,18 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
             score -= 5000
 
         # Age bonus with deviation penalty
-        if hasattr(doc, "age"):
+        if hasattr(doc, "age") and (my_age_min is not None or my_age_max is not None):
             try:
                 cand_age = int(doc.age)
-                if my_age_min <= cand_age <= my_age_max:
+                min_bound = my_age_min if my_age_min is not None else -sys.maxsize
+                max_bound = my_age_max if my_age_max is not None else sys.maxsize
+                if min_bound <= cand_age <= max_bound:
                     score += 5000
                 else:
-                    if cand_age < my_age_min:
-                        diff = my_age_min - cand_age
+                    if cand_age < min_bound:
+                        diff = min_bound - cand_age
                     else:
-                        diff = cand_age - my_age_max
+                        diff = cand_age - max_bound
                     age_score = 5000 - (diff * 100)
                     score += age_score
             except Exception:
@@ -191,12 +193,12 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
             except Exception:
                 pass
 
-        # Lifestyle
-        if my_religion and hasattr(doc, "religion") and doc.religion == my_religion:
+        # Lifestyle (preferences; empty means "any")
+        if my_pref_religions and hasattr(doc, "religion") and doc.religion in my_pref_religions:
             score += 100
-        if my_smoker and hasattr(doc, "is_smoker") and doc.is_smoker == my_smoker:
+        if my_pref_is_smoker and hasattr(doc, "is_smoker") and doc.is_smoker == my_pref_is_smoker:
             score += 100
-        if my_kids and hasattr(doc, "wants_children") and doc.wants_children == my_kids:
+        if my_pref_wants_children and hasattr(doc, "wants_children") and doc.wants_children == my_pref_wants_children:
             score += 100
 
         candidates.append((uid, score, dist))
@@ -214,11 +216,22 @@ async def attempt_match_for_user(r, user_id: str) -> bool:
     if not user_data:
         return False
 
+    user_joined_at = float(user_data.get("joined_at", 0) or 0)
+
     candidates = await _build_candidates(r, user_id, user_data)
     if not candidates:
         return False
 
     for cand_id, _, dist in candidates:
+        if cand_id == user_id:
+            continue
+
+        cand_entry = await r.hgetall(f"mm_entry:{cand_id}")
+        if not cand_entry:
+            continue
+
+        cand_joined_at = float(cand_entry.get("joined_at", 0) or 0)
+
         claimed = await _try_claim_pair(r, user_id, cand_id)
         if not claimed:
             continue
@@ -241,6 +254,11 @@ async def attempt_match_for_user(r, user_id: str) -> bool:
 
             p1 = await repo.profile_repo.get_by_id(user_id)
             p2 = await repo.profile_repo.get_by_id(cand_id)
+
+        if not p1 or not p2:
+            # Restore both users if profiles are missing
+            await r.zadd("matchmaking", {user_id: user_joined_at, cand_id: cand_joined_at})
+            continue
 
         def make_payload(peer_profile, distance, initiator):
             if not peer_profile:
