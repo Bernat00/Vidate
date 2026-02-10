@@ -11,6 +11,7 @@ from backend.persistence.model.conversation import Conversation
 from backend.persistence.model.profile import Profile
 from backend.persistence.model.preferences.preferences import Preference
 from sqlalchemy import select, or_, func, case
+from sqlalchemy.orm import selectinload
 from backend.routes import CurrentUserCheckerDependency, repoDep
 from backend.background.matchmaking import attempt_match_for_user, ensure_matchmaking_index
 
@@ -63,8 +64,18 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
                 lat = payload.get("lat")
                 lon = payload.get("lon")
 
-                profile: Profile | None = await repo.profile_repo.get_by_id(user.id)
-                preference: Preference | None = await repo.preference_repo.get_by_id(user.id)
+                profile: Profile | None = await repo.profile_repo.get_by_id(
+                    user.id,
+                    options=[selectinload(Profile.languages)]
+                )
+                preference: Preference | None = await repo.preference_repo.get_by_id(
+                    user.id,
+                    options=[
+                        selectinload(Preference.genders),
+                        selectinload(Preference.languages),
+                        selectinload(Preference.religions),
+                    ]
+                )
 
                 one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
 
