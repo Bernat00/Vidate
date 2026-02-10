@@ -2,9 +2,7 @@ import sys
 from datetime import datetime, timezone
 import asyncio
 import json
-from backend.persistence import engine
 from backend.persistence.repository import Repo
-from sqlalchemy.ext.asyncio import AsyncSession
 from backend.persistence.model.conversation import Conversation
 from redis.commands.search.query import Query
 from redis.commands.search.field import TagField, NumericField, GeoField
@@ -84,13 +82,7 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
     my_blocked = user_data.get("blocked_ids", "").split("|")
 
     # Parse History Data
-    my_history_data = {}
-    if user_data.get("history_data"):
-        try:
-            my_history_data = json.loads(user_data.get("history_data"))
-        except Exception:
-            pass
-    my_history_ids = user_data.get("history_ids", "").split("|")
+    my_history_ids = [hid for hid in user_data.get("history_ids", "").split("|") if hid]
 
     age_min_str = user_data.get("pref_age_min")
     my_age_min = int(age_min_str) if age_min_str else None
@@ -144,20 +136,13 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
 
         score = 0
 
-        # History penalty
-        if uid in my_history_data:
-            h_info = my_history_data[uid]
-            last_ts = h_info.get("last_ts", 0)
-            count = h_info.get("count", 1)
-
-            now_ts = datetime.now(timezone.utc).timestamp()
-            diff_seconds = max(0, now_ts - last_ts)
-            diff_minutes = diff_seconds / 60
-
-            history_penalty = (50000 * count) / (diff_minutes + 1)
-            score -= history_penalty
-        elif uid in my_history_ids:
-            score -= 5000
+        # History penalty (ranking-based)
+        if uid in my_history_ids:
+            # my_history_ids is ordered oldest first.
+            # penalty is higher for more recent ones.
+            idx = my_history_ids.index(uid)
+            penalty = (idx + 1) * 10000
+            score -= penalty
 
         # Age bonus with deviation penalty
         if hasattr(doc, "age") and (my_age_min is not None or my_age_max is not None):
@@ -207,7 +192,7 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
     return candidates
 
 
-async def attempt_match_for_user(r, user_id: str) -> bool:
+async def attempt_match_for_user(r, user_id: str, repo: Repo) -> bool:
     # Ensure user still in pool
     if await r.zscore("matchmaking", user_id) is None:
         return False
@@ -247,13 +232,11 @@ async def attempt_match_for_user(r, user_id: str) -> bool:
                 pass
 
         # Create conversation
-        async with AsyncSession(engine) as session:
-            repo = Repo(session)
-            conversation = Conversation(user1_id=user_id, user2_id=cand_id)
-            await repo.conversation_repo.save(conversation)
+        conversation = Conversation(user1_id=user_id, user2_id=cand_id)
+        await repo.conversation_repo.save(conversation)
 
-            p1 = await repo.profile_repo.get_by_id(user_id)
-            p2 = await repo.profile_repo.get_by_id(cand_id)
+        p1 = await repo.profile_repo.get_by_id(user_id)
+        p2 = await repo.profile_repo.get_by_id(cand_id)
 
         if not p1 or not p2:
             # Restore both users if profiles are missing
