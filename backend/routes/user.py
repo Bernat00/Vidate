@@ -43,11 +43,14 @@ def me_get(user: get_and_auth_current_user) -> UserMe:
     return UserMe(**user.model_dump())
 
 
-@router.post('/report/{reported_user_id}', response_model=None)
+@router.post('/report', response_model=None)
 async def report(report_create: ReportCreate, user: get_and_auth_current_user, repo: repoDep, response: Response):
+    if user.id == report_create.reported_user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot report yourself")
+
 
     if not await repo.conversation_repo.get_by_both_user_ids(report_create.reported_user_id, user.id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Can't report a user you haven't interacted with yet")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot report a user you haven't interacted with yet")
 
     report = Report()
     report.user_id = report_create.reported_user_id
@@ -63,6 +66,9 @@ async def set_disabled(ban: SetBan, user: get_and_auth_current_admin, repo: repo
     to_be_set = await repo.user_repo.get_by_id(ban.user_id)
     if not to_be_set:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+
+    if to_be_set.id == user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot ban yourself")
 
     to_be_set.disabled = ban.value
     await repo.save(to_be_set)
