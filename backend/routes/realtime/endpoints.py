@@ -60,12 +60,19 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
                     )
                     conversations = (await session.scalars(stmt)).all()
 
-                    history_ids = set()
+                    history_map = {}
                     for conv in conversations:
-                        if conv.user1_id == user.id:
-                            history_ids.add(conv.user2_id)
+                        peer_id = conv.user2_id if conv.user1_id == user.id else conv.user1_id
+                        # Timestamp might be creating tz-aware or naive issues depending on DB driver, assume UTC or convert
+                        ts = conv.timestamp.replace(tzinfo=timezone.utc).timestamp() if conv.timestamp.tzinfo is None else conv.timestamp.timestamp()
+
+                        if peer_id not in history_map:
+                            history_map[peer_id] = {"last_ts": ts, "count": 1}
                         else:
-                            history_ids.add(conv.user1_id)
+                            entry = history_map[peer_id]
+                            entry["count"] += 1
+                            if ts > entry["last_ts"]:
+                                entry["last_ts"] = ts
 
                     # Calculate Age
                     age = 0
@@ -97,10 +104,10 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
 
                         # System
                         "blocked_ids": "", # Assume empty for now
-                        "history_ids": "|".join(history_ids),
+                        "history_ids": "|".join(history_map.keys()), # Keep for legacy/TagField if needed
+                        "history_data": json.dumps(history_map),
                         "joined_at": datetime.now(timezone.utc).timestamp(),
-                        "lat": lat,
-                        "lon": lon,
+                        "location": f"{lon},{lat}" if lat is not None and lon is not None else "",
                     }
 
                     # Store in Redis Hash
