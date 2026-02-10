@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status, Depends
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +8,10 @@ from backend.helpers import get_redis
 from backend.persistence import engine
 from backend.persistence.repository import Repo
 from backend.persistence.model.chat_event import ChatEvent
+from backend.persistence.model.conversation import Conversation
+from backend.persistence.model.profile import Profile
+from backend.persistence.model.preferences.preferences import Preference
+from sqlalchemy import select, or_
 from backend.routes import CurrentUserCheckerDependency
 
 router = APIRouter(prefix='/ws')
@@ -36,9 +40,72 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
             msg_type = data.get("type")
             payload = data.get("payload", {})
 
+            # todo do caching later
             if msg_type == "joined_feed":
                 lat = payload.get("lat")
                 lon = payload.get("lon")
+
+                async with AsyncSession(engine) as session:
+                    repo = Repo(session)
+
+                    # Gather data for matchmaking
+                    profile: Profile | None = await repo.profile_repo.get_by_id(user.id)
+                    preference: Preference | None = await repo.preference_repo.get_by_id(user.id)
+
+                    # History (last 12h)
+                    twelve_hours_ago = datetime.now(timezone.utc) - timedelta(hours=12)
+                    stmt = select(Conversation).where(
+                        or_(Conversation.user1_id == user.id, Conversation.user2_id == user.id),
+                        Conversation.timestamp >= twelve_hours_ago
+                    )
+                    conversations = (await session.scalars(stmt)).all()
+
+                    history_ids = set()
+                    for conv in conversations:
+                        if conv.user1_id == user.id:
+                            history_ids.add(conv.user2_id)
+                        else:
+                            history_ids.add(conv.user1_id)
+
+                    # Calculate Age
+                    age = 0
+                    if profile and profile.birth_date:
+                        today = datetime.now(timezone.utc).date()
+                        born = profile.birth_date.date()
+                        age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+                    # Format Data
+                    mm_data = {
+                        "user_id": user.id,
+
+                        # Profile
+                        "gender": str(profile.gender_id) if profile else "",
+                        "religion": str(profile.religion_id) if profile and profile.religion_id else "",
+                        "is_smoker": str(int(profile.is_smoker)) if profile else "0",
+                        "wants_children": str(int(profile.wants_children)) if profile and profile.wants_children is not None else "",
+                        "age": age,
+                        "languages": ",".join([str(l.id) for l in profile.languages]) if profile and profile.languages else "",
+
+                        # Preferences
+                        "pref_genders": ",".join([str(g.id) for g in preference.genders]) if preference and preference.genders else "",
+                        "pref_age_min": str(preference.age_min) if preference and preference.age_min is not None else "",
+                        "pref_age_max": str(preference.age_max) if preference and preference.age_max is not None else "",
+                        "pref_wants_children": str(int(preference.wants_children)) if preference and preference.wants_children is not None else "",
+                        "pref_is_smoker": str(int(preference.is_smoker)) if preference and preference.is_smoker is not None else "",
+                        "pref_languages": ",".join([str(l.id) for l in preference.languages]) if preference and preference.languages else "",
+                        "pref_religions": ",".join([str(r.id) for r in preference.religions]) if preference and preference.religions else "",
+
+                        # System
+                        "blocked_ids": "", # Assume empty for now
+                        "history_ids": "|".join(history_ids),
+                        "joined_at": datetime.now(timezone.utc).timestamp(),
+                        "lat": lat,
+                        "lon": lon,
+                    }
+
+                    # Store in Redis Hash
+                    await r.hset(f"mm_entry:{user.id}", mapping=mm_data)
+
                 if lat is not None and lon is not None:
                     await r.geoadd("user_geo", (lon, lat, user.id))
 
@@ -47,6 +114,7 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
 
             elif msg_type == "left_feed":
                 await r.zrem("matchmaking", user.id)
+                await r.delete(f"mm_entry:{user.id}")
 
             elif msg_type in ["offer", "answer", "ice_candidate", "end_call"]:
                 peer_id = payload.get("peer_id")
@@ -119,4 +187,5 @@ async def ws_endpoint(ws: WebSocket, token: str, r: Redis = Depends(get_redis)):
 
         await r.zrem("matchmaking", user.id)
         await r.zrem("user_geo", user.id)
+        await r.delete(f"mm_entry:{user.id}")
         print(f"Cleanup: User {user.id} removed from matchmaking.")
