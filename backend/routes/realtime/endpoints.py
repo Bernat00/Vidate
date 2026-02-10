@@ -12,7 +12,8 @@ from backend.persistence.model.conversation import Conversation
 from backend.persistence.model.profile import Profile
 from backend.persistence.model.preferences.preferences import Preference
 from sqlalchemy import select, or_
-from backend.routes import CurrentUserCheckerDependency, repoDep
+from backend.routes import CurrentUserCheckerDependency
+from backend.background.matchmaking import attempt_match_for_user, ensure_matchmaking_index
 
 router = APIRouter(prefix='/ws')
 
@@ -34,6 +35,16 @@ async def redis_to_ws_writer(ws: WebSocket, user, r: Redis):
 
 
 async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
+    matchmaking_task: asyncio.Task | None = None
+
+    async def matchmaking_loop():
+        await ensure_matchmaking_index(r)
+        while True:
+            matched = await attempt_match_for_user(r, user.id)
+            if matched:
+                return
+            await asyncio.sleep(1)
+
     try:
         while True:
             data = await ws.receive_json()
@@ -53,18 +64,19 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
                     preference: Preference | None = await repo.preference_repo.get_by_id(user.id)
 
                     # History (last 12h)
-                    twelve_hours_ago = datetime.now(timezone.utc) - timedelta(hours=12)
                     stmt = select(Conversation).where(
-                        or_(Conversation.user1_id == user.id, Conversation.user2_id == user.id),
-                        Conversation.timestamp >= twelve_hours_ago
+                        or_(Conversation.user1_id == user.id, Conversation.user2_id == user.id)
                     )
                     conversations = (await session.scalars(stmt)).all()
 
                     history_map = {}
+                    twelve_hours_ago = datetime.now(timezone.utc) - timedelta(hours=12)
                     for conv in conversations:
+                        ts_val = conv.timestamp.replace(tzinfo=timezone.utc) if conv.timestamp.tzinfo is None else conv.timestamp
+                        if ts_val < twelve_hours_ago:
+                            continue
                         peer_id = conv.user2_id if conv.user1_id == user.id else conv.user1_id
-                        # Timestamp might be creating tz-aware or naive issues depending on DB driver, assume UTC or convert
-                        ts = conv.timestamp.replace(tzinfo=timezone.utc).timestamp() if conv.timestamp.tzinfo is None else conv.timestamp.timestamp()
+                        ts = ts_val.timestamp()
 
                         if peer_id not in history_map:
                             history_map[peer_id] = {"last_ts": ts, "count": 1}
@@ -116,11 +128,18 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
                 if lat is not None and lon is not None:
                     await r.geoadd("user_geo", (lon, lat, user.id))
 
-                # ZADD with timestamp
+                # ZADD with timestamp (do not remove until matched)
                 await r.zadd("matchmaking", {user.id: datetime.now(timezone.utc).timestamp()})
 
+                if matchmaking_task and not matchmaking_task.done():
+                    matchmaking_task.cancel()
+                matchmaking_task = asyncio.create_task(matchmaking_loop())
+
             elif msg_type == "left_feed":
+                if matchmaking_task and not matchmaking_task.done():
+                    matchmaking_task.cancel()
                 await r.zrem("matchmaking", user.id)
+                await r.zrem("user_geo", user.id)
                 await r.delete(f"mm_entry:{user.id}")
 
             elif msg_type in ["offer", "answer", "ice_candidate", "end_call"]:
@@ -162,6 +181,13 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis):
 
     except (WebSocketDisconnect, asyncio.CancelledError):
         pass
+    finally:
+        if matchmaking_task and not matchmaking_task.done():
+            matchmaking_task.cancel()
+            try:
+                await matchmaking_task
+            except asyncio.CancelledError:
+                pass
 
 
 @router.websocket('/main')

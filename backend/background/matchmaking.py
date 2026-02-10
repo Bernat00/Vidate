@@ -2,7 +2,6 @@ import sys
 from datetime import datetime, timezone
 import asyncio
 import json
-from backend.helpers import get_redis
 from backend.persistence import engine
 from backend.persistence.repository import Repo
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,12 +10,44 @@ from redis.commands.search.query import Query
 from redis.commands.search.field import TagField, NumericField, GeoField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 
-async def matchmaking_worker():
-    print("Matchmaking worker started")
+_INDEX_READY = False
+_INDEX_LOCK = asyncio.Lock()
 
-    # Ensure Index Exists
-    r_init = get_redis()
-    if r_init:
+_LUA_CLAIM_PAIR = """
+if ARGV[1] == ARGV[2] then
+  return 0
+end
+local s1 = redis.call('zscore', KEYS[1], ARGV[1])
+local s2 = redis.call('zscore', KEYS[1], ARGV[2])
+if s1 and s2 then
+  redis.call('zrem', KEYS[1], ARGV[1], ARGV[2])
+  return 1
+end
+return 0
+"""
+
+_TAG_SPECIAL_CHARS = set(",.<>:{}[]\"'`;!@#$%^&*()-+=~|?/\\ ")
+
+
+def _escape_tag_value(value: str) -> str:
+    if not value:
+        return ""
+    escaped = []
+    for ch in value:
+        if ch in _TAG_SPECIAL_CHARS:
+            escaped.append("\\" + ch)
+        else:
+            escaped.append(ch)
+    return "".join(escaped)
+
+
+async def ensure_matchmaking_index(r):
+    global _INDEX_READY
+    if _INDEX_READY:
+        return
+    async with _INDEX_LOCK:
+        if _INDEX_READY:
+            return
         try:
             schema = (
                 TagField("gender", separator=","),
@@ -31,261 +62,227 @@ async def matchmaking_worker():
                 TagField("is_smoker"),
                 TagField("wants_children"),
             )
-            await r_init.ft("idx:matchmaking").create_index(
+            await r.ft("idx:matchmaking").create_index(
                 schema,
                 definition=IndexDefinition(prefix=["mm_entry:"], index_type=IndexType.HASH)
             )
-            print("Created RediSearch index")
         except Exception:
             # Index likely already exists
             pass
+        _INDEX_READY = True
 
-    while True:
+
+async def _try_claim_pair(r, user1_id: str, user2_id: str) -> bool:
+    result = await r.eval(_LUA_CLAIM_PAIR, 1, "matchmaking", user1_id, user2_id)
+    return result == 1
+
+
+async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str, float, float]]:
+    # Parse attributes
+    my_gender = user_data.get("gender", "")
+    my_prefs_genders = user_data.get("pref_genders", "").split(",") if user_data.get("pref_genders") else []
+    my_blocked = user_data.get("blocked_ids", "").split("|")
+
+    # Parse History Data
+    my_history_data = {}
+    if user_data.get("history_data"):
         try:
-            r = get_redis()
-            if not r:
-                await asyncio.sleep(1)
-                continue
+            my_history_data = json.loads(user_data.get("history_data"))
+        except Exception:
+            pass
+    my_history_ids = user_data.get("history_ids", "").split("|")
 
-            # Pop 1 user (Initiator)
-            users = await r.zpopmin("matchmaking", count=1)
+    age_min_str = user_data.get("pref_age_min")
+    my_age_min = int(age_min_str) if age_min_str else 0
 
-            if not users:
-                await asyncio.sleep(1)
-                continue
+    age_max_str = user_data.get("pref_age_max")
+    my_age_max = int(age_max_str) if age_max_str else sys.maxsize
 
-            user1_id, score1 = users[0]
+    # --- BUILD QUERY ---
+    filters = []
 
-            # Fetch Initiator Data
-            user_data = await r.hgetall(f"mm_entry:{user1_id}")
-            if not user_data:
-                # Ghost user?
-                await r.zrem("matchmaking", user1_id)
-                continue
+    if my_prefs_genders:
+        gender_terms = [
+            _escape_tag_value(g) for g in my_prefs_genders if g
+        ]
+        if gender_terms:
+            filters.append(f"@gender:{{{'|'.join(gender_terms)}}}")
 
-            # Parse attributes
-            my_gender = user_data.get('gender', '')
-            my_prefs_genders = user_data.get('pref_genders', '').split(",") if user_data.get('pref_genders') else []
-            my_blocked = user_data.get('blocked_ids', '').split("|")
+    if my_gender:
+        filters.append(f"@pref_genders:{{{_escape_tag_value(my_gender)}}}")
 
-            # Parse History Data
-            my_history_data = {}
-            if user_data.get('history_data'):
-                try:
-                    my_history_data = json.loads(user_data.get('history_data'))
-                except:
-                    pass
-            # Legacy fallback
-            my_history_ids = user_data.get('history_ids', '').split("|")
+    # They must not have blocked me
+    filters.append(f"-@blocked_ids:{{{_escape_tag_value(user_id)}}}")
 
-            age_min_str = user_data.get('pref_age_min')
-            my_age_min = int(age_min_str) if age_min_str else 0
+    query_str = " ".join(filters)
 
-            age_max_str = user_data.get('pref_age_max')
-            my_age_max = int(age_max_str) if age_max_str else sys.maxsize
+    q = (
+        Query(query_str)
+        .return_fields("user_id", "joined_at", "age", "location", "gender", "languages", "religion", "is_smoker", "wants_children")
+        .sort_by("joined_at", asc=True)
+        .paging(0, 20)
+        .dialect(2)
+    )
 
-            # --- BUILD QUERY ---
-            filters = []
+    res = await r.ft("idx:matchmaking").search(q)
 
-            # 1. HARD: Gender
-            if my_prefs_genders:
-                filters.append(f"@gender:{{{'|'.join(my_prefs_genders)}}}")
+    candidates: list[tuple[str, float, float]] = []
 
-            # 2. HARD: Reverse Gender (They must want me)
-            if my_gender:
-                filters.append(f"@pref_genders:{{{my_gender}}}")
+    # My attributes for matching
+    my_langs = set(user_data.get("languages", "").split(",")) if user_data.get("languages") else set()
+    my_religion = user_data.get("religion")
+    my_smoker = user_data.get("is_smoker")
+    my_kids = user_data.get("wants_children")
 
-            # 3. HARD: Reversed Blocked (They must not strictly block me)
-            # Checking if THEY blocked ME. stored in THEIR blocked_ids
-            filters.append(f"-@blocked_ids:{{{user1_id}}}")
+    for doc in res.docs:
+        uid = doc.user_id
+        if uid == user_id:
+            continue
 
-            # 4. HARD: Exclude Self
-            # Handled in loop or via negate ? -@user_id is tricky without index.
-            # We will handle in loop.
+        if uid in my_blocked:
+            continue
 
-            query_str = " ".join(filters)
+        score = 0
 
-            q = Query(query_str)\
-                .return_fields("user_id", "joined_at", "age", "location", "gender", "languages", "religion", "is_smoker", "wants_children")\
-                .sort_by("joined_at", asc=True)\
-                .paging(0, 20)\
-                .dialect(2)
+        # History penalty
+        if uid in my_history_data:
+            h_info = my_history_data[uid]
+            last_ts = h_info.get("last_ts", 0)
+            count = h_info.get("count", 1)
 
-            res = await r.ft("idx:matchmaking").search(q)
+            now_ts = datetime.now(timezone.utc).timestamp()
+            diff_seconds = max(0, now_ts - last_ts)
+            diff_minutes = diff_seconds / 60
 
-            matched_user_id = None
-            dist = 0.0
+            history_penalty = (50000 * count) / (diff_minutes + 1)
+            score -= history_penalty
+        elif uid in my_history_ids:
+            score -= 5000
 
-            # Evaluate Candidates
-            # We want to find the best one that we can lock.
-            candidates = []
+        # Age bonus with deviation penalty
+        if hasattr(doc, "age"):
+            try:
+                cand_age = int(doc.age)
+                if my_age_min <= cand_age <= my_age_max:
+                    score += 5000
+                else:
+                    if cand_age < my_age_min:
+                        diff = my_age_min - cand_age
+                    else:
+                        diff = cand_age - my_age_max
+                    age_score = 5000 - (diff * 100)
+                    score += age_score
+            except Exception:
+                pass
 
-            # My attributes for matching
-            my_langs = set(user_data.get('languages', '').split(",")) if user_data.get('languages') else set()
-            my_religion = user_data.get('religion')
-            my_smoker = user_data.get('is_smoker')
-            my_kids = user_data.get('wants_children')
+        # Common language
+        cand_langs = set(doc.languages.split(",")) if hasattr(doc, "languages") and doc.languages else set()
+        if not my_langs.isdisjoint(cand_langs):
+            score += 2000
 
-            for doc in res.docs:
-                uid = doc.user_id
-                if uid == user1_id:
-                    continue
+        # Distance
+        dist = 0.0
+        if hasattr(doc, "location") and doc.location and user_data.get("location"):
+            try:
+                d = await r.geodist("user_geo", user_id, uid, unit="km")
+                if d is not None:
+                    dist = d
+                    score -= d
+            except Exception:
+                pass
 
-                # Check My Blocklist
-                if uid in my_blocked:
-                    continue
+        # Lifestyle
+        if my_religion and hasattr(doc, "religion") and doc.religion == my_religion:
+            score += 100
+        if my_smoker and hasattr(doc, "is_smoker") and doc.is_smoker == my_smoker:
+            score += 100
+        if my_kids and hasattr(doc, "wants_children") and doc.wants_children == my_kids:
+            score += 100
 
-                # --- SCORING ---
-                score = 0
+        candidates.append((uid, score, dist))
 
-                # 1. History Penalty (Most Important Soft - Negative)
-                if uid in my_history_data:
-                    h_info = my_history_data[uid]
-                    last_ts = h_info.get("last_ts", 0)
-                    count = h_info.get("count", 1)
+    candidates.sort(key=lambda x: x[1], reverse=True)
+    return candidates
 
-                    now_ts = datetime.now(timezone.utc).timestamp()
-                    diff_seconds = max(0, now_ts - last_ts)
-                    diff_minutes = diff_seconds / 60
 
-                    # Formula: High penalty that decays with time
-                    history_penalty = (50000 * count) / (diff_minutes + 1)
-                    score -= history_penalty
+async def attempt_match_for_user(r, user_id: str) -> bool:
+    # Ensure user still in pool
+    if await r.zscore("matchmaking", user_id) is None:
+        return False
 
-                elif uid in my_history_ids: # Fallback
-                    score -= 5000
+    user_data = await r.hgetall(f"mm_entry:{user_id}")
+    if not user_data:
+        return False
 
-                # 2. Age (Very Important Soft - Positive)
-                # More important than language (+2000), less than history
-                if hasattr(doc, 'age'):
-                    try:
-                        cand_age = int(doc.age)
-                        if my_age_min <= cand_age <= my_age_max:
-                            score += 5000
-                        else:
-                            if cand_age < my_age_min:
-                                diff = my_age_min - cand_age
-                            else:
-                                diff = cand_age - my_age_max
+    candidates = await _build_candidates(r, user_id, user_data)
+    if not candidates:
+        return False
 
-                            # Start with bonus but subtract deviation
-                            # 100 points per year off
-                            age_score = 5000 - (diff * 100)
-                            score += age_score
-                    except:
-                         pass
+    for cand_id, _, dist in candidates:
+        claimed = await _try_claim_pair(r, user_id, cand_id)
+        if not claimed:
+            continue
 
-                # 3. Common Language (Important)
-                cand_langs = set(doc.languages.split(",")) if hasattr(doc, 'languages') and doc.languages else set()
-                if not my_langs.isdisjoint(cand_langs):
-                    # They share at least one language
-                    score += 2000
+        # Compute distance before cleanup
+        distance_km = dist
+        if distance_km == 0.0:
+            try:
+                d = await r.geodist("user_geo", user_id, cand_id, unit="km")
+                if d is not None:
+                    distance_km = d
+            except Exception:
+                pass
 
-                # 3. Distance (Important)
-                dist = 0
-                if hasattr(doc, 'location') and doc.location and user_data.get('location'):
-                    try:
-                         d = await r.geodist("user_geo", user1_id, uid, unit="km")
-                         if d is not None:
-                             dist = d
-                             score -= d # -1 point per km
-                    except:
-                        pass
+        # Create conversation
+        async with AsyncSession(engine) as session:
+            repo = Repo(session)
+            conversation = Conversation(user1_id=user_id, user2_id=cand_id)
+            await repo.conversation_repo.save(conversation)
 
-                # 4. Lifestyle (Less Important)
-                # Religion
-                if my_religion and hasattr(doc, 'religion') and doc.religion == my_religion:
-                    score += 100
-                # Smoker
-                if my_smoker and hasattr(doc, 'is_smoker') and doc.is_smoker == my_smoker:
-                    score += 100
-                # Kids
-                if my_kids and hasattr(doc, 'wants_children') and doc.wants_children == my_kids:
-                    score += 100
+            p1 = await repo.profile_repo.get_by_id(user_id)
+            p2 = await repo.profile_repo.get_by_id(cand_id)
 
-                candidates.append((uid, score, dist))
+        def make_payload(peer_profile, distance, initiator):
+            if not peer_profile:
+                return {
+                    "peer_id": "unknown",
+                    "conversation_id": conversation.id
+                }
 
-            # Sort by score desc
-            candidates.sort(key=lambda x: x[1], reverse=True)
+            age = 0
+            if peer_profile.birth_date:
+                now = datetime.now(timezone.utc)
+                bd = peer_profile.birth_date
+                if bd.tzinfo is None:
+                    bd = bd.replace(tzinfo=timezone.utc)
+                age = (now - bd).days // 365
 
-            # Try to lock
-            for cand_id, _, dist_val in candidates:
-                # Attempt atomic remove
-                removed = await r.zrem("matchmaking", cand_id)
-                if removed > 0:
-                    matched_user_id = cand_id
-                    dist = dist_val # store for payload
-                    break
+            return {
+                "peer_id": peer_profile.user_id,
+                "peer_name": peer_profile.first_name,
+                "peer_age": age,
+                "distance_km": distance,
+                "initiator": initiator,
+                "conversation_id": conversation.id,
+            }
 
-            if matched_user_id:
-                user2_id = matched_user_id
-                print(f"Match found: {user1_id} and {user2_id}")
+        payload1 = make_payload(p2, distance_km, True)
+        payload2 = make_payload(p1, distance_km, False)
 
-                # Create conversation entry
-                async with AsyncSession(engine) as session:
-                    repo = Repo(session)
+        await r.publish(f"user:{user_id}", json.dumps({
+            "type": "match_found",
+            "payload": payload1
+        }))
+        await r.publish(f"user:{cand_id}", json.dumps({
+            "type": "match_found",
+            "payload": payload2
+        }))
 
-                    # Create conversation
-                    conversation = Conversation(
-                        user1_id=user1_id,
-                        user2_id=user2_id
-                    )
-                    await repo.conversation_repo.save(conversation)
+        # Cleanup after successful match
+        await r.zrem("user_geo", user_id, cand_id)
+        await r.delete(f"mm_entry:{user_id}")
+        await r.delete(f"mm_entry:{cand_id}")
 
-                    p1 = await repo.profile_repo.get_by_id(user1_id)
-                    p2 = await repo.profile_repo.get_by_id(user2_id)
+        return True
 
-                # Prepare payloads
-                def make_payload(peer_profile, distance_km, initiator_bool):
-                    if not peer_profile:
-                         return {
-                            "peer_id": "unknown",
-                            "conversation_id": conversation.id
-                        }
-
-                    # Age calc
-                    age = 0
-                    if peer_profile.birth_date:
-                        now = datetime.now(timezone.utc)
-                        bd = peer_profile.birth_date
-                        if bd.tzinfo is None: bd = bd.replace(tzinfo=timezone.utc)
-                        age = (now - bd).days // 365
-
-                    return {
-                        "peer_id": peer_profile.user_id,
-                        "peer_name": peer_profile.first_name,
-                        "peer_age": age,
-                        "distance_km": distance_km,
-                        "initiator": initiator_bool,
-                        "conversation_id": conversation.id
-                    }
-
-                payload1 = make_payload(p2, dist, True)
-                payload2 = make_payload(p1, dist, False)
-
-                await r.publish(f"user:{user1_id}", json.dumps({
-                    "type": "match_found",
-                    "payload": payload1
-                }))
-                await r.publish(f"user:{user2_id}", json.dumps({
-                    "type": "match_found",
-                    "payload": payload2
-                }))
-
-                # Clean up mm_entries?
-                # Usually we remove them from matchmaking (Already done via zrem)
-                # And remove from geo?
-                # The ws_endpoint handles cleanup on disconnect.
-                # Should we remove them from feed visually? Frontend will likely navigate away.
-                # But if they come back?
-                # We leave "mm_entry" and "user_geo" until they disconnect or "left_feed".
-
-            else:
-                # No match found, put back
-                await r.zadd("matchmaking", {user1_id: score1})
-                await asyncio.sleep(0.5)
-
-        except Exception as e:
-            print(f"Matchmaking error: {e}")
-            await asyncio.sleep(1)
-
+    return False
