@@ -59,7 +59,6 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
 
                 one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
 
-                # Identify the partner's ID in conversations with the current user, ordered by most recent conversation first
                 peer_id_col = case(
                     (Conversation.user1_id == user.id, Conversation.user2_id),
                     else_=Conversation.user1_id
@@ -78,12 +77,9 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
 
                 history_ids_list = (await repo.session.execute(stmt)).scalars().all()
 
-                # Calculate Age
-                age = 0
-                if profile and profile.birth_date:
-                    today = datetime.now(timezone.utc).date()
-                    born = profile.birth_date.date()
-                    age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+                today = datetime.now(timezone.utc).date()
+                born = profile.birth_date.date()
+                age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
                 mm_data = {
                     "user_id": user.id,
@@ -106,7 +102,7 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
                     "blocked_ids": "", # todo
                     "history_ids": "|".join(history_ids_list), # Redis TagField, ordered by oldest first in the window
                     "joined_at": datetime.now(timezone.utc).timestamp(),
-                    "location": f"{lon},{lat}" if lat is not None and lon is not None else "",
+                    # "location": f"{lon},{lat}" if lat is not None and lon is not None else "",
                 }
 
                 await r.hset(f"mm_entry:{user.id}", mapping=mm_data)
