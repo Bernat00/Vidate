@@ -52,15 +52,6 @@ async def get_match_profile(partner_id: str, repo: repoDep, user: get_and_auth_c
     return profile
 
 
-@deprecated(
-        """
-        this endpoint is deprecated and will be removed
-        """
-    )
-@router.get('/all')
-async def all(repo: repoDep, user: get_and_auth_current_user):
-    pass # existing code...
-
 
 @router.post('/match')
 async def match(userid: str, repo: repoDep, user: get_and_auth_current_user, r: Redis = Depends(get_redis)) -> Match:
@@ -160,7 +151,8 @@ async def feedback(
         raise HTTPException(status_code=400, detail="No conversation found between users")
 
     # 2. Check for existing match initiated by partner
-    stmt = select(Match).where(
+
+    stmt = select(Match).where(     #todo make this use repo.match_repo.get_by_both_user_ids() ne dobálózz random sql-el a route-okban
         Match.user1_id == req.partner_id,
         Match.user2_id == user.id
     )
@@ -171,7 +163,7 @@ async def feedback(
 
     if existing_match:
         if not existing_match.confirmed:
-            existing_match.confirmed = True
+            existing_match.confirmed = True #todo erre már van existing function kb
             await repo.match_repo.save(existing_match)
 
             # Notify both users
@@ -203,7 +195,7 @@ async def feedback(
 
     # 3. Check if I already initiated (duplicate request)
     stmt = select(Match).where(
-        Match.user1_id == user.id,
+        Match.user1_id == user.id,  #todo nem checkeled sehol az amikor forditva van? (rohadtul atlathatatlan ez a kod
         Match.user2_id == req.partner_id
     )
     result = await repo.session.scalars(stmt)
@@ -211,7 +203,7 @@ async def feedback(
 
     if not my_match:
         # Create new pending match
-        new_match = Match(
+        new_match = Match(      #todo csinalsz egy matchet de szarsz a user_1-2 sorrendjere?
             user1_id=user.id,
             user2_id=req.partner_id,
             confirmed=False
