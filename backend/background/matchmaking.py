@@ -1,4 +1,5 @@
 import sys
+import math
 from datetime import datetime, timezone
 import asyncio
 import json
@@ -169,14 +170,14 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
 
         # Distance
         dist = 0.0
-        if hasattr(doc, "location") and doc.location and user_data.get("location"):
-            try:
-                d = await r.geodist("user_geo", user_id, uid, unit="km")
-                if d is not None:
-                    dist = d
-                    score -= d
-            except Exception:
-                pass
+        # Check distance via Redis Geo
+        try:
+            d = await r.geodist("user_geo", user_id, uid, unit="km")
+            if d is not None:
+                dist = float(d)
+                score -= dist  # -1 point per km
+        except Exception:
+            pass
 
         # Lifestyle (preferences; empty means "any")
         if my_pref_religions and hasattr(doc, "religion") and doc.religion in my_pref_religions:
@@ -221,15 +222,8 @@ async def attempt_match_for_user(r, user_id: str, repo: Repo) -> bool:
         if not claimed:
             continue
 
-        # Compute distance before cleanup
+        # Distance is already computed in _build_candidates
         distance_km = dist
-        if distance_km == 0.0:
-            try:
-                d = await r.geodist("user_geo", user_id, cand_id, unit="km")
-                if d is not None:
-                    distance_km = d
-            except Exception:
-                pass
 
         # Create conversation
         conversation = Conversation(user1_id=user_id, user2_id=cand_id)
