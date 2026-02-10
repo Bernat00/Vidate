@@ -1,14 +1,26 @@
 import asyncio
 import json
+import math
+import time
 from datetime import datetime, timezone
 from redis.asyncio import Redis
 from redis.commands.search.query import Query
-import time
 
 REDIS_URL = "redis://localhost:6379"
 
 # Main User Config
 MAIN_USER_ID = "user_main"
+
+def calculate_haversine(lon1, lat1, lon2, lat2):
+    R = 6371.0
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    a = math.sin(delta_phi / 2)**2 + \
+        math.cos(phi1) * math.cos(phi2) * \
+        math.sin(delta_lambda / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
 
 async def test_matchmaking():
     r = Redis.from_url(REDIS_URL, decode_responses=True)
@@ -41,6 +53,8 @@ async def test_matchmaking():
     my_religion = user_data.get('religion')
     my_smoker = user_data.get('is_smoker')
     my_kids = user_data.get('wants_children')
+    my_location = user_data.get("location")
+    my_lon, my_lat = map(float, my_location.split(",")) if my_location else (None, None)
 
     print(f"Testing matchmaking for {MAIN_USER_ID}")
     print(f"  Gender: {my_gender}, Seeking: {my_prefs_genders}")
@@ -146,14 +160,13 @@ async def test_matchmaking():
 
         # 3. Distance
         dist = 0
-        if hasattr(doc, 'location') and doc.location and user_data.get('location'):
+        if hasattr(doc, 'location') and doc.location and my_lat is not None:
             try:
-                d = await r.geodist("user_geo", MAIN_USER_ID, uid, unit="km")
-                if d is not None:
-                    dist = d
-                    score -= d
-                    details.append(f"Dist ({d:.2f}km): -{d:.1f}")
-            except:
+                c_lon, c_lat = map(float, doc.location.split(","))
+                dist = calculate_haversine(my_lon, my_lat, c_lon, c_lat)
+                score -= dist
+                details.append(f"Dist ({dist:.1f}km): -{dist:.1f}")
+            except Exception:
                 pass
 
         # 4. Lifestyle

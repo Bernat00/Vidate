@@ -1,5 +1,6 @@
 import asyncio
 import json
+import random
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status, Depends
 from redis.asyncio import Redis
@@ -37,11 +38,19 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
 
     async def matchmaking_loop():
         await ensure_matchmaking_index(r)
+        attempts = 0
         while True:
+            if await r.zscore("matchmaking", user.id) is None:
+                return
+            if not await r.exists(f"mm_entry:{user.id}"):
+                await r.zrem("matchmaking", user.id)
+                return
             matched = await attempt_match_for_user(r, user.id, repo)
             if matched:
                 return
-            await asyncio.sleep(1)
+            base_sleep = 1 if attempts < 20 else 3
+            await asyncio.sleep(max(0.0, base_sleep + random.uniform(-0.2, 0.2)))
+            attempts += 1
 
     try:
         while True:
@@ -102,7 +111,6 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
                     "blocked_ids": "", # todo
                     "history_ids": "|".join(history_ids_list), # Redis TagField, ordered by oldest first in the window
                     "joined_at": datetime.now(timezone.utc).timestamp(),
-                    # "location": f"{lon},{lat}" if lat is not None and lon is not None else "",
                 }
 
                 await r.hset(f"mm_entry:{user.id}", mapping=mm_data)

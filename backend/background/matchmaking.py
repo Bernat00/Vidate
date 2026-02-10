@@ -200,6 +200,7 @@ async def attempt_match_for_user(r, user_id: str, repo: Repo) -> bool:
 
     user_data = await r.hgetall(f"mm_entry:{user_id}")
     if not user_data:
+        await r.zrem("matchmaking", user_id)
         return False
 
     user_joined_at = float(user_data.get("joined_at", 0) or 0)
