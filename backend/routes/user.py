@@ -1,7 +1,11 @@
 from fastapi import APIRouter, HTTPException, status
+from sqlalchemy.util import await_only
+from starlette.responses import Response
 
+from backend.persistence.model.report import Report
 from backend.persistence.model.user import User
 from backend.routes import get_and_auth_current_user, repoDep
+from backend.schemas.report import ReportCreate
 from backend.schemas.user import UserOut, UserMe, UserEdit
 
 router = APIRouter(prefix='/users', tags=['user'])
@@ -36,3 +40,21 @@ async def me(new: UserEdit, repo: repoDep, user: get_and_auth_current_user):
 @router.get('/me')
 def me_get(user: get_and_auth_current_user) -> UserMe:
     return UserMe(**user.model_dump())
+
+
+@router.post('/report/{reported_user_id}', response_model=None)
+async def report(report_create: ReportCreate, user: get_and_auth_current_user, repo: repoDep, response: Response):
+
+    if not await repo.conversation_repo.get_by_both_user_ids(report_create.reported_user_id, user.id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Can't report a user you haven't interacted with yet")
+
+    report = Report()
+    report.user_id = report_create.reported_user_id
+    report.reason = report_create.reason
+
+    await repo.save(report)
+
+    response.status_code = status.HTTP_201_CREATED
+
+
+

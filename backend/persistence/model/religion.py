@@ -12,3 +12,4 @@ class Religion(SQLModel, table=True):
 
     id: int = Field(primary_key=True)
     name: str = Field(nullable=False, unique=True)
+

@@ -39,4 +39,4 @@ class Profile(SQLModel, table=True):
 
     gender: Gender = Relationship(sa_relationship_kwargs={"lazy": "joined"})
     religion: Optional[Religion] = Relationship(sa_relationship_kwargs={"lazy": "joined"})
-    #language: list[Language] = Relationship()
+

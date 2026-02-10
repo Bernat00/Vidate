@@ -1,13 +1,12 @@
-from typing import Any, Generic, List, Optional, Sequence, Type, TypeVar, Coroutine
+from typing import Any, Generic, List, Optional, Sequence, Type, TypeVar
+from functools import cached_property
 
 from sqlalchemy import Row, RowMapping, inspect
 from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.interfaces import ORMOption
-from sqlalchemy.orm.util import identity_key
 
 from .. import engine
-#from ..model.chat_event import Call
 
 T = TypeVar("T", bound=SQLModel)
 
@@ -95,10 +94,10 @@ from .religion import ReligionRepo
 from .language import LanguageRepo
 from .role import RoleRepo
 from .preference import PreferenceRepo
-#from .call import CallRepo
-#from .message import MessageRepo
 from .chat_event import ChatEventRepo
 from .conversation import ConversationRepo
+from .report import ReportRepo
+
 
 
 
@@ -106,107 +105,49 @@ class Repo(BasicRepo):
     def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-
-    _user_repo: UserRepo = None
-    _mach_repo: MatchRepo = None
-    _profile_repo: ProfileRepo = None
-    _language_repo: LanguageRepo = None
-    _gender_repo: GenderRepo = None
-    _religion_repo: ReligionRepo = None
-    _role_repo: RoleRepo = None
-    _preference_repo: PreferenceRepo = None
-    #_call_repo: CallRepo = None
-    #_message_repo: MessageRepo = None
-    _chat_event: ChatEventRepo = None
-    _conversation_repo: ConversationRepo = None
-
-
-    @property
+    @cached_property
     def user_repo(self) -> UserRepo:
-        if not self._user_repo:
-            self._user_repo = UserRepo(self.session)
-        return self._user_repo
+        return UserRepo(self.session)
 
-    @property
+    @cached_property
     def match_repo(self) -> MatchRepo:
-        if not self._mach_repo:
-            self._mach_repo = MatchRepo(self.session)
-        return self._mach_repo
+        return MatchRepo(self.session)
 
-    @property
+    @cached_property
     def profile_repo(self) -> ProfileRepo:
-        if not self._profile_repo:
-            self._profile_repo = ProfileRepo(self.session)
-        return self._profile_repo
+        return ProfileRepo(self.session)
 
-    @property
+    @cached_property
     def language_repo(self) -> LanguageRepo:
-        if not self._language_repo:
-            self._language_repo = LanguageRepo(self.session)
-        return self._language_repo
+        return LanguageRepo(self.session)
 
-    @property
+    @cached_property
     def gender_repo(self) -> GenderRepo:
-        if not self._gender_repo:
-            self._gender_repo = GenderRepo(self.session)
-        return self._gender_repo
+        return GenderRepo(self.session)
 
-    @property
+    @cached_property
     def religion_repo(self) -> ReligionRepo:
-        if not self._religion_repo:
-            self._religion_repo = ReligionRepo(self.session)
-        return self._religion_repo
+        return ReligionRepo(self.session)
 
-    @property
+    @cached_property
     def role_repo(self) -> RoleRepo:
-        if not self._role_repo:
-            self._role_repo = RoleRepo(self.session)
-        return self._role_repo
+        return RoleRepo(self.session)
 
-    @property
+    @cached_property
     def preference_repo(self) -> PreferenceRepo:
-        if not self._preference_repo:
-            self._preference_repo = PreferenceRepo(self.session)
-        return self._preference_repo
+        return PreferenceRepo(self.session)
 
-    #@property
-    #def call_repo(self) -> CallRepo:
-    #    if not self._call_repo:
-    #        self._call_repo = CallRepo(self.session)
-    #    return self._call_repo
-
-    #@property
-    #def message_repo(self) -> MessageRepo:
-    #    if not self._message_repo:
-    #        self._message_repo = MessageRepo(self.session)
-    #    return self._message_repo
-
-    @property
+    @cached_property
     def chat_event_repo(self) -> ChatEventRepo:
-        if not self._chat_event:
-            self._chat_event = ChatEventRepo(self.session)
-        return self._chat_event
+        return ChatEventRepo(self.session)
 
-    @property
+    @cached_property
     def conversation_repo(self) -> ConversationRepo:
-        if not self._conversation_repo:
-            self._conversation_repo = ConversationRepo(self.session)
-        return self._conversation_repo
+        return ConversationRepo(self.session)
+
+    @cached_property
+    def report_repo(self) -> ReportRepo:
+        return ReportRepo(self.session)
 
 
 
-#todo ezt valamikor megnezni
-
-"""
-
-    def _add_repo(self, repo: ):
-        var_name = '_' + repo.__class__.__name__
-        prop_name = repo.__class__.__name__[:-4].lower() + '_repo'
-
-        def prop(self):
-            if not self.__getattribute__(var_name):
-                self.__setattr__(var_name, repo())
-
-
-        self.__setattr__(name)
-"""
