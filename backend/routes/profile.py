@@ -6,7 +6,7 @@ from backend.persistence.model.gender import Gender
 from backend.persistence.model.language import Language
 from backend.persistence.model.religion import Religion
 from backend.persistence.model.user import User
-from backend.routes import CurrentUserCheckerDependency
+from backend.routes import get_and_auth_current_admin
 from backend.routes import get_and_auth_current_user, repoDep
 from backend.schemas.profile import ProfileCreate, ReligionCreate, LanguageCreate, GenderCreate
 from backend.persistence.model.profile import Profile
@@ -19,11 +19,11 @@ async def get_religions(repo: repoDep, user: get_and_auth_current_user):
     return await repo.religion_repo.get_all()
 
 @router.post('/religions')
-async def post_religions(religion: ReligionCreate, repo: repoDep, user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
+async def post_religions(religion: ReligionCreate, repo: repoDep, user: get_and_auth_current_admin):
     return await repo.save(Religion(**religion.model_dump()))
 
 @router.delete('/religions')
-async def delete_religions(religion_id: int, repo: repoDep, user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
+async def delete_religions(religion_id: int, repo: repoDep, user: get_and_auth_current_admin):
     religion = await repo.religion_repo.get_by_id(religion_id)
     if not religion:
         raise HTTPException(status_code=404, detail="Religion not found")
@@ -40,12 +40,12 @@ async def get_languages(repo: repoDep, user: get_and_auth_current_user):
     return await repo.language_repo.get_all()
 
 @router.post('/languages')
-async def post_language(language: LanguageCreate, repo: repoDep, user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
+async def post_language(language: LanguageCreate, repo: repoDep, user: get_and_auth_current_admin):
     return await repo.save(Language(**language.model_dump()))
 
 @router.delete('/languages')
 async def delete_languages(language_id: int, repo: repoDep,
-                           user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
+                           user: get_and_auth_current_admin):
     language = await repo.language_repo.get_by_id(language_id)
     if not language:
         raise HTTPException(status_code=404, detail="Religion not found")
@@ -61,12 +61,12 @@ async def get_genders(repo: repoDep, user: get_and_auth_current_user):
     return await repo.gender_repo.get_all()
 
 @router.post('/genders')
-async def post_gender(gender: GenderCreate, repo: repoDep, user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
+async def post_gender(gender: GenderCreate, repo: repoDep, user: get_and_auth_current_admin):
     return await repo.save(Gender(**gender.model_dump()))   #todo uniqe test (lehetne try-cath-el is)
 
 @router.delete('/genders')
 async def delete_genders(gender_id: int, repo: repoDep,
-                           user: Annotated[User, Depends(CurrentUserCheckerDependency("admin"))]):
+                           user: get_and_auth_current_admin):
     gender = await repo.gender_repo.get_by_id(gender_id)
     if not gender:
         raise HTTPException(status_code=404, detail="Religion not found")

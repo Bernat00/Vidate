@@ -4,7 +4,8 @@ from starlette.responses import Response
 
 from backend.persistence.model.report import Report
 from backend.persistence.model.user import User
-from backend.routes import get_and_auth_current_user, repoDep
+from backend.routes import get_and_auth_current_user, repoDep, get_and_auth_current_admin
+from backend.schemas.ban import SetBan
 from backend.schemas.report import ReportCreate
 from backend.schemas.user import UserOut, UserMe, UserEdit
 
@@ -56,5 +57,14 @@ async def report(report_create: ReportCreate, user: get_and_auth_current_user, r
 
     response.status_code = status.HTTP_201_CREATED
 
+
+@router.post('/ban')
+async def set_disabled(ban: SetBan, user: get_and_auth_current_admin, repo: repoDep):
+    to_be_set = await repo.user_repo.get_by_id(ban.user_id)
+    if not to_be_set:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+
+    to_be_set.disabled = ban.value
+    await repo.save(to_be_set)
 
 
