@@ -1,3 +1,4 @@
+from pydantic import SecretStr
 from sqlalchemy import inspect
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -49,6 +50,11 @@ async def create_db_and_tables():
     user = Role(name='user')
     admin = Role(name='admin')
 
+    default_admin_user = User()
+    default_admin_user.email = 'admin@example.com'
+    default_admin_user.password_hash = default_admin_user.hash_password(SecretStr('Admin2006'))
+    default_admin_user.role_id = 1
+
     # Create default genders
     male = Gender(name='Male')
     female = Gender(name='Female')
@@ -72,6 +78,7 @@ async def create_db_and_tables():
 
     async with AsyncSession(engine) as session:
         session.add(admin)
+        session.add(default_admin_user)
         session.add(user)
         session.add(male)
         session.add(female)

@@ -1,13 +1,20 @@
+import smtplib
+from datetime import timedelta
+from email.message import EmailMessage
+
 from fastapi import APIRouter, HTTPException, status
+from pydantic import EmailStr
 from sqlalchemy.util import await_only
 from starlette.responses import Response
 
+from backend.config import Config
 from backend.persistence.model.report import Report
 from backend.persistence.model.user import User
 from backend.routes import get_and_auth_current_user, repoDep, get_and_auth_current_admin
+from backend.routes.auth import create_one_time_access_token, use_one_time_access_token
 from backend.schemas.ban import SetBan
 from backend.schemas.report import ReportCreate
-from backend.schemas.user import UserOut, UserMe, UserEdit
+from backend.schemas.user import UserOut, UserMe, UserEdit, PasswordReset, ResetEmail
 
 router = APIRouter(prefix='/users', tags=['user'])
 
@@ -74,3 +81,45 @@ async def set_disabled(ban: SetBan, user: get_and_auth_current_admin, repo: repo
     await repo.save(to_be_set)
 
 
+
+def send_reset_email(to_email: str, reset_link: str):
+    msg = EmailMessage()
+    msg["Subject"] = "Reset your password"
+    msg["To"] = to_email
+    msg.set_content(
+        f"Click the link below to reset your password:\n\n{reset_link}\n\n"
+        "If you didn't request this, you can ignore this email."
+    )
+
+    try:
+        with smtplib.SMTP_SSL(Config.SMTP_HOST) as server:
+            server.login(Config.SMTP_EMAIL, Config.SMTP_PASSWORD)
+            server.send_message(msg)
+    except Exception as e:
+        print(e)
+
+
+
+@router.post('/send-reset-email')
+async def reset_email(reset_email: ResetEmail, repo: repoDep):
+    user = await repo.user_repo.get_by_email(reset_email.email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+
+    token =  await create_one_time_access_token( {'sub':'special', 'type': 'password-reset', 'user_id': user.id}, timedelta(minutes=5))
+
+    send_reset_email(str(reset_email.email), 'nagyondaddress?token=' + token) #todo kell frontend link
+
+
+@router.post('/reset-password')
+async def reset_password(token: str, psw_reset: PasswordReset, repo: repoDep):
+    payload = await use_one_time_access_token(token)
+    if not payload.get('type') == 'password-reset':
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Password reset token is invalid')
+
+    user = await repo.user_repo.get_by_id(payload.get('user_id', failobj=''))
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+
+    user.password_hash = user.hash_password(psw_reset.password)
+    await repo.save(user)

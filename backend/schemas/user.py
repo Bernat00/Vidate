@@ -23,6 +23,13 @@ class UserCreate(BaseModel):
     password: Annotated[SecretStr, BeforeValidator(validate_password)]
 
 
+class PasswordReset(BaseModel):
+    password: Annotated[SecretStr, BeforeValidator(validate_password)]
+
+class ResetEmail(BaseModel):
+    email: EmailStr
+
+
 class UserEdit(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[

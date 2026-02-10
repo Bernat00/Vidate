@@ -1,6 +1,9 @@
 from backend.routes import repoDep
 from ..config import Config
+from ..helpers import get_redis
+from ..persistence.model.one_time_access_token import OneTimeAccessToken
 from ..persistence.model.user import User
+from ..persistence.repository import Repo
 from ..schemas.auth import Token, TokenData
 from ..schemas.user import UserCreate
 
@@ -31,10 +34,10 @@ def decode_token(token: str, credentials_exception: Exception) -> TokenData:
     if id is None:
         raise credentials_exception
 
-    return TokenData(user_id=id)
+    return TokenData(user_id=id, type=payload.get("type"))
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -60,6 +63,17 @@ def get_token(
         return query_token
 
     raise credentials_exception
+
+
+def get_token_or_none(
+        header_token: Annotated[Optional[str], Depends(oauth2_scheme)],
+        query_token = Query(default=None, alias="token"),
+    ) -> str | None:
+    try:
+        return get_token(header_token, query_token)
+    except credentials_exception:
+        return None
+
 
 
 
@@ -93,6 +107,28 @@ class CurrentUserCheckerDependency:
         return user
 
 
+async def create_one_time_access_token(data, expires_delta: Optional[timedelta] = None) -> str:
+    token = create_access_token(data, expires_delta)
+    await get_redis().sadd('otat', token) #todo mivan ha ugyanabban a masodpercben csinaljak egyszerre 2-en??
+    return token
+
+
+async def use_one_time_access_token(token: str):
+    try:
+        payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
+
+        otat = await get_redis().srem('otat', token)
+        if not otat:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token already used')
+
+        return payload
+
+    except jwt.exceptions.DecodeError:
+        raise credentials_exception
+
+
+
+
 
 @router.post('/register')
 async def register(repo: repoDep, userCreate: UserCreate, response: Response) -> None:
@@ -110,6 +146,27 @@ async def register(repo: repoDep, userCreate: UserCreate, response: Response) ->
 
 
 
+@router.post('/register-admin')
+async def register_admin(token: str, repo: repoDep, userCreate: UserCreate, response: Response) -> None:
+    if await repo.user_repo.get_by_email(userCreate.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This email is already registered."
+        )
+
+    token_payload = await use_one_time_access_token(token)
+
+    if token_payload.get('type') != 'register-admin':
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Wrong token')
+
+
+    user = User(**userCreate.model_dump(), password_hash=User.hash_password(userCreate.password))
+    user.role_id = (await repo.role_repo.get_by_name('admin')).id
+    logger.info(f'New user registered:\n{user.email}')
+
+    await repo.save(user)
+    response.status_code = status.HTTP_201_CREATED
+
 
 @router.post('/token')
 async def token(repo: repoDep,
@@ -125,3 +182,9 @@ async def token(repo: repoDep,
     access_token = create_access_token(data={"sub": user.id})
 
     return Token(access_token=access_token, token_type="bearer")
+
+
+
+@router.get('/register-admin-token')
+async def get_register_admin_token(user: Annotated[User | None, Depends(CurrentUserCheckerDependency("admin"))], repo: repoDep) -> str:
+        return await create_one_time_access_token(data={"sub": 'special', 'type': 'register-admin'}, expires_delta=timedelta(minutes=30)) #todo kitalalni mennyi legyen a lejarati ido

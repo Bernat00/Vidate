@@ -21,7 +21,7 @@ async def lifespan(_app: FastAPI):
     try:
         await create_redis()
     except Exception as e:
-        raise
+        raise e
 
     # Start matchmaking worker
     worker_task = asyncio.create_task(matchmaking_worker())
