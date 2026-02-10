@@ -21,7 +21,7 @@ async def test_matchmaking():
 
     # User Attributes
     my_gender = user_data.get('gender')
-    my_prefs_genders = user_data['pref_genders'].split(",") if user_data.get('pref_genders') else []
+    my_prefs_genders = user_data.get('pref_genders').strip().split(",") if user_data.get('pref_genders') else []
     my_blocked = user_data.get('blocked_ids', '').split("|")
 
     # History Parsing
@@ -52,12 +52,18 @@ async def test_matchmaking():
 
     # 1. Hard Constraints
     if my_prefs_genders:
-        filters.append(f"@gender:{{{'|'.join(my_prefs_genders)}}}")
+        # Check for empty strings in split
+        clean_genders = [g for g in my_prefs_genders if g]
+        if clean_genders:
+             filters.append(f"@gender:{{{'|'.join(clean_genders)}}}")
+
     if my_gender:
         filters.append(f"@pref_genders:{{{my_gender}}}")
 
     filters.append(f"-@blocked_ids:{{{MAIN_USER_ID}}}")
-    filters.append(f"@age:[{my_age_min} {my_age_max}]")
+
+    # AGE FILTER REMOVED (Soft constraint now)
+    # filters.append(f"@age:[{my_age_min} {my_age_max}]")
 
     base_query = " ".join(filters)
     print(f"\nQuery: {base_query}")
@@ -110,7 +116,28 @@ async def test_matchmaking():
             score -= 5000
             details.append("History (Legacy via ID): -5000")
 
-        # 2. Common Language
+        # 2. Age (Very Important)
+        cand_age = getattr(doc, 'age', None)
+        if cand_age is not None:
+            try:
+                c_age = int(cand_age)
+                if my_age_min <= c_age <= my_age_max:
+                    score += 5000
+                    details.append(f"Age ({c_age} in [{my_age_min}-{my_age_max}]): +5000")
+                else:
+                    diff = 0
+                    if c_age < my_age_min:
+                        diff = my_age_min - c_age
+                    else:
+                        diff = c_age - my_age_max
+
+                    age_score = 5000 - (diff * 100)
+                    score += age_score
+                    details.append(f"Age ({c_age} off by {diff}y): {age_score:+}")
+            except:
+                pass
+
+        # 3. Common Language
         cand_langs = set(doc.languages.split(",")) if hasattr(doc, 'languages') and doc.languages else set()
         if not my_langs.isdisjoint(cand_langs):
             score += 2000
@@ -153,7 +180,7 @@ async def test_matchmaking():
     for i, (uid, score, details_list, raw_obj) in enumerate(candidates, 1):
         print(f"\n{i}. USER: {uid} (Score: {score:.2f})")
         print(f"   Breakdown: {', '.join(details_list)}")
-        print(f"   Raw Redis Data: {json.dumps(raw_obj, indent=2)}")
+        # print(f"   Raw Redis Data: {json.dumps(raw_obj, indent=2)}")
 
     await r.aclose()
 

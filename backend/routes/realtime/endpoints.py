@@ -12,7 +12,7 @@ from backend.persistence.model.conversation import Conversation
 from backend.persistence.model.profile import Profile
 from backend.persistence.model.preferences.preferences import Preference
 from sqlalchemy import select, or_
-from backend.routes import CurrentUserCheckerDependency
+from backend.routes import CurrentUserCheckerDependency, repoDep
 
 router = APIRouter(prefix='/ws')
 

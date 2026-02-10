@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, timezone
 import asyncio
 import json
@@ -78,10 +79,10 @@ async def matchmaking_worker():
             my_history_ids = user_data.get('history_ids', '').split("|")
 
             age_min_str = user_data.get('pref_age_min')
-            my_age_min = int(age_min_str) if age_min_str else 18
+            my_age_min = int(age_min_str) if age_min_str else 0
 
             age_max_str = user_data.get('pref_age_max')
-            my_age_max = int(age_max_str) if age_max_str else 99
+            my_age_max = int(age_max_str) if age_max_str else sys.maxsize
 
             # --- BUILD QUERY ---
             filters = []
@@ -98,10 +99,7 @@ async def matchmaking_worker():
             # Checking if THEY blocked ME. stored in THEIR blocked_ids
             filters.append(f"-@blocked_ids:{{{user1_id}}}")
 
-            # 4. HARD: Age
-            filters.append(f"@age:[{my_age_min} {my_age_max}]")
-
-            # 5. HARD: Exclude Self
+            # 4. HARD: Exclude Self
             # Handled in loop or via negate ? -@user_id is tricky without index.
             # We will handle in loop.
 
@@ -140,7 +138,7 @@ async def matchmaking_worker():
                 # --- SCORING ---
                 score = 0
 
-                # 1. History Penalty (Most Important Soft)
+                # 1. History Penalty (Most Important Soft - Negative)
                 if uid in my_history_data:
                     h_info = my_history_data[uid]
                     last_ts = h_info.get("last_ts", 0)
@@ -151,16 +149,33 @@ async def matchmaking_worker():
                     diff_minutes = diff_seconds / 60
 
                     # Formula: High penalty that decays with time
-                    # (50,000 * count) / (minutes + 1)
-                    # Example: 0 min, 1 chat -> -50,000
-                    # Example: 60 min, 1 chat -> ~ -820
                     history_penalty = (50000 * count) / (diff_minutes + 1)
                     score -= history_penalty
 
                 elif uid in my_history_ids: # Fallback
                     score -= 5000
 
-                # 2. Common Language (Important)
+                # 2. Age (Very Important Soft - Positive)
+                # More important than language (+2000), less than history
+                if hasattr(doc, 'age'):
+                    try:
+                        cand_age = int(doc.age)
+                        if my_age_min <= cand_age <= my_age_max:
+                            score += 5000
+                        else:
+                            if cand_age < my_age_min:
+                                diff = my_age_min - cand_age
+                            else:
+                                diff = cand_age - my_age_max
+
+                            # Start with bonus but subtract deviation
+                            # 100 points per year off
+                            age_score = 5000 - (diff * 100)
+                            score += age_score
+                    except:
+                         pass
+
+                # 3. Common Language (Important)
                 cand_langs = set(doc.languages.split(",")) if hasattr(doc, 'languages') and doc.languages else set()
                 if not my_langs.isdisjoint(cand_langs):
                     # They share at least one language
@@ -217,7 +232,6 @@ async def matchmaking_worker():
                     )
                     await repo.conversation_repo.save(conversation)
 
-                    # Fetch basic profiles for frontend display
                     p1 = await repo.profile_repo.get_by_id(user1_id)
                     p2 = await repo.profile_repo.get_by_id(user2_id)
 
