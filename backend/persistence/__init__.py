@@ -58,6 +58,7 @@ async def create_db_and_tables():
     # Create default genders
     male = Gender(name='Male')
     female = Gender(name='Female')
+    other = Gender(name='Other')
 
     # Create default religions
     christianity = Religion(name='Christianity')
@@ -75,6 +76,7 @@ async def create_db_and_tables():
     chinese = Language(name='Chinese')
     arabic = Language(name='Arabic')
     hindi = Language(name='Hindi')
+    hungarian = Language(name='Hungarian')
 
     async with AsyncSession(engine) as session:
         session.add(admin)
@@ -82,6 +84,7 @@ async def create_db_and_tables():
         session.add(user)
         session.add(male)
         session.add(female)
+        session.add(other)
         session.add(christianity)
         session.add(islam)
         session.add(hinduism)
@@ -95,6 +98,7 @@ async def create_db_and_tables():
         session.add(chinese)
         session.add(arabic)
         session.add(hindi)
+        session.add(hungarian)
         await session.commit()
 
 async def reset_db():
