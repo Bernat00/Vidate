@@ -50,7 +50,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', className
         {...props}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-borderAccentLight/30">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-borderAccentLight/30">
           <h3 className="text-lg font-bold text-textAccent">{title}</h3>
           <button
             onClick={onClose}
@@ -62,7 +62,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', className
         </div>
 
         {/* Body */}
-        <div className="p-6 text-textPrimary">
+        <div className="p-4 pt-2 text-textPrimary">
           {children}
         </div>
       </div>

@@ -56,6 +56,10 @@ option:checked {
     color: #ffffff;
 }
 
+button {
+    cursor: pointer;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
