@@ -41,6 +41,7 @@ const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
     if (trimmed && !disabled) {
       onSendMessage(trimmed);
       setContent('');
+      textareaRef.current?.focus();
     }
   };
 
@@ -78,6 +79,7 @@ const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
         />
         <button
           type="submit"
+          onPointerDown={(e) => e.preventDefault()}
           disabled={!content.trim() || disabled}
           className={`absolute top-1/2 ${isOverflowing ? 'right-2 lg:right-4' : 'right-2'} -translate-y-1/2 p-2 text-textPrimary hover:bg-borderAccent rounded-full shadow transition-all disabled:opacity-50 disabled:hover:bg-transparent not-disabled:hover:cursor-pointer`}
         >
