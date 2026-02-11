@@ -9,8 +9,8 @@ type GradientPageProps = {
 export default function GradientPage({ children, className = '', isScrollable = false }: GradientPageProps): ReactElement {
   return (
     <div
-      className={`bg-gradient-to-t from-bgAccentPrimary to-bgAccentSecondary min-h-screen ${
-        isScrollable ? 'overflow-y-auto' : 'overflow-hidden'
+      className={`bg-gradient-to-t from-bgAccentPrimary to-bgAccentSecondary flex flex-col ${
+        isScrollable ? 'min-h-[100dvh]' : 'h-[100dvh] overflow-hidden'
       } ${className}`.trim()}
     >
       {children}

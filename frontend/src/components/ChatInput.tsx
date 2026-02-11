@@ -51,6 +51,14 @@ const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
     }
   };
 
+  const handleFocus = () => {
+    window.dispatchEvent(new Event('chat-input-focus'));
+  };
+
+  const handleBlur = () => {
+    window.dispatchEvent(new Event('chat-input-blur'));
+  };
+
   return (
     <form className="w-full px-app-padding" onSubmit={handleSubmit}>
       <label htmlFor="chat" className="sr-only">Your message</label>
@@ -62,6 +70,8 @@ const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           disabled={disabled}
           className="block w-full p-2.5 pr-12 text-sm text-textPrimary bg-bgSecondary border border-borderAccentLight rounded-lg shadow-md focus:ring-borderAccent placeholder-textSecondary resize-none disabled:opacity-50 max-h-[100px] scrollbar-thin"
           placeholder="Your message..."

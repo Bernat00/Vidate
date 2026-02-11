@@ -16,7 +16,7 @@ import CenteredLoader from '../components/layout/CenteredLoader';
 import type { MatchesOutletContext } from '../components/layout/MatchesLayout';
 
 export default function MyMatches(): ReactElement {
-  const { selectedUserId } = useOutletContext<MatchesOutletContext>();
+  const { selectedUserId, isKeyboardOpen } = useOutletContext<MatchesOutletContext>();
   const { matches, refreshMatches } = useMatches();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -197,19 +197,25 @@ export default function MyMatches(): ReactElement {
     <ChatColumn>
       {selectedUserId ? (
         loadingMessages && messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center flex-1 h-[calc(100vh-8.6rem)] lg:h-[calc(100vh-5.5rem)]">
+          <div className="flex flex-col items-center justify-center flex-1">
             <CenteredLoader text="Loading conversation..." className="flex flex-col items-center justify-center gap-4" />
           </div>
         ) : (
-          <div className="flex flex-col flex-1 max-h-[calc(100vh-8.6rem)] lg:max-h-[calc(100vh-5.5rem)] overflow-hidden mb-2">
+          <div className={`flex flex-col w-full ${
+            isKeyboardOpen 
+              ? 'h-[calc(100dvh-4.6rem)]' 
+              : 'h-[calc(100dvh-8.6rem)] lg:h-[calc(100vh-5.5rem)]'
+          }`}>
             <MessageList
               messages={messages}
-              className="flex-1 overflow-y-auto mb-2"
+              className="flex-1 overflow-y-auto min-h-0"
               scrollRef={scrollContainerRef}
               onScroll={handleScroll}
               loadingTop={loadingMessages && messages.length > 0}
             />
-            <ChatInput onSendMessage={onSendMessage} />
+            <div className="pt-2">
+                <ChatInput onSendMessage={onSendMessage} />
+            </div>
           </div>
         )
       ) : (

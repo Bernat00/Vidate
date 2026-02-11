@@ -10,6 +10,7 @@ interface DashboardLayoutProps {
   title?: string;
   selectedUserId?: string | null;
   onSelectUserId?: (userId: string | null) => void;
+  isScrollable?: boolean;
 }
 
 export default function DashboardLayout({
@@ -17,6 +18,7 @@ export default function DashboardLayout({
   title = 'Vidate',
   selectedUserId,
   onSelectUserId,
+  isScrollable = false,
 }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -45,7 +47,7 @@ export default function DashboardLayout({
             }
           />
 
-        <main className="flex-1 flex flex-col overflow-hidden ">
+        <main className={`flex-1 flex flex-col ${isScrollable ? 'overflow-y-auto' : 'overflow-hidden'}`}>
           {children}
         </main>
 
