@@ -17,8 +17,8 @@ from backend.background.matchmaking import attempt_match_for_user, ensure_matchm
 
 router = APIRouter(prefix='/ws')
 
-async def redis_to_ws_writer(ws: WebSocket, user, r: Redis):
-    channel = f"user:{user.id}"
+async def redis_to_ws_writer(ws: WebSocket, user_id: int, r: Redis):
+    channel = f"user:{user_id}"
     pubsub = r.pubsub()
     await pubsub.subscribe(channel)
     try:
@@ -34,19 +34,19 @@ async def redis_to_ws_writer(ws: WebSocket, user, r: Redis):
         await pubsub.aclose()
 
 
-async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
+async def ws_to_redis_reader(ws: WebSocket, user_id: int, r: Redis, repo: Repo):
     matchmaking_task: asyncio.Task | None = None
 
     async def matchmaking_loop():
         await ensure_matchmaking_index(r)
         attempts = 0
         while True:
-            if await r.zscore("matchmaking", user.id) is None:
+            if await r.zscore("matchmaking", user_id) is None:
                 return
-            if not await r.exists(f"mm_entry:{user.id}"):
-                await r.zrem("matchmaking", user.id)
+            if not await r.exists(f"mm_entry:{user_id}"):
+                await r.zrem("matchmaking", user_id)
                 return
-            matched = await attempt_match_for_user(r, user.id, repo)
+            matched = await attempt_match_for_user(r, user_id, repo)
             if matched:
                 return
             base_sleep = 1 if attempts < 20 else 3
@@ -65,11 +65,11 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
                 lon = payload.get("lon")
 
                 profile: Profile | None = await repo.profile_repo.get_by_id(
-                    user.id,
+                    user_id,
                     options=[selectinload(Profile.languages)]
                 )
                 preference: Preference | None = await repo.preference_repo.get_by_id(
-                    user.id,
+                    user_id,
                     options=[
                         selectinload(Preference.genders),
                         selectinload(Preference.languages),
@@ -80,18 +80,18 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
                 one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
 
                 peer_id_col = case(
-                    (Conversation.user1_id == user.id, Conversation.user2_id),
+                    (Conversation.user1_id == user_id, Conversation.user2_id),
                     else_=Conversation.user1_id
                 ).label("peer_id")
 
                 stmt = (
                     select(peer_id_col)
                     .where(
-                        or_(Conversation.user1_id == user.id, Conversation.user2_id == user.id),
+                        or_(Conversation.user1_id == user_id, Conversation.user2_id == user_id),
                         Conversation.timestamp >= one_hour_ago
                     )
                     .group_by(peer_id_col)
-                    .having(peer_id_col != user.id)
+                    .having(peer_id_col != user_id)
                     .order_by(func.max(Conversation.timestamp).asc())
                 )
 
@@ -102,7 +102,7 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
                 age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
                 mm_data = {
-                    "user_id": user.id,
+                    "user_id": user_id,
 
                     "gender": str(profile.gender_id) if profile else "",
                     "religion": str(profile.religion_id) if profile and profile.religion_id else "",
@@ -124,12 +124,12 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
                     "joined_at": datetime.now(timezone.utc).timestamp(),
                 }
 
-                await r.hset(f"mm_entry:{user.id}", mapping=mm_data)
+                await r.hset(f"mm_entry:{user_id}", mapping=mm_data)
 
                 if lat is not None and lon is not None:
-                    await r.geoadd("user_geo", (lon, lat, user.id))
+                    await r.geoadd("user_geo", (lon, lat, user_id))
 
-                await r.zadd("matchmaking", {user.id: datetime.now(timezone.utc).timestamp()})
+                await r.zadd("matchmaking", {user_id: datetime.now(timezone.utc).timestamp()})
 
                 if matchmaking_task and not matchmaking_task.done():
                     matchmaking_task.cancel()
@@ -138,9 +138,9 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
             elif msg_type == "left_feed":
                 if matchmaking_task and not matchmaking_task.done():
                     matchmaking_task.cancel()
-                await r.zrem("matchmaking", user.id)
-                await r.zrem("user_geo", user.id)
-                await r.delete(f"mm_entry:{user.id}")
+                await r.zrem("matchmaking", user_id)
+                await r.zrem("user_geo", user_id)
+                await r.delete(f"mm_entry:{user_id}")
 
             elif msg_type in ["offer", "answer", "ice_candidate", "end_call"]:
                 peer_id = payload.get("peer_id")
@@ -158,7 +158,7 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
                     chat_event = ChatEvent(
                         type="message",
                         match_id=match_id,
-                        originator_id=user.id,
+                        originator_id=user_id,
                         recipient_id=recipient_id,
                         content=payload.get("content")
                     )
@@ -169,7 +169,7 @@ async def ws_to_redis_reader(ws: WebSocket, user, r: Redis, repo: Repo):
                         "payload": chat_event.model_dump(mode="json")
                     })
                     await r.publish(f"user:{recipient_id}", message_payload)
-                    await r.publish(f"user:{user.id}", message_payload)
+                    await r.publish(f"user:{user_id}", message_payload)
 
             elif msg_type == "ping":
                 continue
@@ -194,10 +194,11 @@ async def ws_endpoint(ws: WebSocket, token: str, r: Redis = Depends(get_redis), 
         await ws.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
+    user_id = user.id
     await ws.accept()
 
-    writer_task = asyncio.create_task(redis_to_ws_writer(ws, user, r))
-    reader_task = asyncio.create_task(ws_to_redis_reader(ws, user, r, repo))
+    writer_task = asyncio.create_task(redis_to_ws_writer(ws, user_id, r))
+    reader_task = asyncio.create_task(ws_to_redis_reader(ws, user_id, r, repo))
 
     try:
         _done, _pending = await asyncio.wait(
@@ -205,13 +206,13 @@ async def ws_endpoint(ws: WebSocket, token: str, r: Redis = Depends(get_redis), 
             return_when=asyncio.FIRST_COMPLETED,
         )
     except Exception as e:
-        print(f"WS Error for User {user.id}: {e}")
+        print(f"WS Error for User {user_id}: {e}")
     finally:
         for task in [writer_task, reader_task]:
             if not task.done():
                 task.cancel()
 
-        await r.zrem("matchmaking", user.id)
-        await r.zrem("user_geo", user.id)
-        await r.delete(f"mm_entry:{user.id}")
-        print(f"Cleanup: User {user.id} removed from matchmaking.")
+        await r.zrem("matchmaking", user_id)
+        await r.zrem("user_geo", user_id)
+        await r.delete(f"mm_entry:{user_id}")
+        print(f"Cleanup: User {user_id} removed from matchmaking.")
