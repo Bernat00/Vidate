@@ -13,7 +13,7 @@ from backend.persistence.model.preferences.preferences import Preference
 from sqlalchemy import select, or_, func, case
 from sqlalchemy.orm import selectinload
 from backend.routes import CurrentUserCheckerDependency, repoDep
-from backend.background.matchmaking import attempt_match_for_user, ensure_matchmaking_index
+from backend.background.matchmaking import attempt_match_for_user
 
 router = APIRouter(prefix='/ws')
 
@@ -38,7 +38,6 @@ async def ws_to_redis_reader(ws: WebSocket, user_id: int, r: Redis, repo: Repo):
     matchmaking_task: asyncio.Task | None = None
 
     async def matchmaking_loop():
-        await ensure_matchmaking_index(r)
         attempts = 0
         while True:
             if await r.zscore("matchmaking", user_id) is None:

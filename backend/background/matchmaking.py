@@ -1,15 +1,11 @@
 import sys
 from datetime import datetime, timezone
-import asyncio
 import json
 from backend.persistence.repository import Repo
 from backend.persistence.model.conversation import Conversation
 from redis.commands.search.query import Query
 from redis.commands.search.field import TagField, NumericField, GeoField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
-
-_INDEX_READY = False
-_INDEX_LOCK = asyncio.Lock()
 
 _LUA_CLAIM_PAIR = """
 if ARGV[1] == ARGV[2] then
@@ -40,34 +36,28 @@ def _escape_tag_value(value: str) -> str:
 
 
 async def ensure_matchmaking_index(r):
-    global _INDEX_READY
-    if _INDEX_READY:
-        return
-    async with _INDEX_LOCK:
-        if _INDEX_READY:
-            return
-        try:
-            schema = (
-                TagField("gender", separator=","),
-                TagField("pref_genders", separator=","),
-                TagField("languages", separator=","),
-                TagField("blocked_ids", separator="|"),
-                TagField("history_ids", separator="|"),
-                NumericField("joined_at", sortable=True),
-                NumericField("age", sortable=True),
-                GeoField("location"),
-                TagField("religion"),
-                TagField("is_smoker"),
-                TagField("wants_children"),
-            )
-            await r.ft("idx:matchmaking").create_index(
-                schema,
-                definition=IndexDefinition(prefix=["mm_entry:"], index_type=IndexType.HASH)
-            )
-        except Exception:
-            # Index likely already exists
-            pass
-        _INDEX_READY = True
+    try:
+        schema = (
+            TagField("gender", separator=","),
+            TagField("pref_genders", separator=","),
+            TagField("languages", separator=","),
+            TagField("blocked_ids", separator="|"),
+            TagField("history_ids", separator="|"),
+            NumericField("joined_at", sortable=True),
+            NumericField("age", sortable=True),
+            GeoField("location"),
+            TagField("religion"),
+            TagField("is_smoker"),
+            TagField("wants_children"),
+        )
+        await r.ft("idx:matchmaking").create_index(
+            schema,
+            definition=IndexDefinition(prefix=["mm_entry:"], index_type=IndexType.HASH)
+        )
+    except Exception as e:
+        # Silently ignore if index already exists
+        if "Index already exists" not in str(e):
+            print(f"Index creation observation: {e}")
 
 
 async def _try_claim_pair(r, user1_id: str, user2_id: str) -> bool:
