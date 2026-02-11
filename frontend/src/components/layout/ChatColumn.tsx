@@ -9,8 +9,8 @@ type ChatColumnProps = {
  */
 export default function ChatColumn({ children }: ChatColumnProps): ReactElement {
   return (
-    <div className="flex justify-center flex-1 mx-2">
-      <div className="w-full lg:w-9/10 flex flex-1 flex-col mx-2 pt-4 min-h-0">
+    <div className="flex justify-center flex-1 min-h-0">
+      <div className="w-full lg:px-8 flex flex-1 flex-col px-4 pt-4 min-h-0">
         {children}
       </div>
     </div>
