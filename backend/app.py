@@ -10,7 +10,6 @@ from .routes.realtime.endpoints import router as realtime_router
 from fastapi import FastAPI
 
 from .config import Config
-from backend.background.matchmaking import matchmaking_worker
 import asyncio
 
 
@@ -23,17 +22,7 @@ async def lifespan(_app: FastAPI):
     except Exception as e:
         raise e
 
-    # Start matchmaking worker
-    worker_task = asyncio.create_task(matchmaking_worker())
-
     yield
-
-    # Stop matchmaking worker
-    worker_task.cancel()
-    try:
-        await worker_task
-    except asyncio.CancelledError:
-        pass
 
     #close stuff
     await close_redis()
