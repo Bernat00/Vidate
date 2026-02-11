@@ -1,7 +1,5 @@
 from contextlib import asynccontextmanager
 
-import redis.asyncio as redis
-
 from .persistence import  create_db_and_tables
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,16 +7,15 @@ from .routes import router as api_router
 from .routes.realtime.endpoints import router as realtime_router
 from fastapi import FastAPI
 
-from .config import Config
-import asyncio
-
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     from backend.helpers import create_redis, close_redis
+    from backend.background.matchmaking import ensure_matchmaking_index
     await create_db_and_tables()
     try:
-        await create_redis()
+        r = await create_redis()
+        await ensure_matchmaking_index(r)
     except Exception as e:
         raise e
 
