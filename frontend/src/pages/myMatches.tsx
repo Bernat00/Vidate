@@ -16,15 +16,27 @@ import CenteredLoader from '../components/layout/CenteredLoader';
 import type { MatchesOutletContext } from '../components/layout/MatchesLayout';
 
 export default function MyMatches(): ReactElement {
-  const { selectedUserId } = useOutletContext<MatchesOutletContext>();
-  const { matches } = useMatches();
+  const { selectedUserId, isKeyboardOpen } = useOutletContext<MatchesOutletContext>();
+  const { matches, refreshMatches } = useMatches();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  // Ref to track hasMore without triggering useCallback changes
+  const hasMoreRef = useRef(true);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isFetchingRef = useRef(false);
   const initialScrollRef = useRef(false);
   const shouldScrollToBottomRef = useRef(false);
+  const prevScrollHeightRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    refreshMatches();
+  }, [refreshMatches]);
 
   const ws = useWebSocket();
   const { user } = useAuth()!;
@@ -33,7 +45,8 @@ export default function MyMatches(): ReactElement {
   const selectedMatchId = selectedMatch?.match_id?.toString();
 
   const fetchMessages = useCallback(async (matchId: string, lastId?: number | string) => {
-    if (isFetchingRef.current || (!hasMore && lastId)) return;
+    // Use ref here to prevent dependency cycle
+    if (isFetchingRef.current || (lastId && !hasMoreRef.current)) return;
 
     isFetchingRef.current = true;
     setLoadingMessages(true);
@@ -59,16 +72,11 @@ export default function MyMatches(): ReactElement {
 
       if (lastId) {
         // Pagination: keep scroll position
-        const container = scrollContainerRef.current;
-        const oldScrollHeight = container?.scrollHeight || 0;
+        if (scrollContainerRef.current) {
+          prevScrollHeightRef.current = scrollContainerRef.current.scrollHeight;
+        }
 
         setMessages(prev => [...mappedMessages, ...prev]);
-
-        setTimeout(() => {
-          if (container) {
-            container.scrollTop = container.scrollHeight - oldScrollHeight;
-          }
-        }, 0);
       } else {
         setMessages(mappedMessages);
       }
@@ -80,7 +88,7 @@ export default function MyMatches(): ReactElement {
       setLoadingMessages(false);
       isFetchingRef.current = false;
     }
-  }, [hasMore, user?.id, selectedMatch]);
+  }, [user?.id, selectedMatch]);
 
   useEffect(() => {
     if (selectedMatchId) {
@@ -89,11 +97,22 @@ export default function MyMatches(): ReactElement {
       initialScrollRef.current = true;
       fetchMessages(selectedMatchId);
     }
-  }, [selectedMatchId]);
+  }, [selectedMatchId, fetchMessages]);
 
   useLayoutEffect(() => {
-    if (!loadingMessages && initialScrollRef.current && messages.length > 0 && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // Handle pagination scroll adjustment
+    if (prevScrollHeightRef.current !== null) {
+      const newScrollHeight = container.scrollHeight;
+      container.scrollTop = newScrollHeight - prevScrollHeightRef.current;
+      prevScrollHeightRef.current = null;
+      return;
+    }
+
+    if (!loadingMessages && initialScrollRef.current && messages.length > 0) {
+      container.scrollTop = container.scrollHeight;
       initialScrollRef.current = false;
     }
   }, [messages, loadingMessages]);
@@ -178,19 +197,25 @@ export default function MyMatches(): ReactElement {
     <ChatColumn>
       {selectedUserId ? (
         loadingMessages && messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center flex-1 h-[calc(100vh-8.6rem)] lg:h-[calc(100vh-5.5rem)]">
+          <div className="flex flex-col items-center justify-center flex-1">
             <CenteredLoader text="Loading conversation..." className="flex flex-col items-center justify-center gap-4" />
           </div>
         ) : (
-          <div className="flex flex-col flex-1 max-h-[calc(100vh-8.6rem)] lg:max-h-[calc(100vh-5.5rem)] overflow-hidden mb-2">
+          <div className={`flex flex-col w-full ${
+            isKeyboardOpen 
+              ? 'h-[calc(100dvh-4.6rem)]' 
+              : 'h-[calc(100dvh-8.6rem)] lg:h-[calc(100vh-5.5rem)]'
+          }`}>
             <MessageList
               messages={messages}
-              className="flex-1 overflow-y-auto mb-2"
+              className="flex-1 overflow-y-auto min-h-0"
               scrollRef={scrollContainerRef}
               onScroll={handleScroll}
               loadingTop={loadingMessages && messages.length > 0}
             />
-            <ChatInput onSendMessage={onSendMessage} />
+            <div className="pt-2">
+                <ChatInput onSendMessage={onSendMessage} />
+            </div>
           </div>
         )
       ) : (

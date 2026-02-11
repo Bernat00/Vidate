@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useWebSocket } from '../context/webSocketContext';
 import api from '../api';
-import { Video, MapPin, ThumbsUp, ThumbsDown, PhoneOff } from 'lucide-react';
+import { Video, MapPin, ThumbsUp, ThumbsDown, PhoneOff, Flag } from 'lucide-react';
 import { useToast } from '../context/toastContext';
 import PermissionRequest from '../components/PermissionRequest';
 import InfoItem from '../components/common/InfoItem';
 import DestructiveButton from '../components/form/DestructiveButton';
+import { Modal } from '../components/common/Modal';
 import { calculateAge } from '../helpers';
 
 type ViewState = 'PERMISSIONS' | 'TESTING' | 'WAITING' | 'CONNECTING' | 'IN_CALL' | 'FEEDBACK';
@@ -50,6 +51,9 @@ export default function Home() {
   const [useLocation, setUseLocation] = useState(true);
   const [timeLeft, setTimeLeft] = useState<number>(120); // 2 minutes
   const [micLevel, setMicLevel] = useState(0);
+
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportReason, setReportReason] = useState('');
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -201,6 +205,9 @@ export default function Home() {
     setViewState('WAITING');
     viewStateRef.current = 'WAITING';
     peerProfileRef.current = null;
+    setIsReporting(false);
+    setReportReason('');
+
     send({
       type: 'joined_feed',
       payload: { lat: finalCoords.lat, lon: finalCoords.lon }
@@ -231,6 +238,21 @@ export default function Home() {
       } catch (e) {
           console.error(e);
           showToast("Failed to submit feedback", "error");
+      }
+  };
+
+  const handleReport = async () => {
+      if (!peerProfile || !reportReason.trim()) return;
+      try {
+          await api.post('/users/report', {
+              reported_user_id: peerProfile.peer_id,
+              reason: reportReason
+          });
+          showToast("User reported", "success");
+          startSearching();
+      } catch (e) {
+          console.error(e);
+          showToast("Failed to report user", "error");
       }
   };
 
@@ -412,7 +434,13 @@ export default function Home() {
   };
 
   return (
-    <div className={`flex flex-col items-center ${viewState === 'IN_CALL' ? 'h-[calc(100vh-4rem)] justify-start' : 'justify-center min-h-[calc(100vh-4rem)] p-4'} max-w-lg mx-auto w-full overflow-hidden`}>
+    <div className={`flex flex-col items-center ${
+        viewState === 'IN_CALL' 
+          ? 'h-[calc(100dvh-4rem)] justify-start' 
+          : (viewState === 'TESTING' || viewState === 'PERMISSIONS')
+            ? 'h-[calc(100dvh-4rem)] justify-start p-4'
+            : 'justify-center min-h-[calc(100dvh-4rem)] p-4'
+    } max-w-lg mx-auto w-full ${(viewState === 'TESTING' || viewState === 'PERMISSIONS') ? 'overflow-y-auto' : 'overflow-hidden'}`}>
 
       {/* State: PERMISSIONS (Setup) */}
       {(viewState === 'PERMISSIONS' || viewState === 'TESTING') && (
@@ -507,7 +535,7 @@ export default function Home() {
 
       {/* State: FEEDBACK */}
       {viewState === 'FEEDBACK' && (
-          <div className="flex flex-col items-center gap-4 text-center animate-fade-in w-full overflow-y-auto px-2 pb-4">
+          <div className="flex flex-col items-center gap-2 text-center animate-fade-in w-full overflow-y-auto px-2 pb-4">
               <h2 className="text-xl font-bold text-textPrimary">
                 How was your chat with {peerProfile?.peer_name ?? 'your match'}?
               </h2>
@@ -565,27 +593,70 @@ export default function Home() {
                 </div>
               )}
 
-               <div className="flex gap-12 mt-2">
-                   <button
-                       onClick={() => handleFeedback(false)}
-                       className="flex flex-col items-center gap-2 group hover:cursor-pointer"
-                   >
-                       <div className="w-16 h-16 rounded-full bg-bgSecondary flex items-center justify-center border border-borderAccent group-hover:bg-red-500/20 transition-colors">
-                           <ThumbsDown className="text-textSecondary group-hover:text-red-500" size={32} />
-                       </div>
-                       <span className="text-sm text-textSecondary">Pass</span>
-                   </button>
+                   <>
+                       <div className="flex gap-12 mt-2">
+                           <button
+                               onClick={() => handleFeedback(false)}
+                               className="flex flex-col items-center gap-2 group hover:cursor-pointer"
+                           >
+                               <div className="w-16 h-16 rounded-full bg-bgSecondary flex items-center justify-center border border-borderAccent group-hover:bg-red-500/20 transition-colors">
+                                   <ThumbsDown className="text-textSecondary group-hover:text-red-500" size={32} />
+                               </div>
+                               <span className="text-sm text-textSecondary">Pass</span>
+                           </button>
 
-                   <button
-                       onClick={() => handleFeedback(true)}
-                       className="flex flex-col items-center gap-2 group hover:cursor-pointer"
+                           <button
+                               onClick={() => handleFeedback(true)}
+                               className="flex flex-col items-center gap-2 group hover:cursor-pointer"
+                               >
+                                   <div className="w-16 h-16 rounded-full bg-bgSecondary flex items-center justify-center border border-borderAccent group-hover:bg-green-500/20 transition-colors">
+                                       <ThumbsUp className="text-textSecondary group-hover:text-green-500" size={32} />
+                                   </div>
+                                   <span className="text-sm text-textSecondary">Like</span>
+                               </button>
+                       </div>
+
+                       <button
+                           onClick={() => setIsReporting(true)}
+                           className="mt-6 text-textSecondary text-sm hover:text-textError flex items-center gap-2 transition-colors hover:cursor-pointer p-2"
                        >
-                           <div className="w-16 h-16 rounded-full bg-bgSecondary flex items-center justify-center border border-borderAccent group-hover:bg-green-500/20 transition-colors">
-                               <ThumbsUp className="text-textSecondary group-hover:text-green-500" size={32} />
-                           </div>
-                           <span className="text-sm text-textSecondary">Like</span>
+                           <Flag size={16} />
+                           Report and Block User
                        </button>
-                   </div>
+
+                       <Modal
+                           isOpen={isReporting}
+                           onClose={() => setIsReporting(false)}
+                           title={`Report ${peerProfile?.peer_name || 'User'}`}
+                       >
+                           <div className="flex flex-col gap-4">
+                               <p className="text-sm text-textSecondary">
+                                   Please provide a reason for reporting. After this action, you will never meet this user again.
+                               </p>
+                               <textarea
+                                    value={reportReason}
+                                    onChange={(e) => setReportReason(e.target.value)}
+                                    className="w-full h-32 md:h-24 p-3 rounded-lg bg-bgSecondary border border-borderAccent text-textPrimary text-sm focus:border-textError focus:outline-none resize-none"
+                                    placeholder="Describe the issue..."
+                               />
+                               <div className="flex gap-2 justify-end mt-4">
+                                   <button
+                                       onClick={() => setIsReporting(false)}
+                                       className="px-4 py-2 rounded-lg text-sm text-textSecondary font-medium hover:bg-bgSecondary hover:text-textPrimary transition-colors"
+                                   >
+                                       Cancel
+                                   </button>
+                                   <DestructiveButton
+                                       onClick={handleReport}
+                                       disabled={!reportReason.trim()}
+                                       className="!w-auto !px-4 !py-2 !text-sm !rounded-lg"
+                                   >
+                                       Submit Report
+                                   </DestructiveButton>
+                               </div>
+                           </div>
+                       </Modal>
+                   </>
               </div>
           )}
         </div>

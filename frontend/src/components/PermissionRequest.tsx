@@ -53,7 +53,7 @@ export default function PermissionRequest({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] max-w-md mx-auto p-4 space-y-6 animate-fade-in text-center w-full">
+    <div className="flex flex-col items-center justify-center flex-1 max-w-md mx-auto p-4 space-y-6 animate-fade-in text-center w-full">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-textPrimary">
             {hasMedia ? "You're All Set!" : "Permissions Required"}
@@ -164,7 +164,7 @@ export default function PermissionRequest({
       {hasMedia && (
         <PrimaryButton
           onClick={onStartMatching}
-          className="!bg-textAccent hover:!bg-opacity-90 text-white text-lg font-bold !rounded-full shadow-lg hover:shadow-xl hover:scale-105 w-full py-4 mt-4 animate-pulse-gentle"
+          className="flex items-center justify-center !bg-textAccent hover:!bg-opacity-90 text-white text-lg font-bold !rounded-full shadow-lg hover:shadow-xl hover:scale-105 w-full py-4 mt-4 animate-pulse-gentle"
         >
           Let's Go
         </PrimaryButton>

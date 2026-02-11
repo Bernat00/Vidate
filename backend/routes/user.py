@@ -61,6 +61,7 @@ async def report(report_create: ReportCreate, user: get_and_auth_current_user, r
 
     report = Report()
     report.user_id = report_create.reported_user_id
+    report.reporter_id = user.id
     report.reason = report_create.reason
 
     await repo.save(report)

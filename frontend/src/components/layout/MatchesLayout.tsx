@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useLocation, useParams } from 'react-router-dom';
+import { Outlet, useLocation, useParams, useOutletContext } from 'react-router-dom';
 import DashboardLayout from './DashboardLayout';
 
 type MatchesOutletContext = {
   selectedUserId: string | null;
   setSelectedUserId: (userId: string | null) => void;
+  isKeyboardOpen?: boolean;
 };
 
 export default function MatchesLayout() {
   const location = useLocation();
   const { userId } = useParams<{ userId?: string }>();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const { isKeyboardOpen } = useOutletContext<{ isKeyboardOpen: boolean }>();
 
   useEffect(() => {
     if (userId) {
@@ -30,8 +32,9 @@ export default function MatchesLayout() {
       title={title}
       selectedUserId={selectedUserId}
       onSelectUserId={setSelectedUserId}
+      isScrollable={isProfileRoute}
     >
-      <Outlet context={{ selectedUserId, setSelectedUserId }} />
+      <Outlet context={{ selectedUserId, setSelectedUserId, isKeyboardOpen }} />
     </DashboardLayout>
   );
 }
