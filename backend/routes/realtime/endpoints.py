@@ -110,7 +110,7 @@ async def ws_to_redis_reader(ws: WebSocket, user_id: int, r: Redis, repo: Repo):
 
                 mm_data = {
                     "user_id": user_id,
-
+                    "first_name": profile.first_name if profile else "",
                     "gender": str(profile.gender_id) if profile else "",
                     "religion": str(profile.religion_id) if profile and profile.religion_id else "",
                     "is_smoker": str(int(profile.is_smoker)) if profile else "0",
@@ -132,6 +132,7 @@ async def ws_to_redis_reader(ws: WebSocket, user_id: int, r: Redis, repo: Repo):
                 }
 
                 await r.hset(f"mm_entry:{user_id}", mapping=mm_data)
+                await r.expire(f"mm_entry:{user_id}", 3600 * 24)
 
                 if lat is not None and lon is not None:
                     await r.geoadd("user_geo", (lon, lat, user_id))
