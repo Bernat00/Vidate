@@ -3,7 +3,7 @@ from typing_extensions import deprecated
 import json
 from . import repoDep
 from ..persistence.model.match import Match
-from ..persistence.repository.match import SameValueError
+from backend.errors import SameValueError
 from ..schemas.chat_event import ChatEventOut
 from ..schemas.profile import ProfileRead
 

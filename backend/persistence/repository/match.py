@@ -10,6 +10,7 @@ from sqlalchemy import select, ScalarResult, Row, RowMapping
 from typing import Sequence, Any, Coroutine
 
 from ..model.user import User
+from ...errors import SameValueError, MatchAlreadyConfirmedError
 
 
 class MatchRepo(BaseRepo[Match]):
@@ -44,6 +45,9 @@ class MatchRepo(BaseRepo[Match]):
         match = await match_repo.get_by_both_user_ids(me.id, to_match.id)
 
         if match:
+            if match.confirmed:
+                raise MatchAlreadyConfirmedError("Match already confirmed")
+
             match.confirmed = True
             return await match_repo.save(match)
 
@@ -58,7 +62,5 @@ class MatchRepo(BaseRepo[Match]):
         return await match_repo.save(mach)
 
 
-class SameValueError(ValueError):
-    def __init__(self, value: str):
-        self.value = value
+
 
