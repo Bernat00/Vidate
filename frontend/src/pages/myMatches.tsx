@@ -17,14 +17,26 @@ import type { MatchesOutletContext } from '../components/layout/MatchesLayout';
 
 export default function MyMatches(): ReactElement {
   const { selectedUserId } = useOutletContext<MatchesOutletContext>();
-  const { matches } = useMatches();
+  const { matches, refreshMatches } = useMatches();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  // Ref to track hasMore without triggering useCallback changes
+  const hasMoreRef = useRef(true);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isFetchingRef = useRef(false);
   const initialScrollRef = useRef(false);
   const shouldScrollToBottomRef = useRef(false);
+  const prevScrollHeightRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    refreshMatches();
+  }, [refreshMatches]);
 
   const ws = useWebSocket();
   const { user } = useAuth()!;
@@ -33,7 +45,8 @@ export default function MyMatches(): ReactElement {
   const selectedMatchId = selectedMatch?.match_id?.toString();
 
   const fetchMessages = useCallback(async (matchId: string, lastId?: number | string) => {
-    if (isFetchingRef.current || (!hasMore && lastId)) return;
+    // Use ref here to prevent dependency cycle
+    if (isFetchingRef.current || (lastId && !hasMoreRef.current)) return;
 
     isFetchingRef.current = true;
     setLoadingMessages(true);
@@ -59,16 +72,11 @@ export default function MyMatches(): ReactElement {
 
       if (lastId) {
         // Pagination: keep scroll position
-        const container = scrollContainerRef.current;
-        const oldScrollHeight = container?.scrollHeight || 0;
+        if (scrollContainerRef.current) {
+          prevScrollHeightRef.current = scrollContainerRef.current.scrollHeight;
+        }
 
         setMessages(prev => [...mappedMessages, ...prev]);
-
-        setTimeout(() => {
-          if (container) {
-            container.scrollTop = container.scrollHeight - oldScrollHeight;
-          }
-        }, 0);
       } else {
         setMessages(mappedMessages);
       }
@@ -80,7 +88,7 @@ export default function MyMatches(): ReactElement {
       setLoadingMessages(false);
       isFetchingRef.current = false;
     }
-  }, [hasMore, user?.id, selectedMatch]);
+  }, [user?.id, selectedMatch]);
 
   useEffect(() => {
     if (selectedMatchId) {
@@ -89,11 +97,22 @@ export default function MyMatches(): ReactElement {
       initialScrollRef.current = true;
       fetchMessages(selectedMatchId);
     }
-  }, [selectedMatchId]);
+  }, [selectedMatchId, fetchMessages]);
 
   useLayoutEffect(() => {
-    if (!loadingMessages && initialScrollRef.current && messages.length > 0 && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // Handle pagination scroll adjustment
+    if (prevScrollHeightRef.current !== null) {
+      const newScrollHeight = container.scrollHeight;
+      container.scrollTop = newScrollHeight - prevScrollHeightRef.current;
+      prevScrollHeightRef.current = null;
+      return;
+    }
+
+    if (!loadingMessages && initialScrollRef.current && messages.length > 0) {
+      container.scrollTop = container.scrollHeight;
       initialScrollRef.current = false;
     }
   }, [messages, loadingMessages]);
