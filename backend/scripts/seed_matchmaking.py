@@ -173,6 +173,45 @@ async def seed():
     u13["blocked_ids"] = "user_main|user_other"
     users.append(u13)
 
+    # 14. Open to all genders (empty pref_genders) - Should match with main user
+    # Note: In production, empty pref_genders will be populated with all gender IDs from DB
+    # For testing, we simulate that by setting it to "1,2,3" (all available genders)
+    u14 = base_candidate.copy()
+    u14["user_id"] = "user_open_all_genders"
+    u14["pref_genders"] = "1,2,3"  # Simulating "all genders" (populated by endpoint)
+    users.append(u14)
+
+    # 15. Main user with no gender preference - test the other direction
+    u15 = {
+        "user_id": "user_main_no_pref",
+        "gender": "1",  # Male
+        "pref_genders": "1,2,3",  # Simulating "all genders" (populated by endpoint)
+        "blocked_ids": "",
+        "history_ids": "",
+        "history_data": "",
+        "joined_at": time.time() - 50,
+        "age": 26,
+        "languages": "1,2",
+        "location": "-74.0060,40.7128",  # NY
+        "religion": "1",
+        "is_smoker": "0",
+        "wants_children": "1",
+        "pref_age_min": 20,
+        "pref_age_max": 30,
+        "pref_wants_children": "1",
+        "pref_is_smoker": "0",
+        "pref_languages": "1,2",
+        "pref_religions": "1"
+    }
+    users.append(u15)
+
+    # 16. Non-binary user with no gender preference
+    u16 = base_candidate.copy()
+    u16["user_id"] = "user_nonbinary_open"
+    u16["gender"] = "3"  # Non-binary
+    u16["pref_genders"] = "1,2,3"  # Simulating "all genders" (populated by endpoint)
+    users.append(u16)
+
     # Insert data
     for u in users:
         # Convert to Redis hash format (no None, json stringify if needed?)

@@ -1,5 +1,4 @@
 import sys
-import math
 from datetime import datetime, timezone
 import asyncio
 import json

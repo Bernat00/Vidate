@@ -101,6 +101,14 @@ async def ws_to_redis_reader(ws: WebSocket, user_id: int, r: Redis, repo: Repo):
                 born = profile.birth_date.date()
                 age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
+                # If user has no gender preferences, fetch all genders from DB (meaning "open to all")
+                if preference and preference.genders:
+                    pref_genders_str = ",".join([str(g.id) for g in preference.genders])
+                else:
+                    # Empty preference means "all genders" - fetch all gender IDs from database
+                    all_genders = await repo.gender_repo.get_all()
+                    pref_genders_str = ",".join([str(g.id) for g in all_genders])
+
                 mm_data = {
                     "user_id": user_id,
 
@@ -111,7 +119,7 @@ async def ws_to_redis_reader(ws: WebSocket, user_id: int, r: Redis, repo: Repo):
                     "age": age,
                     "languages": ",".join([str(l.id) for l in profile.languages]) if profile and profile.languages else "",
 
-                    "pref_genders": ",".join([str(g.id) for g in preference.genders]) if preference and preference.genders else "",
+                    "pref_genders": pref_genders_str,
                     "pref_age_min": str(preference.age_min) if preference and preference.age_min is not None else "",
                     "pref_age_max": str(preference.age_max) if preference and preference.age_max is not None else "",
                     "pref_wants_children": str(int(preference.wants_children)) if preference and preference.wants_children is not None else "",
