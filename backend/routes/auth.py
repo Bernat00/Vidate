@@ -1,7 +1,6 @@
 from backend.routes import repoDep
 from ..config import Config
 from ..helpers import get_redis
-from ..persistence.model.one_time_access_token import OneTimeAccessToken
 from ..persistence.model.user import User
 from ..persistence.repository import Repo
 from ..schemas.auth import Token, TokenData
@@ -109,15 +108,17 @@ class CurrentUserCheckerDependency:
 
 async def create_one_time_access_token(data, expires_delta: Optional[timedelta] = None) -> str:
     token = create_access_token(data, expires_delta)
-    await get_redis().sadd('otat', token) #todo mivan ha ugyanabban a masodpercben csinaljak egyszerre 2-en??
+    await get_redis().set(f'otat:{token}', "asd", ex=expires_delta)
     return token
 
 
 async def use_one_time_access_token(token: str):
     try:
+        r = get_redis()
+
         payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
 
-        otat = await get_redis().srem('otat', token)
+        otat = await r.getdel(f'otat:{token}')
         if not otat:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token already used')
 

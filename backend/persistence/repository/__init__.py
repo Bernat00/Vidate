@@ -97,7 +97,6 @@ from .preference import PreferenceRepo
 from .chat_event import ChatEventRepo
 from .conversation import ConversationRepo
 from .report import ReportRepo
-from .otat import OneTimeAccessTokenRepo
 
 
 
@@ -149,10 +148,6 @@ class Repo(BasicRepo):
     @cached_property
     def report_repo(self) -> ReportRepo:
         return ReportRepo(self.session)
-
-    @cached_property
-    def one_time_access_token_repo(self) -> OneTimeAccessTokenRepo:
-        return OneTimeAccessTokenRepo(self.session)
 
 
 
