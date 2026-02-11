@@ -434,7 +434,13 @@ export default function Home() {
   };
 
   return (
-    <div className={`flex flex-col items-center ${viewState === 'IN_CALL' ? 'h-[calc(100vh-4rem)] justify-start' : 'justify-center min-h-[calc(100vh-4rem)] p-4'} max-w-lg mx-auto w-full overflow-hidden`}>
+    <div className={`flex flex-col items-center ${
+        viewState === 'IN_CALL' 
+          ? 'h-[calc(100dvh-4rem)] justify-start' 
+          : (viewState === 'TESTING' || viewState === 'PERMISSIONS')
+            ? 'h-[calc(100dvh-4rem)] justify-start p-4'
+            : 'justify-center min-h-[calc(100dvh-4rem)] p-4'
+    } max-w-lg mx-auto w-full ${(viewState === 'TESTING' || viewState === 'PERMISSIONS') ? 'overflow-y-auto' : 'overflow-hidden'}`}>
 
       {/* State: PERMISSIONS (Setup) */}
       {(viewState === 'PERMISSIONS' || viewState === 'TESTING') && (
