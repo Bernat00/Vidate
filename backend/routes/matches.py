@@ -3,7 +3,7 @@ from typing_extensions import deprecated
 import json
 from . import repoDep
 from ..persistence.model.match import Match
-from backend.errors import SameValueError
+from backend.errors import SameValueError, MatchAlreadyConfirmedError
 from ..schemas.chat_event import ChatEventOut
 from ..schemas.profile import ProfileRead
 
@@ -135,14 +135,8 @@ async def feedback(
         return {"status": "ok"}
 
     # 1. Verify conversation
-    stmt = select(Conversation).where(
-        or_(
-            and_(Conversation.user1_id == user.id, Conversation.user2_id == req.partner_id),
-            and_(Conversation.user1_id == req.partner_id, Conversation.user2_id == user.id)
-        )
-    )
-    result = await repo.session.scalars(stmt)
-    conversation = result.first()
+
+    conversation = repo.conversation_repo.get_by_both_user_ids(user.id, req.partner_id)
 
     if not conversation:
         raise HTTPException(status_code=400, detail="No conversation found between users")
@@ -152,18 +146,17 @@ async def feedback(
     if not to_match:
         raise HTTPException(status_code=404, detail="User not found")
 
-    existing_match = await repo.match_repo.get_by_both_user_ids(user.id, req.partner_id)
-
-    if existing_match and existing_match.confirmed:
-        return {"status": "already_matched"}
-
     try:
         # MatchRepo.match handles creation (sorted IDs) or confirmation
         current_match = await repo.match_repo.match(user, to_match)
+
+    except MatchAlreadyConfirmedError:
+        return {"status": "already_matched"}
+
     except SameValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
 
-    if current_match.confirmed and (not existing_match or not existing_match.confirmed):
+    if current_match.confirmed:
         # Match was just confirmed
 
         current_user_id = user.id

@@ -84,6 +84,20 @@ class BaseRepo(Generic[T], BasicRepo):
         return result.unique().all()
 
 
+class HasTwoUsersRepo(Generic[T], BaseRepo):
+    """
+    Made for models with a user1_id and a user2_id filed
+    """
+
+    async def get_by_both_user_ids(self, id1: str, id2:str) -> T | None:
+        stmt = (
+            select(self.model).where(
+                ((self.model.user1_id == id1) & (self.model.user2_id == id2)) | ((self.model.user1_id == id2) & (self.model.user2_id == id1))) #todo ezt refactoralni
+        )
+
+
+        return await self.session.scalar(stmt)
+
 
 
 from .user import UserRepo

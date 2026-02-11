@@ -1,30 +1,16 @@
-from argparse import ArgumentError
-
-from fastapi import HTTPException
-from pydantic import EmailStr
-from watchfiles import awatch
-
-from . import BaseRepo
+from . import HasTwoUsersRepo
 from ..model.match import Match
 from sqlalchemy import select, ScalarResult, Row, RowMapping
-from typing import Sequence, Any, Coroutine
 
 from ..model.user import User
 from ...errors import SameValueError, MatchAlreadyConfirmedError
 
 
-class MatchRepo(BaseRepo[Match]):
+class MatchRepo(HasTwoUsersRepo[Match]):
 
     def __init__(self, session):
         super().__init__(session, Match)
 
-    async def get_by_both_user_ids(self, id1: str, id2:str) -> Match | None:
-        stmt = (
-            select(Match).where(
-                ((Match.user1_id == id1) & (Match.user2_id == id2)) | ((Match.user1_id == id2) & (Match.user2_id == id1)))
-        )
-
-        return await self.session.scalar(stmt)
 
     async def get_by_user_id(self, user_id: str) -> list[Match] | None:
         stmt = (
