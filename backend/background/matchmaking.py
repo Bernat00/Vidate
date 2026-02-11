@@ -8,14 +8,14 @@ from redis.commands.search.field import TagField, NumericField, GeoField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 
 # Matchmaking Scoring Constants
-MAX_CANDIDATES = 50
-MAX_GEO_BONUS = 1500.0
-MAX_GEO_DIST_KM = 2000.0
-HISTORY_PENALTY_BASE = 10000
-AGE_BONUS_IN_RANGE = 5000
+MAX_CANDIDATES = 100
+MAX_GEO_BONUS = 3000
+MAX_GEO_DIST_KM = 2000
+HISTORY_PENALTY_BASE = 20000
+AGE_BONUS_IN_RANGE = 2000
 AGE_PENALTY_PER_YEAR = 100
-LANGUAGE_BONUS = 2000
-LIFESTYLE_BONUS = 100
+LANGUAGE_BONUS = 1500
+LIFESTYLE_BONUS = 500
 
 _LUA_CLAIM_PAIR = """
 if ARGV[1] == ARGV[2] then
