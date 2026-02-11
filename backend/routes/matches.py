@@ -145,71 +145,52 @@ async def feedback(
     conversation = result.first()
 
     if not conversation:
-        # For development/testing, maybe beneficial to allow match even without conversation?
-        # The prompt says: "the users can only match if they have had a conversation."
-        # strict enforcement.
         raise HTTPException(status_code=400, detail="No conversation found between users")
 
-    # 2. Check for existing match initiated by partner
+    # 2. MATCH Logic using MatchRepo
+    to_match = await repo.user_repo.get_by_id(req.partner_id)
+    if not to_match:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    stmt = select(Match).where(     #todo make this use repo.match_repo.get_by_both_user_ids() ne dobálózz random sql-el a route-okban
-        Match.user1_id == req.partner_id,
-        Match.user2_id == user.id
-    )
-    result = await repo.session.scalars(stmt)
-    existing_match = result.first()
+    existing_match = await repo.match_repo.get_by_both_user_ids(user.id, req.partner_id)
 
-    current_user_id = user.id
+    if existing_match and existing_match.confirmed:
+        return {"status": "already_matched"}
 
-    if existing_match:
-        if not existing_match.confirmed:
-            existing_match.confirmed = True #todo erre már van existing function kb
-            await repo.match_repo.save(existing_match)
+    try:
+        # MatchRepo.match handles creation (sorted IDs) or confirmation
+        current_match = await repo.match_repo.match(user, to_match)
+    except SameValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
 
-            # Notify both users
-            my_profile = await repo.profile_repo.get_by_id(current_user_id)
-            peer_profile = await repo.profile_repo.get_by_id(req.partner_id)
+    if current_match.confirmed and (not existing_match or not existing_match.confirmed):
+        # Match was just confirmed
 
-            # To the peer
-            await r.publish(f"user:{req.partner_id}", json.dumps({
-                "type": "match_confirmed",
-                "payload": {
-                    "peer_id": current_user_id,
-                    "peer_name": my_profile.first_name if my_profile else "Someone",
-                    "match_id": existing_match.id
-                }
-            }))
-            # To the current user
-            await r.publish(f"user:{current_user_id}", json.dumps({
-                "type": "match_confirmed",
-                "payload": {
-                    "peer_id": req.partner_id,
-                    "peer_name": peer_profile.first_name if peer_profile else "Someone",
-                    "match_id": existing_match.id
-                }
-            }))
+        current_user_id = user.id
+        my_profile = await repo.profile_repo.get_by_id(current_user_id)
+        peer_profile = await repo.profile_repo.get_by_id(req.partner_id)
 
-            return {"status": "matched"}
-        else:
-             return {"status": "already_matched"}
+        # Notify both users
+        # To the peer
+        await r.publish(f"user:{req.partner_id}", json.dumps({
+            "type": "match_confirmed",
+            "payload": {
+                "peer_id": current_user_id,
+                "peer_name": my_profile.first_name if my_profile else "Someone",
+                "match_id": current_match.id
+            }
+        }))
+        # To the current user
+        await r.publish(f"user:{current_user_id}", json.dumps({
+            "type": "match_confirmed",
+            "payload": {
+                "peer_id": req.partner_id,
+                "peer_name": peer_profile.first_name if peer_profile else "Someone",
+                "match_id": current_match.id
+            }
+        }))
 
-    # 3. Check if I already initiated (duplicate request)
-    stmt = select(Match).where(
-        Match.user1_id == user.id,  #todo nem checkeled sehol az amikor forditva van? (rohadtul atlathatatlan ez a kod
-        Match.user2_id == req.partner_id
-    )
-    result = await repo.session.scalars(stmt)
-    my_match = result.first()
-
-    if not my_match:
-        # Create new pending match
-        new_match = Match(      #todo csinalsz egy matchet de szarsz a user_1-2 sorrendjere?
-            user1_id=user.id,
-            user2_id=req.partner_id,
-            confirmed=False
-        )
-        await repo.save(new_match)
-        return {"status": "pending"}
+        return {"status": "matched"}
 
     return {"status": "pending"}
 

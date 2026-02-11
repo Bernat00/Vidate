@@ -3,5 +3,3 @@ ban users
 admin page for reporting and banning, languages, genders, religions - delete test
 
 message read receipts, alert unread messages
-
-matchmaking
