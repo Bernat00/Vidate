@@ -112,20 +112,24 @@ async def get_user_reports(user_id: str, user: get_and_auth_current_admin, repo:
 
 
 @router.get('/reported-summary')
-async def get_reported_summary(user: get_and_auth_current_admin, repo: repoDep):
-    summary = await repo.report_repo.get_reported_users_summary()
-    # Join with user info to make it useful
-    detailed_summary = []
-    for user_id, count in summary:
-        u = await repo.user_repo.get_by_id(user_id)
-        if u:
-            detailed_summary.append({
-                "user_id": user_id,
-                "email": u.email,
-                "report_count": count,
-                "disabled": u.disabled
-            })
-    return detailed_summary
+async def get_reported_summary(
+    user: get_and_auth_current_admin,
+    repo: repoDep,
+    page: int = 1,
+    limit: int = 10,
+    disabled: bool | None = None
+):
+    items, total = await repo.report_repo.get_reported_users_summary(
+        disabled=disabled,
+        page=page,
+        limit=limit
+    )
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit
+    }
 
 
 @router.get('')

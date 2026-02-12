@@ -5,7 +5,9 @@ import {
   Tabs as FlowbiteTabs,
   Button,
   TextInput,
-  Modal as FlowbiteModal
+  Modal as FlowbiteModal,
+  Pagination,
+  Select
 } from 'flowbite-react';
 import { Trash2, UserPlus, ShieldAlert, CheckCircle, Ban, Undo2, Link as LinkIcon, Copy, LogOut, Eye, X } from 'lucide-react';
 import api from '../../api';
@@ -49,6 +51,12 @@ const AdminDashboard: React.FC = () => {
   const [reportedUsers, setReportedUsers] = useState<UserReportSummary[]>([]);
   const [adminToken, setAdminToken] = useState<string | null>(null);
 
+  // Pagination & Filtering
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [bannedFilter, setBannedFilter] = useState<'all' | 'banned' | 'active'>('active');
+  const itemsPerPage = 10;
+
   const [selectedUserForReports, setSelectedUserForReports] = useState<UserReportSummary | null>(null);
   const [currentReports, setCurrentReports] = useState<UserReport[]>([]);
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
@@ -68,17 +76,32 @@ const AdminDashboard: React.FC = () => {
 
   const fetchReportedSummary = useCallback(async () => {
     try {
-      const res = await api.get('/users/reported-summary');
-      setReportedUsers(res.data);
+      const params: any = {
+        page: currentPage,
+        limit: itemsPerPage
+      };
+      if (bannedFilter === 'banned') params.disabled = true;
+      if (bannedFilter === 'active') params.disabled = false;
+
+      const res = await api.get('/users/reported-summary', { params });
+      setReportedUsers(res.data.items);
+      setTotalPages(Math.ceil(res.data.total / itemsPerPage));
     } catch {
       showToast('Error fetching reported users', 'error');
     }
-  }, [showToast]);
+  }, [showToast, currentPage, bannedFilter]);
 
   useEffect(() => {
     void fetchLookups();
+  }, [fetchLookups]);
+
+  useEffect(() => {
     void fetchReportedSummary();
-  }, [fetchLookups, fetchReportedSummary]);
+  }, [fetchReportedSummary]);
+
+  const onPageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleBan = async (userId: string, value: boolean) => {
     try {
@@ -153,7 +176,32 @@ const AdminDashboard: React.FC = () => {
       <Tabs aria-label="Admin tasks" variant="underline">
         <Tabs.Item active title="Users & Reports" icon={ShieldAlert}>
           <div className="mt-4">
-            <h2 className="text-xl font-semibold mb-4 text-textPrimary">Reported Users (Most reported first)</h2>
+            <h2 className="text-xl font-semibold mb-4 text-textPrimary">Reported Users</h2>
+
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+              <Select
+                value={bannedFilter}
+                onChange={(e) => {
+                  setBannedFilter(e.target.value as 'all' | 'banned' | 'active');
+                  setCurrentPage(1); // Reset to first page on filter change
+                }}
+                className="w-full md:w-auto mb-4 md:mb-0"
+              >
+                <option value="all">All Users</option>
+                <option value="banned">Banned Users</option>
+                <option value="active">Active Users</option>
+              </Select>
+
+              {totalPages > 1 && (
+                <Pagination
+                  className="mt-4 md:mt-0"
+                  currentPage={currentPage}
+                  onPageChange={onPageChange}
+                  showIcons
+                  totalPages={totalPages}
+                />
+              )}
+            </div>
 
             <div className="overflow-x-auto rounded-lg border border-gray-700">
               <table className="w-full text-left text-sm text-gray-300">
@@ -207,7 +255,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         </Tabs.Item>
 
-        <Tabs.Item title="Lookup Data" icon={CheckCircle}>
+        <Tabs.Item title="Manage Attributes" icon={CheckCircle}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-4">
              <LookupSection title="Genders" items={genders} onAdd={(name) => addLookup('genders', name)} onDelete={(id) => deleteLookup('genders', id)} />
              <LookupSection title="Languages" items={languages} onAdd={(name) => addLookup('languages', name)} onDelete={(id) => deleteLookup('languages', id)} />

@@ -1,26 +1,12 @@
-block and report
-ban users
-admin page for reporting and banning, languages, genders, religions - delete test
-
 message read receipts, alert unread messages
-
-
-
-now create a simple admin page.
-i need to be able to:
-create new admins.
-CRUD genders, languages, religions
-ban users
-unban users
-read user reports, see users who have been reported a lot.
-
-the page doesn't need to be fancy like the rest of the app. try to find some libraries/components or whatever you need so that we can accomplish this with the lowest amount of code.
-if a user logs in with the role "user" it should remain as is. but if an "admin" role user logs in, they can only use the admin pages. remember to always validate permissions on the backend for the admin endpoints.
-
-if a user got banned they cannot use the app. when they try to log in they must get a toast notification saying that they are banned.
-
-
-
-
 more reliable websockets and tell the user persistenly that they lost connection.
 auth context: just because no internet do not redirect to /login
+
+
+
+if a user got banned they cannot use the app. when they try to log in they must get a toast notification saying that they are banned. and make sure banned status is also validated on the backend as well.
+
+
+
+
+
