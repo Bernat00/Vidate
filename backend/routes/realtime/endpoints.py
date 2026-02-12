@@ -10,6 +10,7 @@ from backend.persistence.model.chat_event import ChatEvent
 from backend.persistence.model.conversation import Conversation
 from backend.persistence.model.profile import Profile
 from backend.persistence.model.preferences.preferences import Preference
+from backend.persistence.model.report import Report
 from sqlalchemy import select, or_, func, case
 from sqlalchemy.orm import selectinload
 from backend.routes import CurrentUserCheckerDependency, repoDep
@@ -17,7 +18,7 @@ from backend.background.matchmaking import attempt_match_for_user
 
 router = APIRouter(prefix='/ws')
 
-async def redis_to_ws_writer(ws: WebSocket, user_id: int, r: Redis):
+async def redis_to_ws_writer(ws: WebSocket, user_id: str, r: Redis):
     channel = f"user:{user_id}"
     pubsub = r.pubsub()
     await pubsub.subscribe(channel)
@@ -34,7 +35,7 @@ async def redis_to_ws_writer(ws: WebSocket, user_id: int, r: Redis):
         await pubsub.aclose()
 
 
-async def ws_to_redis_reader(ws: WebSocket, user_id: int, r: Redis, repo: Repo):
+async def ws_to_redis_reader(ws: WebSocket, user_id: str, r: Redis, repo: Repo):
     matchmaking_task: asyncio.Task | None = None
 
     async def matchmaking_loop():
@@ -108,6 +109,16 @@ async def ws_to_redis_reader(ws: WebSocket, user_id: int, r: Redis, repo: Repo):
                     all_genders = await repo.gender_repo.get_all()
                     pref_genders_str = ",".join([str(g.id) for g in all_genders])
 
+                # Fetch blocked user IDs from Reports (both directions)
+                blocked_stmt = select(Report.user_id).where(Report.reporter_id == str(user_id))
+                reported_by_me = (await repo.session.execute(blocked_stmt)).scalars().all()
+
+                blocked_stmt2 = select(Report.reporter_id).where(Report.user_id == str(user_id))
+                reported_me = (await repo.session.execute(blocked_stmt2)).scalars().all()
+
+                blocked_ids = set(reported_by_me) | set(reported_me)
+                blocked_ids_str = "|".join(filter(None, [str(bid) for bid in blocked_ids]))
+
                 mm_data = {
                     "user_id": user_id,
                     "first_name": profile.first_name if profile else "",
@@ -126,7 +137,7 @@ async def ws_to_redis_reader(ws: WebSocket, user_id: int, r: Redis, repo: Repo):
                     "pref_languages": ",".join([str(l.id) for l in preference.languages]) if preference and preference.languages else "",
                     "pref_religions": ",".join([str(r.id) for r in preference.religions]) if preference and preference.religions else "",
 
-                    "blocked_ids": "", # todo
+                    "blocked_ids": blocked_ids_str,
                     "history_ids": "|".join(history_ids_list), # Redis TagField, ordered by oldest first in the window
                     "joined_at": datetime.now(timezone.utc).timestamp(),
                 }

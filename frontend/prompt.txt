@@ -20,8 +20,6 @@ if a user logs in with the role "user" it should remain as is. but if an "admin"
 if a user got banned they cannot use the app. when they try to log in they must get a toast notification saying that they are banned.
 
 
-now implement the blocklist for the matchmaking based on the reports table
-
 
 
 more reliable websockets and tell the user persistenly that they lost connection.
