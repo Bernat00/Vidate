@@ -1,12 +1,2 @@
 message read receipts, alert unread messages
-more reliable websockets and tell the user persistenly that they lost connection.
-auth context: just because no internet do not redirect to /login
-
-
-
-if a user got banned they cannot use the app. when they try to log in they must get a toast notification saying that they are banned. and make sure banned status is also validated on the backend as well.
-
-
-
-
-
+more reliable websockets and tell the user persistenly that they lost connection. handle the case if the user is logged in 2 times to the app. right now the video chat breaks in that case.
