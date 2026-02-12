@@ -93,6 +93,11 @@ class CurrentUserCheckerDependency:
         if user is None:
             raise credentials_exception
 
+        if user.disabled:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account has been banned.",
+            )
 
         if self.role_name:
             role = await repo.role_repo.get_by_name(self.role_name)
@@ -180,6 +185,13 @@ async def token(repo: repoDep,
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if user.disabled:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been banned.",
+        )
+
     access_token = create_access_token(data={"sub": user.id})
 
     return Token(access_token=access_token, token_type="bearer")

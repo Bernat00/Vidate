@@ -45,6 +45,10 @@ api.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.clear();
       sessionStorage.clear();
+    } else if (error?.response?.status === 403 && error.response?.data?.detail === "Your account has been banned.") {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.dispatchEvent(new CustomEvent('auth:banned', { detail: "Your account has been banned." }));
     }
     return Promise.reject(error);
   }
