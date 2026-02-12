@@ -20,6 +20,21 @@ import { commonInputClasses } from '../../components/form/formStyles';
 const Tabs = FlowbiteTabs as any;
 const Modal = FlowbiteModal as any;
 
+const paginationTheme = {
+  pages: {
+    base: "xs:mt-0 mt-2 inline-flex items-center space-x-4",
+    previous: {
+      base: "ml-0 rounded-lg border border-gray-300 bg-white py-2 px-3 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
+    },
+    next: {
+      base: "rounded-lg border border-gray-300 bg-white py-2 px-3 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
+    },
+    selector: {
+      base: "w-10 rounded-lg border border-gray-300 bg-white py-2 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
+    },
+  },
+};
+
 interface GenericLookup {
   id: number;
   name: string;
@@ -194,6 +209,7 @@ const AdminDashboard: React.FC = () => {
 
               {totalPages > 1 && (
                 <Pagination
+                  theme={paginationTheme}
                   className="mt-4 md:mt-0"
                   currentPage={currentPage}
                   onPageChange={onPageChange}
