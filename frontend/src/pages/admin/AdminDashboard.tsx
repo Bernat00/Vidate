@@ -6,7 +6,7 @@ import {
   Button,
   TextInput
 } from 'flowbite-react';
-import { Trash2, UserPlus, ShieldAlert, CheckCircle, Ban, Undo2 } from 'lucide-react';
+import { Trash2, UserPlus, ShieldAlert, CheckCircle, Ban, Undo2, Link as LinkIcon, Copy, LogOut } from 'lucide-react';
 import api from '../../api';
 import { useToast } from '../../context/toastContext';
 import { commonInputClasses } from '../../components/form/formStyles';
@@ -116,11 +116,14 @@ const AdminDashboard: React.FC = () => {
     <div className="p-8 bg-bgPrimary text-textPrimary min-h-screen">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-textAccent">Admin Dashboard</h1>
-        <Button color="failure" onClick={() => {
+        <Button color="failure" size="sm" onClick={() => {
             localStorage.clear();
             sessionStorage.clear();
             window.location.href = '/login';
-        }}>Logout</Button>
+        }}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Logout
+        </Button>
       </div>
 
       <Tabs aria-label="Admin tasks" variant="underline">
@@ -183,19 +186,72 @@ const AdminDashboard: React.FC = () => {
         </Tabs.Item>
 
         <Tabs.Item title="Manage Admins" icon={UserPlus}>
-          <div className="mt-4 max-w-md">
-            <h2 className="text-xl font-semibold mb-4 text-textPrimary">Create New Admin</h2>
-            <p className="text-gray-400 mb-4">Generate a one-time registration token for a new admin. Share this link with them.</p>
-            <Button onClick={generateAdminToken}>Generate Admin Registration Link</Button>
+          <div className="mt-6 max-w-2xl">
+            <div className="bg-bgSecondary p-6 rounded-xl shadow-lg border border-borderAccentLight/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-textAccent/10 rounded-lg">
+                  <UserPlus className="h-6 w-6 text-textAccent" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-textPrimary">Create New Admin</h2>
+                  <p className="text-sm text-textSecondary text-gray-400">Invite a new administrator by generating a secure, one-time registration link.</p>
+                </div>
+              </div>
 
-            {adminToken && (
-               <div className="mt-4 p-4 bg-green-900/20 rounded border border-green-500/50 text-green-300">
-                  <p className="font-mono break-all text-xs mb-2">
-                    {window.location.origin}/register?token={adminToken}&type=admin
-                  </p>
-                  <Button size="xs" color="success" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/register?token=${adminToken}&type=admin`)}>Copy Link</Button>
-               </div>
-            )}
+              <div className="space-y-6">
+                <div className="p-4 bg-bgPrimary/50 rounded-lg border border-gray-700/50">
+                  <h3 className="text-sm font-semibold text-textPrimary mb-2 uppercase tracking-wider">Instructions</h3>
+                  <ul className="text-sm text-gray-400 space-y-2 list-disc pl-5">
+                    <li>The generated link can only be used <strong>once</strong>.</li>
+                    <li>The link will expire in <strong>30 minutes</strong>.</li>
+                    <li>The recipient will be prompted to create an account with admin privileges.</li>
+                  </ul>
+                </div>
+
+                {!adminToken ? (
+                  <Button
+                    className="w-full md:w-auto"
+                    onClick={generateAdminToken}
+                  >
+                    <LinkIcon className="mr-2 h-5 w-5" />
+                    Generate Invitation Link
+                  </Button>
+                ) : (
+                  <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="p-1 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <div className="p-3 bg-bgPrimary/40 rounded flex flex-col md:flex-row items-center gap-3">
+                        <div className="flex-1 font-mono text-xs text-green-400 break-all select-all p-2 bg-black/20 rounded border border-black/10">
+                          {window.location.origin}/register?token={adminToken}&type=admin
+                        </div>
+                        <Button
+                          size="sm"
+                          color="success"
+                          className="w-full md:w-auto"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(`${window.location.origin}/register?token=${adminToken}&type=admin`);
+                            showToast('Link copied to clipboard!', 'success');
+                          }}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Copy Link
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center px-1">
+                      <p className="text-xs text-green-500/80 flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" /> Link generated successfully
+                      </p>
+                      <button
+                        onClick={() => setAdminToken(null)}
+                        className="text-xs text-textSecondary hover:text-textPrimary transition-colors"
+                      >
+                        Generate another?
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </Tabs.Item>
       </Tabs>

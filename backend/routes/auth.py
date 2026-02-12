@@ -188,4 +188,4 @@ async def token(repo: repoDep,
 
 @router.get('/register-admin-token')
 async def get_register_admin_token(user: Annotated[User | None, Depends(CurrentUserCheckerDependency("admin"))], repo: repoDep) -> str:
-        return await create_one_time_access_token(data={"sub": 'special', 'type': 'register-admin'}, expires_delta=timedelta(minutes=30)) #todo kitalalni mennyi legyen a lejarati ido
+        return await create_one_time_access_token(data={"sub": 'special', 'type': 'register-admin'}, expires_delta=timedelta(minutes=30))
