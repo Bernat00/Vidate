@@ -1,13 +1,15 @@
 from fastapi import APIRouter, HTTPException
+from sqlalchemy import select, func
 
 from backend.helpers import copy_non_none_fields
 from backend.persistence.model.gender import Gender
 from backend.persistence.model.language import Language
 from backend.persistence.model.religion import Religion
+from backend.persistence.model.preferences.associacions import PreferenceGenderLink, PreferenceLanguageLink, PreferenceReligionLink
 from backend.routes import get_and_auth_current_admin
 from backend.routes import get_and_auth_current_user, repoDep
 from backend.schemas.profile import ProfileCreate, ReligionCreate, LanguageCreate, GenderCreate
-from backend.persistence.model.profile import Profile
+from backend.persistence.model.profile import Profile, ProfileLanguageLink
 
 router = APIRouter(prefix='/profile', tags=['profile'])
 
@@ -25,6 +27,16 @@ async def delete_religions(religion_id: int, repo: repoDep, user: get_and_auth_c
     religion = await repo.religion_repo.get_by_id(religion_id)
     if not religion:
         raise HTTPException(status_code=404, detail="Religion not found")
+
+    # Check usage in Profile
+    profile_usage = await repo.session.execute(select(func.count()).select_from(Profile).where(Profile.religion_id == religion_id))
+    if profile_usage.scalar() > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete religion: it is currently used by one or more users.")
+
+    # Check usage in Preference
+    pref_usage = await repo.session.execute(select(func.count()).select_from(PreferenceReligionLink).where(PreferenceReligionLink.religion_id == religion_id))
+    if pref_usage.scalar() > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete religion: it is currently a preference for one or more users.")
 
     await repo.delete(religion)
 
@@ -55,7 +67,17 @@ async def delete_languages(language_id: int, repo: repoDep,
                            user: get_and_auth_current_admin):
     language = await repo.language_repo.get_by_id(language_id)
     if not language:
-        raise HTTPException(status_code=404, detail="Religion not found")
+        raise HTTPException(status_code=404, detail="Language not found")
+
+    # Check usage in Profile
+    profile_usage = await repo.session.execute(select(func.count()).select_from(ProfileLanguageLink).where(ProfileLanguageLink.language_id == language_id))
+    if profile_usage.scalar() > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete language: it is currently used by one or more users.")
+
+    # Check usage in Preference
+    pref_usage = await repo.session.execute(select(func.count()).select_from(PreferenceLanguageLink).where(PreferenceLanguageLink.language_id == language_id))
+    if pref_usage.scalar() > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete language: it is currently a preference for one or more users.")
 
     await repo.delete(language)
 
@@ -85,20 +107,22 @@ async def delete_genders(gender_id: int, repo: repoDep,
                            user: get_and_auth_current_admin):
     gender = await repo.gender_repo.get_by_id(gender_id)
     if not gender:
-        raise HTTPException(status_code=404, detail="Religion not found")
+        raise HTTPException(status_code=404, detail="Gender not found")
+
+    # Check usage in Profile
+    profile_usage = await repo.session.execute(select(func.count()).select_from(Profile).where(Profile.gender_id == gender_id))
+    if profile_usage.scalar() > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete gender: it is currently used by one or more users.")
+
+    # Check usage in Preference
+    pref_usage = await repo.session.execute(select(func.count()).select_from(PreferenceGenderLink).where(PreferenceGenderLink.gender_id == gender_id))
+    if pref_usage.scalar() > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete gender: it is currently a preference for one or more users.")
 
     await repo.delete(gender)
 
     return 'deleted'
 
-
-@router.put('/genders')
-async def update_genders(gender_id: int, gender_data: GenderCreate, repo: repoDep, user: get_and_auth_current_admin):
-    gender = await repo.gender_repo.get_by_id(gender_id)
-    if not gender:
-        raise HTTPException(status_code=404, detail="Gender not found")
-    gender.name = gender_data.name
-    return await repo.save(gender)
 
 
 @router.get('/mine')
@@ -122,7 +146,6 @@ async def update_mine(profile: ProfileCreate, repo: repoDep, user: get_and_auth_
     updated.wants_children = profile.wants_children
 
     updated.languages = await repo.language_repo.get_by_id_list(profile.language_ids or [])
-    #todo lehet a tobbi is lista kene h legyen
 
 
     await repo.save(updated)

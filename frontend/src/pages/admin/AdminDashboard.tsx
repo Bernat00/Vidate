@@ -79,7 +79,7 @@ const AdminDashboard: React.FC = () => {
 
   const generateAdminToken = async () => {
     try {
-      const res = await api.get('/register-admin-token');
+      const res = await api.get('/auth/register-admin-token');
       setAdminToken(res.data);
     } catch {
       showToast('Failed to generate token', 'error');
@@ -87,12 +87,18 @@ const AdminDashboard: React.FC = () => {
   };
 
   const deleteLookup = async (type: 'genders' | 'languages' | 'religions', id: number) => {
+    const typeSingular = type.slice(0, -1);
+    if (!window.confirm(`Are you sure you want to delete this ${typeSingular}?`)) {
+      return;
+    }
+
     try {
       await api.delete(`/profile/${type}?${type.slice(0, -1)}_id=${id}`);
       showToast('Deleted successfully', 'success');
       void fetchLookups();
-    } catch {
-      showToast('Delete failed', 'error');
+    } catch (e: any) {
+      const errorMsg = e.response?.data?.detail || 'Delete failed';
+      showToast(errorMsg, 'error');
     }
   };
 
