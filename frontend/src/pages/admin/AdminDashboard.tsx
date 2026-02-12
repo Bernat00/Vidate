@@ -2,19 +2,21 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Tabs as FlowbiteTabs, // 1. Rename the import
+  Tabs as FlowbiteTabs,
   Button,
-  TextInput
+  TextInput,
+  Modal as FlowbiteModal
 } from 'flowbite-react';
-import { Trash2, UserPlus, ShieldAlert, CheckCircle, Ban, Undo2, Link as LinkIcon, Copy, LogOut } from 'lucide-react';
+import { Trash2, UserPlus, ShieldAlert, CheckCircle, Ban, Undo2, Link as LinkIcon, Copy, LogOut, Eye, X } from 'lucide-react';
 import api from '../../api';
 import { useToast } from '../../context/toastContext';
 import { commonInputClasses } from '../../components/form/formStyles';
 
-// 2. Cast 'Tabs' to 'any'.
-// This forces TypeScript to accept <Tabs.Item> without errors,
-// matching the fact that it already works in the browser.
+// CASTING:
+// We cast these to 'any' to bypass TypeScript errors regarding missing static properties
+// (like Tabs.Item or Modal.Header) which are causing issues in your build.
 const Tabs = FlowbiteTabs as any;
+const Modal = FlowbiteModal as any;
 
 interface GenericLookup {
   id: number;
@@ -28,6 +30,13 @@ interface UserReportSummary {
   disabled: boolean;
 }
 
+interface UserReport {
+  id: number;
+  reporter_email: string;
+  reason: string;
+  created_at: string;
+}
+
 const AdminDashboard: React.FC = () => {
   const { showToast } = useToast();
 
@@ -39,6 +48,10 @@ const AdminDashboard: React.FC = () => {
   // User Data
   const [reportedUsers, setReportedUsers] = useState<UserReportSummary[]>([]);
   const [adminToken, setAdminToken] = useState<string | null>(null);
+
+  const [selectedUserForReports, setSelectedUserForReports] = useState<UserReportSummary | null>(null);
+  const [currentReports, setCurrentReports] = useState<UserReport[]>([]);
+  const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
 
   const fetchLookups = useCallback(async () => {
     try {
@@ -112,6 +125,17 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const fetchUserReports = async (user: UserReportSummary) => {
+    try {
+      const res = await api.get(`/users/reports/${user.user_id}`);
+      setCurrentReports(res.data);
+      setSelectedUserForReports(user);
+      setIsReportsModalOpen(true);
+    } catch {
+      showToast('Failed to fetch reports', 'error');
+    }
+  };
+
   return (
     <div className="p-8 bg-bgPrimary text-textPrimary min-h-screen">
       <div className="flex justify-between items-center mb-8">
@@ -131,15 +155,14 @@ const AdminDashboard: React.FC = () => {
           <div className="mt-4">
             <h2 className="text-xl font-semibold mb-4 text-textPrimary">Reported Users (Most reported first)</h2>
 
-            {/* MANUAL TABLE IMPLEMENTATION FOR DARK MODE SUPPORT */}
             <div className="overflow-x-auto rounded-lg border border-gray-700">
               <table className="w-full text-left text-sm text-gray-300">
                 <thead className="bg-gray-800 text-xs uppercase text-gray-400">
                   <tr>
                     <th className="px-6 py-3">Email</th>
-                    <th className="px-6 py-3">Reports</th>
+                    <th className="px-6 py-3 text-center">Reports</th>
                     <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Actions</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-700 bg-bgSecondary">
@@ -148,11 +171,18 @@ const AdminDashboard: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap font-medium text-textPrimary">
                         {u.email}
                       </td>
-                      <td className="px-6 py-4">{u.report_count}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none ${u.report_count > 5 ? 'text-red-100 bg-red-600' : 'text-orange-100 bg-orange-500'} rounded-full`}>
+                          {u.report_count}
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         {u.disabled ? <span className="text-red-500 font-bold">BANNED</span> : 'Active'}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <Button size="xs" color="gray" onClick={() => fetchUserReports(u)}>
+                          <Eye className="mr-2 h-4 w-4" /> View
+                        </Button>
                         {u.disabled ? (
                           <Button size="xs" color="success" onClick={() => handleBan(u.user_id, false)}>
                             <Undo2 className="mr-2 h-4 w-4" /> Unban
@@ -194,7 +224,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-textPrimary">Create New Admin</h2>
-                  <p className="text-sm text-textSecondary text-gray-400">Invite a new administrator by generating a secure, one-time registration link.</p>
+                  <p className="text-sm text-textSecondary">Invite a new administrator by generating a secure, one-time registration link.</p>
                 </div>
               </div>
 
@@ -255,6 +285,49 @@ const AdminDashboard: React.FC = () => {
           </div>
         </Tabs.Item>
       </Tabs>
+
+      {/* Reports Modal */}
+      {/* FIX: We use the Modal wrapper but replace Modal.Header/Body/Footer with div to avoid 'undefined' errors */}
+      <Modal show={isReportsModalOpen} onClose={() => setIsReportsModalOpen(false)} size="xl">
+        <div className="bg-bgSecondary rounded-lg text-textPrimary">
+            {/* Custom Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+                <h3 className="text-xl font-semibold">
+                    Reports for {selectedUserForReports?.email}
+                </h3>
+                <button
+                    onClick={() => setIsReportsModalOpen(false)}
+                    className="text-gray-400 hover:text-gray-200 transition-colors"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+            </div>
+
+            {/* Custom Body */}
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                {currentReports.length > 0 ? (
+                currentReports.map((report) => (
+                    <div key={report.id} className="p-4 bg-bgPrimary/50 rounded-lg border border-gray-700">
+                    <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-semibold text-textAccent">Reporter: {report.reporter_email}</span>
+                        <span className="text-xs text-gray-500">{new Date(report.created_at).toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-gray-300 italic">"{report.reason}"</p>
+                    </div>
+                ))
+                ) : (
+                <p className="text-center text-gray-500 py-8">No detailed reports found.</p>
+                )}
+            </div>
+
+            {/* Custom Footer */}
+            <div className="flex items-center justify-end p-4 border-t border-gray-700">
+                <Button color="gray" onClick={() => setIsReportsModalOpen(false)}>
+                    Close
+                </Button>
+            </div>
+        </div>
+      </Modal>
     </div>
   );
 };
@@ -282,7 +355,6 @@ const LookupSection: React.FC<LookupSectionProps> = ({ title, items, onAdd, onDe
         <Button onClick={() => { if(newName) { onAdd(newName); setNewName(''); } }}>Add</Button>
       </div>
 
-      {/* REPLACED TABLE WITH CUSTOM LIST */}
       <div className="flex-1 overflow-y-auto border border-gray-700/50 rounded-md bg-bgPrimary/30">
         {items.length > 0 ? (
           <ul className="divide-y divide-gray-700/50">

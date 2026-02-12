@@ -96,6 +96,21 @@ async def get_reports(user: get_and_auth_current_admin, repo: repoDep):
     return await repo.report_repo.get_all()
 
 
+@router.get('/reports/{user_id}')
+async def get_user_reports(user_id: str, user: get_and_auth_current_admin, repo: repoDep):
+    reports = await repo.report_repo.get_by_reported_id(user_id)
+    res = []
+    for r in reports:
+        reporter = await repo.user_repo.get_by_id(r.reporter_id)
+        res.append({
+            "id": r.id,
+            "reporter_email": reporter.email if reporter else "Unknown",
+            "reason": r.reason,
+            "created_at": r.created_at
+        })
+    return res
+
+
 @router.get('/reported-summary')
 async def get_reported_summary(user: get_and_auth_current_admin, repo: repoDep):
     summary = await repo.report_repo.get_reported_users_summary()

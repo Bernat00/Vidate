@@ -17,3 +17,8 @@ class ReportRepo(BaseRepo[Report]):
         )
         result = await self.session.execute(stmt)
         return result.all()
+
+    async def get_by_reported_id(self, user_id: str):
+        stmt = select(Report).where(Report.user_id == user_id).order_by(Report.created_at.desc())
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
