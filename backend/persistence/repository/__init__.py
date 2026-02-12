@@ -84,7 +84,7 @@ class BaseRepo(Generic[T], BasicRepo):
         return result.unique().all()
 
 
-class HasTwoUsersRepo(Generic[T], BaseRepo):
+class HasTwoUsersRepo(BaseRepo):
     """
     Made for models with a user1_id and a user2_id filed
     """
