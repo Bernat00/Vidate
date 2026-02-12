@@ -10,6 +10,7 @@ export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
 
   if (loading) return <CenteredLoader />;
 
+  if (user?.role_name === 'admin') return <Navigate to="/admin" replace />;
   if (user?.is_onboarded) return <Navigate to="/home" replace />;
   if (user && !user.is_onboarded) return <Navigate to="/setup-profile" replace />;
 

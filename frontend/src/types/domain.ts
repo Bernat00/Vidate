@@ -7,6 +7,7 @@ export interface UserMe {
   updated_at: string | null; // ISO datetime
   disabled: boolean | null;
   is_onboarded: boolean | null;
+  role_name: string | null;
 }
 
 export interface ProfileOption {

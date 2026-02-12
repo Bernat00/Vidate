@@ -1,10 +1,9 @@
-from typing import Annotated, Any, List, Optional
+from typing import Annotated, Optional
 
-from pydantic import EmailStr, SecretStr, BeforeValidator, ConfigDict, computed_field, Field
+from pydantic import EmailStr, SecretStr, BeforeValidator, ConfigDict
 from pydantic import BaseModel
 from datetime import datetime
 
-from backend.persistence.model.match import Match
 
 def validate_password(v: str):
     if len(v) > 30:
@@ -26,6 +25,7 @@ class UserCreate(BaseModel):
 class PasswordReset(BaseModel):
     password: Annotated[SecretStr, BeforeValidator(validate_password)]
 
+
 class ResetEmail(BaseModel):
     email: EmailStr
 
@@ -39,6 +39,7 @@ class UserEdit(BaseModel):
 
 
 class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: str
     email: EmailStr
     created_at: datetime
@@ -46,10 +47,12 @@ class UserOut(BaseModel):
     disabled: bool
 
 
-class UserMe(BaseModel):            #todo really??
+class UserMe(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: str
     email: EmailStr
     created_at: datetime
     updated_at: datetime
     disabled: bool
     is_onboarded: bool
+    role_name: str

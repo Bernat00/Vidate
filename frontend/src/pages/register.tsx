@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import api from '../api.ts';
 import { login } from '../helpers.ts';
@@ -27,20 +27,35 @@ const Register = () => {
   const { register: reg, handleSubmit, getValues, formState: { errors } } = useForm<RegisterFormValues>();
   const [apiError, setApiError] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { handleAuthSuccess } = useAuthRedirect();
   const { getErrorMessage } = useApiError();
 
   const onSubmit = async (data: RegisterFormValues) => {
     setApiError('');
+    const token = searchParams.get('token');
+    const isAdmin = searchParams.get('type') === 'admin';
+
     try {
-      await api.post('/auth/register', {
-        email: data.email,
-        password: data.password
-      });
+      if (isAdmin && token) {
+        await api.post(`/auth/register-admin?token=${token}`, {
+          email: data.email,
+          password: data.password
+        });
+      } else {
+        await api.post('/auth/register', {
+          email: data.email,
+          password: data.password
+        });
+      }
 
       try {
         await login(data.email, data.password);
-        await handleAuthSuccess('/setup-profile');
+        if (isAdmin) {
+            await handleAuthSuccess('/admin');
+        } else {
+            await handleAuthSuccess('/setup-profile');
+        }
       } catch {
         navigate('/login', {
           state: {

@@ -10,6 +10,7 @@ from typing import List, Callable, TYPE_CHECKING
 from pwdlib import PasswordHash
 
 from backend.persistence.model.profile import Profile
+from backend.persistence.model.role import Role
 
 if TYPE_CHECKING:
     from backend.persistence.model.match import Match
@@ -77,9 +78,10 @@ class User(SQLModel, table=True):
         nullable=False,
     )
 
+    role: Role = Relationship()
+
     is_onboarded: bool = Field(default=False)
 
-    # todo profile, role
 
 
     @staticmethod

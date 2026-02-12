@@ -3,8 +3,6 @@ from datetime import timedelta
 from email.message import EmailMessage
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import EmailStr
-from sqlalchemy.util import await_only
 from starlette.responses import Response
 
 from backend.config import Config
@@ -46,8 +44,19 @@ async def me(new: UserEdit, repo: repoDep, user: get_and_auth_current_user):
 
 
 @router.get('/me')
-def me_get(user: get_and_auth_current_user) -> UserMe:
-    return UserMe(**user.model_dump())
+async def me_get(user: get_and_auth_current_user, repo: repoDep) -> UserMe:
+    role = await repo.role_repo.get_by_id(user.role_id)
+    role_name = role.name if role else "user"
+
+    return UserMe(
+        id=user.id,
+        email=user.email,
+        created_at=user.created_at,
+        updated_at=user.updated_at,
+        disabled=user.disabled,
+        is_onboarded=user.is_onboarded,
+        role_name=role_name
+    )
 
 
 @router.post('/report', response_model=None)
@@ -80,6 +89,33 @@ async def set_disabled(ban: SetBan, user: get_and_auth_current_admin, repo: repo
 
     to_be_set.disabled = ban.value
     await repo.save(to_be_set)
+
+
+@router.get('/reports')
+async def get_reports(user: get_and_auth_current_admin, repo: repoDep):
+    return await repo.report_repo.get_all()
+
+
+@router.get('/reported-summary')
+async def get_reported_summary(user: get_and_auth_current_admin, repo: repoDep):
+    summary = await repo.report_repo.get_reported_users_summary()
+    # Join with user info to make it useful
+    detailed_summary = []
+    for user_id, count in summary:
+        u = await repo.user_repo.get_by_id(user_id)
+        if u:
+            detailed_summary.append({
+                "user_id": user_id,
+                "email": u.email,
+                "report_count": count,
+                "disabled": u.disabled
+            })
+    return detailed_summary
+
+
+@router.get('')
+async def get_all_users(user: get_and_auth_current_admin, repo: repoDep):
+    return await repo.user_repo.get_all()
 
 
 

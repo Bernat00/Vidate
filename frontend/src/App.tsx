@@ -15,6 +15,7 @@ import PublicOnlyRoute from './components/routing/PublicOnlyRoute';
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import Home from './pages/home';
 import Profile from './pages/profile';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import { WebSocketProvider } from './context/webSocketContext';
 import MatchesLayout from './components/layout/MatchesLayout';
 import { MatchesProvider } from './context/matchesContext';
@@ -64,6 +65,12 @@ function App(): ReactElement {
                               </Route>
                               <Route path="/profile" element={<Profile />} />
                             </Route>
+
+                            <Route path="/admin" element={
+                                <ProtectedRoute>
+                                    <AdminDashboard />
+                                </ProtectedRoute>
+                            } />
                         </Routes>
                     </MatchesProvider>
                 </WebSocketProvider>

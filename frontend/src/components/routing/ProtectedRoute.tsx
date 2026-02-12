@@ -24,7 +24,18 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (!user.is_onboarded && location.pathname !== '/setup-profile') {
+  const isAdmin = user.role_name === 'admin';
+  const isAdminPath = location.pathname.startsWith('/admin');
+
+  if (isAdmin && !isAdminPath) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (!isAdmin && isAdminPath) {
+    return <Navigate to="/home" replace />;
+  }
+
+  if (!user.is_onboarded && location.pathname !== '/setup-profile' && !isAdmin) {
     return <Navigate to="/setup-profile" replace />;
   }
 

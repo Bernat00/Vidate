@@ -1,11 +1,9 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 
 from backend.helpers import copy_non_none_fields
 from backend.persistence.model.gender import Gender
 from backend.persistence.model.language import Language
 from backend.persistence.model.religion import Religion
-from backend.persistence.model.user import User
 from backend.routes import get_and_auth_current_admin
 from backend.routes import get_and_auth_current_user, repoDep
 from backend.schemas.profile import ProfileCreate, ReligionCreate, LanguageCreate, GenderCreate
@@ -33,6 +31,15 @@ async def delete_religions(religion_id: int, repo: repoDep, user: get_and_auth_c
     return 'deleted'
 
 
+@router.put('/religions')
+async def update_religions(religion_id: int, religion_data: ReligionCreate, repo: repoDep, user: get_and_auth_current_admin):
+    religion = await repo.religion_repo.get_by_id(religion_id)
+    if not religion:
+        raise HTTPException(status_code=404, detail="Religion not found")
+    religion.name = religion_data.name
+    return await repo.save(religion)
+
+
 
 
 @router.get('/languages')
@@ -55,6 +62,15 @@ async def delete_languages(language_id: int, repo: repoDep,
     return 'deleted'
 
 
+@router.put('/languages')
+async def update_languages(language_id: int, language_data: LanguageCreate, repo: repoDep, user: get_and_auth_current_admin):
+    language = await repo.language_repo.get_by_id(language_id)
+    if not language:
+        raise HTTPException(status_code=404, detail="Language not found")
+    language.name = language_data.name
+    return await repo.save(language)
+
+
 
 @router.get('/genders')
 async def get_genders(repo: repoDep, user: get_and_auth_current_user):
@@ -74,6 +90,15 @@ async def delete_genders(gender_id: int, repo: repoDep,
     await repo.delete(gender)
 
     return 'deleted'
+
+
+@router.put('/genders')
+async def update_genders(gender_id: int, gender_data: GenderCreate, repo: repoDep, user: get_and_auth_current_admin):
+    gender = await repo.gender_repo.get_by_id(gender_id)
+    if not gender:
+        raise HTTPException(status_code=404, detail="Gender not found")
+    gender.name = gender_data.name
+    return await repo.save(gender)
 
 
 @router.get('/mine')

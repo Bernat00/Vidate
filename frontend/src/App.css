@@ -37,6 +37,12 @@ select:focus {
     border-color: var(--color-borderAccentLight) !important;
 }
 
+/* Ensure inputs also match the background theme, preventing them from turning white */
+input {
+    background-color: var(--color-bgSecondary) !important;
+    color: var(--color-textPrimary) !important;
+}
+
 select:has(option[disabled]:checked) {
     color: var(--color-textSecondary) !important;
 }
