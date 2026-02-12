@@ -46,19 +46,21 @@ class BaseRepo(Generic[T], BasicRepo):
     async def get_by_id(
         self,
         id: Any,
-        options: Sequence[ORMOption] = None
+        options: Sequence[ORMOption] = None,
+        for_update = False
     ) -> Optional[T]:
         """
         Retrieves an entity by ID.
 
+        :param for_update: if you want to select for update
         :param id: The primary key (or tuple for composite keys).
         :param options: SQLAlchemy loader options (e.g., selectinload, joinedload)
         """
 
-        return await self.session.get(self.model, id, options=options)
+        return await self.session.get(self.model, id, options=options, with_for_update=for_update)
 
 
-    async def get_by_id_list(self, id_list: list[Any], options: Sequence[ORMOption] = None) -> List[T]:
+    async def get_by_id_list(self, id_list: list[Any], options: Sequence[ORMOption] = None, for_update = True) -> List[T]:
         """
             Retrieves multiple entites by IDs.
             WARNING this only works with non-composite primary keys!!!
@@ -70,15 +72,21 @@ class BaseRepo(Generic[T], BasicRepo):
 
         stmt = select(self.model).where(pk.in_(id_list))
 
+        if for_update:
+            stmt = stmt.with_for_update()
+
 
         result = await self.session.scalars(stmt)
         return result.unique().all()
 
 
-    async def get_all(self, options: Sequence[ORMOption] = None) -> Sequence[Row[Any] | RowMapping | Any]:
+    async def get_all(self, options: Sequence[ORMOption] = None, for_update = True) -> Sequence[Row[Any] | RowMapping | Any]:
         stmt = select(self.model)
         if options:
             stmt = stmt.options(*options)
+
+        if for_update:
+            stmt = stmt.with_for_update()
 
         result = await self.session.scalars(stmt)
         return result.unique().all()
@@ -89,11 +97,17 @@ class HasTwoUsersRepo(BaseRepo[T], Generic[T]):
     Made for models with a user1_id and a user2_id filed
     """
 
-    async def get_by_both_user_ids(self, id1: str, id2:str) -> T | None:
+    async def get_by_both_user_ids(self, id1: str, id2:str, options: Sequence[ORMOption] = None, for_update=False) -> T | None:
         stmt = (
             select(self.model).where(
                 ((self.model.user1_id == id1) & (self.model.user2_id == id2)) | ((self.model.user1_id == id2) & (self.model.user2_id == id1))) #todo ezt refactoralni
         )
+
+        if options:
+            stmt = stmt.options(*options)
+
+        if for_update:
+            stmt = stmt.with_for_update()
 
 
         return await self.session.scalar(stmt)

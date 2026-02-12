@@ -28,26 +28,24 @@ class MatchRepo(HasTwoUsersRepo[Match]):
 
         match_repo = MatchRepo(session=self.session)
 
-        async with match_repo.session.begin():
+        match = await match_repo.get_by_both_user_ids(me.id, to_match.id, for_update=True)
 
-            match = await match_repo.get_by_both_user_ids(me.id, to_match.id)
+        if match:
+            if match.confirmed:
+                raise MatchAlreadyConfirmedError("Match already confirmed")
 
-            if match:
-                if match.confirmed:
-                    raise MatchAlreadyConfirmedError("Match already confirmed")
+            match.confirmed = True
+            return await match_repo.save(match)
 
-                match.confirmed = True
-                return await match_repo.save(match)
+        mach = Match()
+        if me.id < to_match.id:
+            mach.user1_id = me.id
+            mach.user2_id = to_match.id
+        else:
+            mach.user1_id = to_match.id
+            mach.user2_id = me.id
 
-            mach = Match()
-            if me.id < to_match.id:
-                mach.user1_id = me.id
-                mach.user2_id = to_match.id
-            else:
-                mach.user1_id = to_match.id
-                mach.user2_id = me.id
-
-            return await match_repo.save(mach)
+        return await match_repo.save(mach)
 
 
 
