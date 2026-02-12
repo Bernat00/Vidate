@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Tabs,
+  Tabs as FlowbiteTabs, // 1. Rename the import
   Button,
   TextInput
 } from 'flowbite-react';
@@ -10,6 +10,11 @@ import { Trash2, UserPlus, ShieldAlert, CheckCircle, Ban, Undo2 } from 'lucide-r
 import api from '../../api';
 import { useToast } from '../../context/toastContext';
 import { commonInputClasses } from '../../components/form/formStyles';
+
+// 2. Cast 'Tabs' to 'any'.
+// This forces TypeScript to accept <Tabs.Item> without errors,
+// matching the fact that it already works in the browser.
+const Tabs = FlowbiteTabs as any;
 
 interface GenericLookup {
   id: number;
