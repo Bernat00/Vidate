@@ -1,4 +1,4 @@
-from sqlalchemy import case, select
+from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
 
 from . import BaseRepo
@@ -17,37 +17,73 @@ class ProfileRepo(BaseRepo[Profile]):
             user_id: str,
             only_confirmed: bool = True,
     ) -> list[dict]:
-        other_user_id = (
-            case(
-        (Match.user1_id == user_id, Match.user2_id),
-                (Match.user2_id == user_id, Match.user1_id)
-            ).label("other_user_id")
+        # Subquery for matches where current user is user1
+        stmt1 = (
+            select(
+                Match.id.label("match_id"),
+                Match.user2_id.label("other_user_id"),
+                Match.timestamp.label("matched_at"),
+                Match.confirmed
+            )
+            .where(Match.user1_id == user_id)
+        )
+        # Subquery for matches where current user is user2
+        stmt2 = (
+            select(
+                Match.id.label("match_id"),
+                Match.user1_id.label("other_user_id"),
+                Match.timestamp.label("matched_at"),
+                Match.confirmed
+            )
+            .where(Match.user2_id == user_id)
+        )
+
+        matches_union = stmt1.union_all(stmt2).subquery()
+
+        # Subquery for last message content
+        last_msg_content = (
+            select(ChatEvent.content)
+            .where(ChatEvent.match_id == matches_union.c.match_id)
+            .order_by(desc(ChatEvent.timestamp))
+            .limit(1)
+            .correlate(matches_union)
+            .scalar_subquery()
+            .label("last_message")
+        )
+
+        # Subquery for last message timestamp
+        last_msg_at = (
+            select(ChatEvent.timestamp)
+            .where(ChatEvent.match_id == matches_union.c.match_id)
+            .order_by(desc(ChatEvent.timestamp))
+            .limit(1)
+            .correlate(matches_union)
+            .scalar_subquery()
+            .label("last_message_at")
         )
 
         stmt = (
             select(
                 Profile,
-                Match.timestamp,
-                Match.id,
-                select(ChatEvent.content).where(ChatEvent.match_id == Match.id).order_by(ChatEvent.timestamp.desc()).limit(1).scalar_subquery().label("last_message"),
-                select(ChatEvent.timestamp).where(ChatEvent.match_id == Match.id).order_by(ChatEvent.timestamp.desc()).limit(1).scalar_subquery().label("last_message_at")
+                matches_union.c.matched_at,
+                matches_union.c.match_id,
+                last_msg_content,
+                last_msg_at
             )
             .join(
-                Match,
-                Profile.user_id == other_user_id,
-            )
-            .where(
-                other_user_id.is_not(None)
+                matches_union,
+                Profile.user_id == matches_union.c.other_user_id,
             )
             .options(
                 selectinload(Profile.gender),
                 selectinload(Profile.religion),
                 selectinload(Profile.languages)
             )
+            .order_by(desc(matches_union.c.matched_at))
         )
 
         if only_confirmed:
-            stmt = stmt.where(Match.confirmed.is_(True))
+            stmt = stmt.where(matches_union.c.confirmed == True)
 
         result = await self.session.execute(stmt)
         result = result.unique()
@@ -68,26 +104,21 @@ class ProfileRepo(BaseRepo[Profile]):
             user_id: str,
             partner_id: str
     ) -> dict | None:
-        other_user_id = (
-            case(
-                (Match.user1_id == user_id, Match.user2_id),
-                (Match.user2_id == user_id, Match.user1_id)
-            ).label("other_user_id")
-        )
+        # Simplified to use union for performance
+        stmt1 = select(Match.id, Match.timestamp).where(Match.user1_id == user_id, Match.user2_id == partner_id, Match.confirmed == True)
+        stmt2 = select(Match.id, Match.timestamp).where(Match.user1_id == partner_id, Match.user2_id == user_id, Match.confirmed == True)
+
+        match_stmt = stmt1.union_all(stmt2).subquery()
 
         stmt = (
             select(
                 Profile,
-                Match.timestamp,
-                Match.id
+                match_stmt.c.timestamp,
+                match_stmt.c.id
             )
             .join(
-                Match,
-                Profile.user_id == other_user_id,
-            )
-            .where(
-                other_user_id == partner_id,
-                Match.confirmed.is_(True)
+                match_stmt,
+                Profile.user_id == partner_id,
             )
             .options(
                 selectinload(Profile.gender),

@@ -101,13 +101,11 @@ async def ws_to_redis_reader(ws: WebSocket, user_id: str, r: Redis, repo: Repo):
                 born = profile.birth_date.date()
                 age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
-                # If user has no gender preferences, fetch all genders from DB (meaning "open to all")
+                # If user has no gender preferences, use "ANY" tag (meaning "open to all")
                 if preference and preference.genders:
                     pref_genders_str = ",".join([str(g.id) for g in preference.genders])
                 else:
-                    # Empty preference means "all genders" - fetch all gender IDs from database
-                    all_genders = await repo.gender_repo.get_all()
-                    pref_genders_str = ",".join([str(g.id) for g in all_genders])
+                    pref_genders_str = "ANY"
 
                 # Fetch blocked user IDs from Reports (both directions)
                 blocked_stmt = select(Report.user_id).where(Report.reporter_id == str(user_id))

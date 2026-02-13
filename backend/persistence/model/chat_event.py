@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlmodel import SQLModel, Field
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, Column
 
 class ChatEvent(SQLModel, table=True):
     __tablename__ = "chat_events"
@@ -21,9 +21,8 @@ class ChatEvent(SQLModel, table=True):
     recipient_id: str = Field(foreign_key="users.id", nullable=False)
 
     timestamp: datetime | None = Field(
-        nullable=False,
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_type=DateTime(timezone=True)
+        sa_column=Column(DateTime(timezone=True), index=True, nullable=False)
     )
 
     # message-specific fields
@@ -32,4 +31,7 @@ class ChatEvent(SQLModel, table=True):
     # is_read: Optional[bool] = Field(default=None)
 
     # call-specific fields
-    end_time: Optional[datetime] = Field(default=None, sa_type=DateTime(timezone=True))
+    end_time: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )

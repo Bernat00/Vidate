@@ -5,7 +5,13 @@ r: redis.Redis | None = None
 
 async def create_redis():
     global r
-    r = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, decode_responses=True)
+    r = redis.Redis(
+        host=Config.REDIS_HOST,
+        port=Config.REDIS_PORT,
+        decode_responses=True,
+        max_connections=100,
+        socket_timeout=5
+    )
     await r.ping()
     print("Connected to Redis")
     return r

@@ -60,7 +60,7 @@ class BaseRepo(Generic[T], BasicRepo):
         return await self.session.get(self.model, id, options=options, with_for_update=for_update)
 
 
-    async def get_by_id_list(self, id_list: list[Any], options: Sequence[ORMOption] = None, for_update = True) -> List[T]:
+    async def get_by_id_list(self, id_list: list[Any], options: Sequence[ORMOption] = None, for_update = False) -> List[T]:
         """
             Retrieves multiple entites by IDs.
             WARNING this only works with non-composite primary keys!!!
@@ -80,7 +80,7 @@ class BaseRepo(Generic[T], BasicRepo):
         return result.unique().all()
 
 
-    async def get_all(self, options: Sequence[ORMOption] = None, for_update = True) -> Sequence[Row[Any] | RowMapping | Any]:
+    async def get_all(self, options: Sequence[ORMOption] = None, for_update = False) -> Sequence[Row[Any] | RowMapping | Any]:
         stmt = select(self.model)
         if options:
             stmt = stmt.options(*options)
@@ -176,6 +176,3 @@ class Repo(BasicRepo):
     @cached_property
     def report_repo(self) -> ReportRepo:
         return ReportRepo(self.session)
-
-
-
