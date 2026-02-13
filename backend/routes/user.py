@@ -3,6 +3,7 @@ from datetime import timedelta
 from email.message import EmailMessage
 
 from fastapi import APIRouter, HTTPException, status
+from starlette.requests import Request
 from starlette.responses import Response
 
 from backend.config import Config
@@ -132,7 +133,7 @@ async def get_reported_summary(
     }
 
 
-@router.get('')
+@router.get('') #todo ez meg mi???
 async def get_all_users(user: get_and_auth_current_admin, repo: repoDep):
     return await repo.user_repo.get_all()
 
@@ -153,18 +154,23 @@ def send_reset_email(to_email: str, reset_link: str):
             server.send_message(msg)
     except Exception as e:
         print(e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Reset email failed to send")
 
 
 
 @router.post('/send-reset-email')
-async def reset_email(reset_email: ResetEmail, repo: repoDep):
+async def reset_email(reset_email: ResetEmail, repo: repoDep, request: Request):
     user = await repo.user_repo.get_by_email(reset_email.email)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
 
     token =  await create_one_time_access_token( {'sub':'special', 'type': 'password-reset', 'user_id': user.id}, timedelta(minutes=5))
 
-    send_reset_email(str(reset_email.email), 'nagyondaddress?token=' + token) #todo kell frontend link
+
+    base_url = str(request.base_url).rstrip('/') #todo prodban e helyett .env-bol
+    reset_link = f"{base_url}/reset-password?token={token}"
+
+    send_reset_email(str(reset_email.email), reset_link)
 
 
 @router.post('/reset-password')
@@ -173,7 +179,7 @@ async def reset_password(token: str, psw_reset: PasswordReset, repo: repoDep):
     if not payload.get('type') == 'password-reset':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Password reset token is invalid')
 
-    user = await repo.user_repo.get_by_id(payload.get('user_id', failobj=''))
+    user = await repo.user_repo.get_by_id(payload.get('user_id', ''))
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
 

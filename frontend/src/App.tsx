@@ -21,6 +21,10 @@ import MatchesLayout from './components/layout/MatchesLayout';
 import { MatchesProvider } from './context/matchesContext';
 import { NotificationListener } from './components/NotificationListener';
 
+// ... existing imports
+import ForgotPassword from "./pages/passwordResetEmail.tsx";
+import ResetPassword from "./pages/resetPassword.tsx";
+
 function App(): ReactElement {
   return (
     <BrowserRouter>
@@ -30,6 +34,7 @@ function App(): ReactElement {
                     <MatchesProvider>
                         <NotificationListener />
                         <Routes>
+                            {/* --- Public Routes --- */}
                             <Route path="/" element={
                               <PublicOnlyRoute>
                                 <LandingPage />
@@ -45,13 +50,25 @@ function App(): ReactElement {
                                 <Register />
                               </PublicOnlyRoute>
                             } />
+
+                            {/* --- New Password Reset Routes --- */}
+                            <Route path="/forgot-password" element={
+                              <PublicOnlyRoute>
+                                <ForgotPassword />
+                              </PublicOnlyRoute>
+                            } />
+                            <Route path="/reset-password" element={
+                              <PublicOnlyRoute>
+                                <ResetPassword />
+                              </PublicOnlyRoute>
+                            } />
+
+                            {/* --- Protected Routes --- */}
                             <Route path="/setup-profile" element={
                                 <ProtectedRoute>
                                     <SetupProfile/>
                                 </ProtectedRoute>
-                            }>
-                            </Route>
-
+                            } />
 
                             <Route element={
                               <ProtectedRoute>
@@ -80,4 +97,4 @@ function App(): ReactElement {
   )
 }
 
-export default App
+export default App;

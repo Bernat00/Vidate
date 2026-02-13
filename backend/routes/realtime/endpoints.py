@@ -108,6 +108,8 @@ async def ws_to_redis_reader(ws: WebSocket, user_id: str, r: Redis, repo: Repo):
                     # Empty preference means "all genders" - fetch all gender IDs from database
                     all_genders = await repo.gender_repo.get_all()
                     pref_genders_str = ",".join([str(g.id) for g in all_genders])
+                print("---------------------")
+                print(pref_genders_str)
 
                 # Fetch blocked user IDs from Reports (both directions)
                 blocked_stmt = select(Report.user_id).where(Report.reporter_id == str(user_id))

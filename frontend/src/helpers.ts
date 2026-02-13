@@ -1,6 +1,7 @@
 import api from './api';
 import qs from 'qs';
 import type { MatchItem } from './types/domain';
+import type {AxiosResponse} from "axios";
 
 interface TokenResponse {
   access_token: string;
@@ -74,3 +75,13 @@ export function calculateAge(birthDate?: string | null): string {
 export function getAvatarUrl(match: MatchItem): string {
   return match.profile?.profilePicture || match.profile?.avatar || 'https://via.placeholder.com/150';
 }
+
+export const sendPasswordResetEmail = async (email: string): Promise<AxiosResponse<any>> => {
+
+  return api.post('/users/send-reset-email', { email });
+};
+
+export const resetPassword = async (token: string, password: string) => {
+  // token is passed as a query param, password in the body
+  return api.post(`/users/reset-password?token=${token}`, { password });
+};

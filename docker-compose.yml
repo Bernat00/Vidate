@@ -42,6 +42,8 @@ services:
       - JWT_SECRET_KEY=dev_secret_key_change_me
       - PSW_SECRET_KEY=dev_psw_key_change_me
       - PWD_SALT=helikopter
+      - SMTP_EMAIL={$SMTP_EMAIL}
+      - SMTP_PASSWORD={$SMTP_PASSWORD}
     depends_on:
       db:
         condition: service_healthy

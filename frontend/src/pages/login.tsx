@@ -75,12 +75,20 @@ const Login = () => {
 
         <PrimaryButton type="submit">Sign in</PrimaryButton>
 
-        <p className="text-textSecondary text-sm text-center">
-          Don’t have an account?{' '}
-          <Link to="/register" className="text-textAccent hover:underline">
-            Sign up
-          </Link>
-        </p>
+        <div className="mt-6 space-y-2 text-center text-sm">
+  <p className="text-textSecondary">
+    Don’t have an account?{' '}
+    <Link to="/register" className="text-textAccent hover:underline font-medium">
+      Sign up
+    </Link>
+  </p>
+
+  <p>
+    <Link to="/forgot-password" className="text-textAccent hover:underline font-medium">
+      Forgot your password?
+    </Link>
+  </p>
+</div>
       </form>
     </AuthCardLayout>
   );
