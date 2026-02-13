@@ -50,10 +50,22 @@ async def create_db_and_tables():
     user = Role(name='user')
     admin = Role(name='admin')
 
+    # Create default admin
     default_admin_user = User()
     default_admin_user.email = 'admin@example.com'
     default_admin_user.password_hash = default_admin_user.hash_password(SecretStr('Admin2006'))
     default_admin_user.role_id = 1
+
+    #create demo users
+    user1 = User()
+    user1.email = 'ezegyemberneve@gmail.com'
+    user1.password_hash = user1.hash_password(SecretStr('Admin2006'))
+
+    user2 = User()
+    user2.email = 'demo@example.com'
+    user2.password_hash = user2.hash_password(SecretStr('Admin2006'))
+
+
 
     # Create default genders
     male = Gender(name='Male')
