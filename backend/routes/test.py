@@ -10,7 +10,7 @@ from backend.routes import get_and_auth_current_user, repoDep
 router = APIRouter(prefix='/test')
 
 
-@router.get('/')
+@router.get('')
 async def test(current_user: get_and_auth_current_user):
     return 'success'
 

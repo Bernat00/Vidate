@@ -12,7 +12,7 @@ from ..persistence.model.preferences.preferences import Preference
 router = APIRouter(prefix='/preferences', tags=['preferences'])
 
 
-@router.get('/', response_model=PreferenceRead)
+@router.get('', response_model=PreferenceRead)
 async def get_preferences(user: get_and_auth_current_user, repo: repoDep):
     preferences = await repo.preference_repo.get_by_id(user.id)
     if not preferences:
@@ -26,7 +26,7 @@ async def get_preferences(user: get_and_auth_current_user, repo: repoDep):
     )
 
 
-@router.put('/', response_model=PreferenceRead)
+@router.put('', response_model=PreferenceRead)
 async def update_preferences(preference: PreferenceCreate, repo: repoDep, user: get_and_auth_current_user):
     uid = user.id
     
