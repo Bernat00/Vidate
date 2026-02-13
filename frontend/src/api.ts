@@ -1,7 +1,7 @@
 import axios, { AxiosHeaders } from 'axios';
 
 export const getBaseUrl = () => {
-  return window.location.origin;
+  return window.location.origin + '/api';
 };
 
 const baseUrl = getBaseUrl()
