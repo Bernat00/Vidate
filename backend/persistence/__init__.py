@@ -20,9 +20,17 @@ from backend.persistence.model.preferences.preferences import Preference
 from backend.persistence.model.preferences.associacions import PreferenceGenderLink, PreferenceLanguageLink, PreferenceReligionLink
 
 
-engine_kwargs = {"echo": True}
+engine_kwargs = {
+    "echo": False,
+}
 if str(Config.SQL_ALCHEMY_DATABASE_URL).startswith("sqlite"):
     engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    engine_kwargs.update({
+        "pool_size": 20,
+        "max_overflow": 10,
+        "pool_recycle": 3600,
+    })
 
 engine = create_async_engine(
     str(Config.SQL_ALCHEMY_DATABASE_URL),

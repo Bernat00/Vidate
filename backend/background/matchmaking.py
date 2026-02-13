@@ -92,15 +92,19 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
     # --- BUILD QUERY ---
     filters = []
 
-    if my_prefs_genders:
+    # Filter by candidate's gender (must match my preferences)
+    # If I have no specific gender preferences (ANY), I skip this filter
+    if my_prefs_genders and "ANY" not in my_prefs_genders:
         gender_terms = [
             _escape_tag_value(g) for g in my_prefs_genders if g
         ]
         if gender_terms:
             filters.append(f"@gender:{{{'|'.join(gender_terms)}}}")
 
+    # Filter by my gender (must match candidate's preferences)
+    # The candidate matches if my_gender is in their pref_genders OR if their pref_genders is ANY
     if my_gender:
-        filters.append(f"@pref_genders:{{{_escape_tag_value(my_gender)}}}")
+        filters.append(f"@pref_genders:{{{_escape_tag_value(my_gender)}|ANY}}")
 
     # They must not have blocked me
     filters.append(f"-@blocked_ids:{{{_escape_tag_value(user_id)}}}")
@@ -190,7 +194,7 @@ async def _build_candidates(r, user_id: str, user_data: dict) -> list[tuple[str,
         if my_pref_wants_children and hasattr(doc, "wants_children") and doc.wants_children == my_pref_wants_children:
             score += LIFESTYLE_BONUS
 
-        candidates.append((uid, score, dist))
+        candidates.append((uid, score, dist, doc_data))
 
     candidates.sort(key=lambda x: x[1], reverse=True)
     return candidates
@@ -206,22 +210,12 @@ async def attempt_match_for_user(r, user_id: str, repo: Repo) -> bool:
         await r.zrem("matchmaking", user_id)
         return False
 
-    user_joined_at = float(user_data.get("joined_at", 0) or 0)
-
     candidates = await _build_candidates(r, user_id, user_data)
     if not candidates:
         return False
 
-    for cand_id, _, dist in candidates:
-        cand_entry = await r.hgetall(f"mm_entry:{cand_id}")
-        if not cand_entry:
-            # Cleanup ghost candidate
-            await r.zrem("matchmaking", cand_id)
-            await r.zrem("user_geo", cand_id)
-            continue
-
-        cand_joined_at = float(cand_entry.get("joined_at", 0) or 0)
-
+    for cand_id, _, dist, cand_entry in candidates:
+        # We already have cand_entry from the search results! No need for hgetall.
         claimed = await _try_claim_pair(r, user_id, cand_id)
         if not claimed:
             continue
