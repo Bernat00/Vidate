@@ -191,14 +191,8 @@ async def feedback(
 @router.get('/feedback-profile/{partner_id}', response_model=ProfileRead)
 async def get_feedback_profile(partner_id: str, repo: repoDep, user: get_and_auth_current_user):
     # Ensure users have had a conversation
-    stmt = select(Conversation).where(
-        or_(
-            and_(Conversation.user1_id == user.id, Conversation.user2_id == partner_id),
-            and_(Conversation.user1_id == partner_id, Conversation.user2_id == user.id)
-        )
-    )
-    result = await repo.session.scalars(stmt)
-    conversation = result.first()
+
+    conversation = repo.conversation_repo.get_by_both_user_ids(user.id, partner_id)
 
     if not conversation:
         raise HTTPException(status_code=400, detail="No conversation found between users")
