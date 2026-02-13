@@ -1,6 +1,11 @@
 import axios, { AxiosHeaders } from 'axios';
 
 export const getBaseUrl = () => {
+  const { hostname, protocol, port } = window.location;
+  if (port === '5173') {
+    return `${protocol}//${hostname}:8000/api`;
+  }
+
   return window.location.origin + '/api';
 };
 
