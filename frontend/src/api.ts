@@ -6,7 +6,7 @@ export const getBaseUrl = () => {
     return `${protocol}//${hostname}:8000/api`;
   }
 
-  return '/api';
+  return window.location.origin + '/api';
 };
 
 const baseUrl = getBaseUrl()

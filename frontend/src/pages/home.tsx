@@ -440,7 +440,7 @@ export default function Home() {
           : (viewState === 'TESTING' || viewState === 'PERMISSIONS')
             ? 'h-[calc(100dvh-4rem)] justify-start p-4'
             : 'justify-center min-h-[calc(100dvh-4rem)] p-4'
-    } max-w-lg mx-auto w-full ${(viewState === 'TESTING' || viewState === 'PERMISSIONS') ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+    } ${(viewState !== 'TESTING' && viewState !== 'PERMISSIONS') ? 'max-w-lg' : ''} mx-auto w-full ${(viewState === 'TESTING' || viewState === 'PERMISSIONS') ? 'overflow-y-auto' : 'overflow-hidden'}`}>
 
       {/* State: PERMISSIONS (Setup) */}
       {(viewState === 'PERMISSIONS' || viewState === 'TESTING') && (

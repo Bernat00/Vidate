@@ -8,6 +8,7 @@ __pycache__/
 *.pyc
 *.db
 package-lock.json
-*.env
 backend/.env
 .env
+C:\Users\szabo\PycharmProjects\Vidate\backend\.env
+C:\Users\szabo\PycharmProjects\Vidate\.env
