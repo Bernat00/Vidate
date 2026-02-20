@@ -1,13 +1,49 @@
-*/venv
-*.idea
-*/package-lock.json
-*/node_modules
-frontend/.flowbite-react/init.tsx
-frontend/.flowbite-react/class-list.json
-__pycache__/
-*.pyc
-*.db
-package-lock.json
-*.env
-backend/.env
-.env
+# Python
+  .venv/
+  __pycache__/
+  *.pyc
+  *.pyo
+  *.db
+  *.sqlite3
+  venv/
+  ENV/
+
+  # Environment files
+  .env
+  .env.*
+  *.env
+
+  # IDE
+  .idea/
+  .vs/
+  .vscode/
+  *.swp
+  *.swo
+
+  # Node.js
+  node_modules/
+  package-lock.json
+  frontend/package-lock.json
+
+  # Build outputs
+  */bin/
+  */obj/
+  */dist/
+  */build/
+  *.dll
+  *.exe
+  *.pdb
+
+  # MAUI specific (add this!)
+  VidateMaui/
+
+  # Test project specific
+  VidateTests/.vs/
+
+  # Test results
+  TestResults/
+  *.log
+
+  # OS
+  .DS_Store
+  Thumbs.db

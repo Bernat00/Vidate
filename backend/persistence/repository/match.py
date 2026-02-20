@@ -28,7 +28,7 @@ class MatchRepo(HasTwoUsersRepo[Match]):
 
         match_repo = MatchRepo(session=self.session)
 
-        match = await match_repo.get_by_both_user_ids(me.id, to_match.id, for_update=True)
+        match = await match_repo.get_by_both_user_ids(me.id, to_match.id)
 
         if match:
             if match.confirmed:

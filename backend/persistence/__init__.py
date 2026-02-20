@@ -30,17 +30,7 @@ engine = create_async_engine(
 )
 
 async def create_db_and_tables():
-    async with engine.connect() as conn:
-        def check_role_exists(sync_conn):
-            inspector = inspect(sync_conn)
 
-            return inspector.has_table("roles")
-
-        table_exists = await conn.run_sync(check_role_exists)
-
-
-    if table_exists:
-        return
 
 
     async with engine.begin() as conn:
@@ -57,13 +47,13 @@ async def create_db_and_tables():
     default_admin_user.role_id = 1
 
     #create demo users
-    user1 = User()
-    user1.email = 'ezegyemberneve@gmail.com'
-    user1.password_hash = user1.hash_password(SecretStr('Admin2006'))
-
-    user2 = User()
-    user2.email = 'demo@example.com'
-    user2.password_hash = user2.hash_password(SecretStr('Admin2006'))
+    #user1 = User()
+    #user1.email = 'ezegyemberneve@gmail.com'
+    #user1.password_hash = user1.hash_password(SecretStr('Admin2006'))
+#
+    #user2 = User()
+    #user2.email = 'demo@example.com'
+    #user2.password_hash = user2.hash_password(SecretStr('Admin2006'))
 
 
 

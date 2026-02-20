@@ -1,7 +1,3 @@
-# Build results
-[Bb]in/*
-[Oo]bj/*
-
 # User-specific files
 *.user
 *.userosscache
@@ -9,3 +5,8 @@
 
 # Visual Studio files
 .vs/*
+
+*/**/bin
+*/**/obj
+/obj
+/bin

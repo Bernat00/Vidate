@@ -12,3 +12,6 @@ backend/.env
 .env
 C:\Users\szabo\PycharmProjects\Vidate\backend\.env
 C:\Users\szabo\PycharmProjects\Vidate\.env
+
+**/*/bin
+**/*/obj
