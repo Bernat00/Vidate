@@ -270,47 +270,26 @@ export default function SetupProfile({isNewUser = true}: SetupProfileProps) {
   useEffect(() => {
     (async () => {
       try {
-        if (isNewUser) {
-          const [g, l, r, myRes] = await Promise.all([
+          const [g, l, r] = await Promise.all([
             api.get<ProfileOption[]>('/profile/genders'),
             api.get<ProfileOption[]>('/profile/languages'),
             api.get<ProfileOption[]>('/profile/religions'),
-            api.get<ProfileMine | null>('/profile/mine').catch(() => ({ data: null } as { data: null })),
           ]);
 
           setGenders(g.data ?? []);
           setLanguages(l.data ?? []);
           setReligions(r.data ?? []);
 
-          const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null; language_id?: number | null }) | null;
-          if (my) {
-            setValue('first_name', my.first_name ?? '');
-            setValue('middle_name', my.middle_name ?? '');
-            setValue('last_name', my.last_name ?? '');
-            setValue('birth_date', my.birth_date ? my.birth_date.slice(0, 10) : '');
-            setValue('gender_id', my.gender_id != null ? String(my.gender_id) : '');
-            const myLanguages = my.languages?.map(language => String(language.id)) ?? [];
-            if (myLanguages.length > 0) {
-              setValue('language_ids', myLanguages);
-            } else if (my.language_id != null) {
-              setValue('language_ids', [String(my.language_id)]);
-            }
-            setValue('religion_id', my.religion_id != null ? String(my.religion_id) : '');
-            setValue('self_is_smoker', my.is_smoker != null ? String(my.is_smoker) : '');
-            setValue('self_wants_children', my.wants_children != null ? String(my.wants_children) : '');
-          }
+
+        if (isNewUser) {
+
+
         } else {
-          const [g, l, r, myRes, prefRes] = await Promise.all([
-            api.get<ProfileOption[]>('/profile/genders'),
-            api.get<ProfileOption[]>('/profile/languages'),
-            api.get<ProfileOption[]>('/profile/religions'),
+          const [myRes, prefRes] = await Promise.all([
             api.get<ProfileMine | null>('/profile/mine').catch(() => ({ data: null } as { data: null })),
             api.get<PreferenceMine | null>('/preferences').catch(() => ({ data: null } as { data: null }))
           ]);
 
-          setGenders(g.data ?? []);
-          setLanguages(l.data ?? []);
-          setReligions(r.data ?? []);
 
           const my = myRes.data as (ProfileMine & { is_smoker?: boolean | null; wants_children?: boolean | null; language_id?: number | null }) | null;
           const myLanguageIds = my?.languages?.map(language => String(language.id)) ?? [];
