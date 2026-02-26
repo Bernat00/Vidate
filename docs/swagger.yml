@@ -1,17 +1,12 @@
 openapi: 3.0.3
 
 info:
-  title: Video Dating App API
+  title: Vidate Backend API
   version: 1.0.0
   description: >
-    REST API for the Video Dating App MVP.
-    Real-time features (messages, video calls, matches) use WebSockets and are excluded here.
-
-security:
-  - bearerAuth: []
+    REST API for the Vidate backend. WebSocket signaling uses /ws/main.
 
 components:
-
   securitySchemes:
     bearerAuth:
       type: http
@@ -19,48 +14,204 @@ components:
       bearerFormat: JWT
 
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
 
-    # ======================
-    # USER (ACCOUNT TABLE)
-    # ======================
-    UserAccount:
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+
+    UserCreate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+      required: [email, password]
+
+    UserEdit:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          nullable: true
+        password:
+          type: string
+          format: password
+          nullable: true
+        old_password:
+          type: string
+          format: password
+      required: [old_password]
+
+    UserOut:
       type: object
       properties:
         id:
           type: string
-          format: uuid
         email:
           type: string
           format: email
-        email_verified:
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        disabled:
           type: boolean
-        is_enabled:
+
+    UserMe:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        disabled:
           type: boolean
-        role:
+        is_onboarded:
+          type: boolean
+        role_name:
+          type: string
+
+    UserAdmin:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        disabled:
+          type: boolean
+        role_id:
+          type: integer
+        is_onboarded:
+          type: boolean
+
+    ResetEmail:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required: [email]
+
+    PasswordReset:
+      type: object
+      properties:
+        password:
+          type: string
+          format: password
+      required: [password]
+
+    SetBan:
+      type: object
+      properties:
+        user_id:
+          type: string
+        value:
+          type: boolean
+      required: [user_id, value]
+
+    ReportCreate:
+      type: object
+      properties:
+        reported_user_id:
+          type: string
+        reason:
+          type: string
+      required: [reported_user_id, reason]
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: string
+        reporter_id:
+          type: string
+        reason:
           type: string
         created_at:
           type: string
           format: date-time
-        last_login_at:
+
+    ReportedUserReport:
+      type: object
+      properties:
+        id:
+          type: integer
+        reporter_email:
+          type: string
+          format: email
+        reason:
+          type: string
+        created_at:
           type: string
           format: date-time
 
-    # ======================
-    # LANGUAGE TABLE
-    # ======================
+    ReportSummaryItem:
+      type: object
+      properties:
+        user_id:
+          type: string
+        email:
+          type: string
+          format: email
+        disabled:
+          type: boolean
+        report_count:
+          type: integer
+
+    ReportSummaryResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportSummaryItem"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
     Language:
       type: object
       properties:
         id:
           type: integer
-        code:
-          type: string
         name:
           type: string
 
-    # ======================
-    # RELIGION TABLE
-    # ======================
     Religion:
       type: object
       properties:
@@ -69,9 +220,6 @@ components:
         name:
           type: string
 
-    # ======================
-    # GENDER TABLE
-    # ======================
     Gender:
       type: object
       properties:
@@ -80,15 +228,11 @@ components:
         name:
           type: string
 
-    # ======================
-    # PROFILE TABLE
-    # ======================
-    UserProfile:
+    ProfileRead:
       type: object
       properties:
         user_id:
           type: string
-          format: uuid
         first_name:
           type: string
         middle_name:
@@ -96,256 +240,311 @@ components:
           nullable: true
         last_name:
           type: string
-        birthdate:
+        birth_date:
           type: string
-          format: date
-        gender:
-          type: string
-        is_smoker:
-          type: boolean
-        wants_children:
-          type: boolean
-        language:
-          $ref: "#/components/schemas/Language"
-        religion:
-          $ref: "#/components/schemas/Religion"
-
-    # ======================
-    # PROFILE UPDATE REQUEST
-    # ======================
-    ProfileUpdateRequest:
-      type: object
-      properties:
-        first_name:
-          type: string
-        middle_name:
-          type: string
-          nullable: true
-        last_name:
-          type: string
-        birthdate:
-          type: string
-          format: date
-        gender:
-          type: string
-        avatar_url:
-          type: string
-          format: uri
-        is_smoker:
-          type: boolean
-        wants_children:
-          type: boolean
-        language_id:
+          format: date-time
+        gender_id:
           type: integer
         religion_id:
           type: integer
-
-    # ======================
-    # SETTINGS UPDATE REQUEST
-    # ======================
-    SettingsUpdateRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-
-    # ======================
-    # AUTH SCHEMAS
-    # ======================
-    RegisterRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-      required: [email, password]
-
-    LoginRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-        stay_logged_in:
+          nullable: true
+        is_smoker:
           type: boolean
-          description: >
-            If true, the server issues a long-lived JWT. If false or omitted,
-            a short-lived JWT is issued.
-      required: [email, password]
+        wants_children:
+          type: boolean
+          nullable: true
+        gender:
+          $ref: "#/components/schemas/Gender"
+        religion:
+          $ref: "#/components/schemas/Religion"
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Language"
 
-    LoginResponse:
+    ProfileCreate:
       type: object
       properties:
-        access_token:
+        first_name:
           type: string
-        token_type:
+        middle_name:
           type: string
-          example: Bearer
-        expires_in:
+          nullable: true
+        last_name:
+          type: string
+        birth_date:
+          type: string
+          format: date-time
+        gender_id:
           type: integer
-          description: Lifetime of token in seconds
+        language_ids:
+          type: array
+          items:
+            type: integer
+        religion_id:
+          type: integer
+          nullable: true
+        is_smoker:
+          type: boolean
+        wants_children:
+          type: boolean
+          nullable: true
+      required:
+        - first_name
+        - last_name
+        - birth_date
+        - gender_id
+        - language_ids
+        - is_smoker
 
-    EmailVerificationResponse:
+    PreferenceCreate:
       type: object
       properties:
-        message:
-          type: string
+        age_min:
+          type: integer
+          nullable: true
+        age_max:
+          type: integer
+          nullable: true
+        wants_children:
+          type: boolean
+          nullable: true
+        is_smoker:
+          type: boolean
+          nullable: true
+        gender_ids:
+          type: array
+          items:
+            type: integer
+          nullable: true
+        language_ids:
+          type: array
+          items:
+            type: integer
+          nullable: true
+        religion_ids:
+          type: array
+          items:
+            type: integer
+          nullable: true
 
-    # ======================
-    # ERROR RESPONSE
-    # ======================
-    ErrorResponse:
+    PreferenceRead:
       type: object
       properties:
-        error:
+        user_id:
+          type: string
+        age_min:
+          type: integer
+          nullable: true
+        age_max:
+          type: integer
+          nullable: true
+        wants_children:
+          type: boolean
+          nullable: true
+        is_smoker:
+          type: boolean
+          nullable: true
+        genders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Gender"
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Language"
+        religions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Religion"
+
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        confirmed:
+          type: boolean
+        user1_id:
+          type: string
+        user2_id:
           type: string
 
-  responses:
+    MatchResponse:
+      type: object
+      properties:
+        profile:
+          $ref: "#/components/schemas/ProfileRead"
+        matched_at:
+          type: string
+          format: date-time
+        match_id:
+          type: integer
+        last_message:
+          type: string
+          nullable: true
+        last_message_at:
+          type: string
+          format: date-time
+          nullable: true
 
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
+    FeedbackRequest:
+      type: object
+      properties:
+        partner_id:
+          type: string
+        liked:
+          type: boolean
+      required: [partner_id, liked]
 
-    Forbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-
-    NotFound:
-      description: Not found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
+    ChatEventOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        match_id:
+          type: integer
+        originator_id:
+          type: string
+        recipient_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        content:
+          type: string
+          nullable: true
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
 
 paths:
-
-  # ============================================================
-  #                       AUTH ENDPOINTS
-  # ============================================================
-
   /api/auth/register:
     post:
-      summary: Register a new account
-      tags: [Auth]
+      summary: Register a new user
+      tags: [auth]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RegisterRequest"
+              $ref: "#/components/schemas/UserCreate"
       responses:
         "201":
-          description: Registered
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserAccount"
+          description: Created
         "400":
-          description: Invalid input
-
-  /api/auth/login:
-    post:
-      summary: Login and receive a JWT
-      tags: [Auth]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LoginRequest"
-      responses:
-        "200":
-          description: Login successful
+          description: Email already registered
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginResponse"
-        "401":
-          description: Invalid credentials
+                $ref: "#/components/schemas/ErrorResponse"
 
-  /api/auth/logout:
+  /api/auth/register-admin:
     post:
-      summary: Logout
-      tags: [Auth]
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Logged out
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-  /api/auth/send-verification:
-    post:
-      summary: Send verification email to authenticated user
-      tags: [Auth]
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Verification email sent
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EmailVerificationResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-  /api/auth/verify-email:
-    get:
-      summary: Verify email using a token
-      tags: [Auth]
+      summary: Register a new admin user
+      tags: [auth]
       parameters:
         - name: token
           in: query
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+      responses:
+        "201":
+          description: Created
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/token:
+    post:
+      summary: Login and receive a JWT
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+              required: [username, password]
       responses:
         "200":
-          description: Email verified
-        "400":
-          description: Invalid or expired token
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Token"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
-  # ============================================================
-  #                         SETTINGS
-  # ============================================================
-
-  /api/settings:
+  /api/auth/register-admin-token:
     get:
-      summary: Get account-level settings
-      tags: [Settings]
+      summary: Generate one-time admin registration token
+      tags: [auth]
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: Account settings returned
+          description: Token string
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserAccount"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: "#/components/schemas/ErrorResponse"
 
+  /api/users/me:
+    get:
+      summary: Get current user
+      tags: [user]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserMe"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     patch:
-      summary: Update email or password
-      tags: [Settings]
+      summary: Update current user
+      tags: [user]
       security:
         - bearerAuth: []
       requestBody:
@@ -353,62 +552,287 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SettingsUpdateRequest"
+              $ref: "#/components/schemas/UserEdit"
       responses:
         "200":
-          description: Settings updated
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserOut"
         "400":
-          description: Invalid input
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/users:
+    get:
+      summary: List all users
+      tags: [user]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserAdmin"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/users/report:
+    post:
+      summary: Report another user
+      tags: [user]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportCreate"
+      responses:
+        "201":
+          description: Report created
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/users/ban:
+    post:
+      summary: Set user ban status
+      tags: [user]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetBan"
+      responses:
+        "200":
+          description: Ban updated
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/users/reports:
+    get:
+      summary: Get all reports
+      tags: [user]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/users/reports/{user_id}:
+    get:
+      summary: Get reports for a user
+      tags: [user]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportedUserReport"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/users/reported-summary:
+    get:
+      summary: Get reported users summary
+      tags: [user]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: disabled
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportSummaryResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/users/send-reset-email:
+    post:
+      summary: Send password reset email
+      tags: [user]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetEmail"
+      responses:
+        "200":
+          description: Email sent
+        "404":
+          description: User does not exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/users/reset-password:
+    post:
+      summary: Reset password
+      tags: [user]
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordReset"
+      responses:
+        "200":
+          description: Password reset
+        "403":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User does not exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/profile/mine:
     get:
       summary: Get authenticated user's profile
-      tags: [ Profile ]
+      tags: [profile]
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       responses:
         "200":
           description: Profile returned
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserProfile"
+                $ref: "#/components/schemas/ProfileRead"
         "401":
-          $ref: "#/components/responses/Unauthorized"
-
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     put:
       summary: Update authenticated user's profile
-      tags: [ Profile ]
+      tags: [profile]
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProfileUpdateRequest"
+              $ref: "#/components/schemas/ProfileCreate"
       responses:
         "200":
           description: Profile updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserProfile"
+                $ref: "#/components/schemas/ProfileRead"
         "400":
-          description: Invalid input
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-  # ============================================================
-  #                   LOOKUP TABLE ENDPOINTS
-  # ============================================================
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/profile/languages:
     get:
       summary: List all languages
-      tags: [Profile]
+      tags: [profile]
       security:
         - bearerAuth: []
       responses:
@@ -420,11 +844,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Language"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
     post:
       summary: Create a new language
-      tags: [Profile]
+      tags: [profile]
       security:
         - bearerAuth: []
       requestBody:
@@ -432,51 +854,63 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                code:
-                  type: string
-                name:
-                  type: string
-              required: [code, name]
+              $ref: "#/components/schemas/Language"
       responses:
-        "201":
+        "200":
           description: Language created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Language"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-
-  /api/profile/languages/{id}:
     delete:
       summary: Delete a language
-      tags: [Profile]
+      tags: [profile]
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
+        - name: language_id
+          in: query
           required: true
           schema:
             type: integer
       responses:
-        "204":
-          description: Language deleted
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        "200":
+          description: Deleted
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Language not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Update a language
+      tags: [profile]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: language_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Language"
+      responses:
+        "200":
+          description: Language updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Language"
 
   /api/profile/religions:
     get:
       summary: List all religions
-      tags: [Profile]
+      tags: [profile]
       security:
         - bearerAuth: []
       responses:
@@ -488,11 +922,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Religion"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
     post:
       summary: Create a new religion
-      tags: [Profile]
+      tags: [profile]
       security:
         - bearerAuth: []
       requestBody:
@@ -500,49 +932,63 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-              required: [name]
+              $ref: "#/components/schemas/Religion"
       responses:
-        "201":
+        "200":
           description: Religion created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Religion"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-
-  /api/profile/religions/{id}:
     delete:
       summary: Delete a religion
-      tags: [Profile]
+      tags: [profile]
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
+        - name: religion_id
+          in: query
           required: true
           schema:
             type: integer
       responses:
-        "204":
-          description: Religion deleted
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        "200":
+          description: Deleted
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Religion not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Update a religion
+      tags: [profile]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: religion_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Religion"
+      responses:
+        "200":
+          description: Religion updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Religion"
 
   /api/profile/genders:
     get:
       summary: List all genders
-      tags: [Profile]
+      tags: [profile]
       security:
         - bearerAuth: []
       responses:
@@ -554,11 +1000,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Gender"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
     post:
       summary: Create a new gender
-      tags: [Profile]
+      tags: [profile]
       security:
         - bearerAuth: []
       requestBody:
@@ -566,111 +1010,282 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-              required: [name]
+              $ref: "#/components/schemas/Gender"
       responses:
-        "201":
+        "200":
           description: Gender created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Gender"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-
-  /api/profile/genders/{id}:
     delete:
       summary: Delete a gender
-      tags: [Profile]
+      tags: [profile]
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
+        - name: gender_id
+          in: query
           required: true
           schema:
             type: integer
       responses:
-        "204":
-          description: Gender deleted
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        "200":
+          description: Deleted
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Gender not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
-  # ============================================================
-  #                        MODERATION
-  # ============================================================
-
-  /api/mod/users:
+  /api/preferences:
     get:
-      summary: List all users (Account + Profile)
-      tags: [Moderation]
+      summary: Get preferences
+      tags: [preferences]
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: Users returned
+          description: Preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreferenceRead"
+        "404":
+          description: Preferences not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Update preferences
+      tags: [preferences]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferenceCreate"
+      responses:
+        "200":
+          description: Preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreferenceRead"
+
+  /api/matches/mine:
+    get:
+      summary: List matches for current user
+      tags: [matches]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Matches
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    account:
-                      $ref: "#/components/schemas/UserAccount"
-                    profile:
-                      $ref: "#/components/schemas/UserProfile"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  $ref: "#/components/schemas/MatchResponse"
 
-  /api/mod/users/{id}/ban:
-    post:
-      summary: Permanently ban a user
-      tags: [Moderation]
+  /api/matches/match-profile/{partner_id}:
+    get:
+      summary: Get matched profile by partner id
+      tags: [matches]
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: partner_id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
-          description: User banned
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Match response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchResponse"
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Match profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
-  # ============================================================
-  #                        WEBSOCKETS
-  # ============================================================
-
-  /ws:
-    get:
-      tags: [Websocket]
-      summary: WebSocket Upgrade Endpoint
-      description: >
-        Endpoint for upgadeing the connection to websocket.
+  /api/matches/match:
+    post:
+      summary: Create or confirm a match
+      tags: [matches]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userid
+          in: query
+          required: true
+          schema:
+            type: string
       responses:
-        '101':
-          description: Switching Protocols (WebSocket handshake accepted)
-        '400':
-          description: Bad request
-        '401':
+        "200":
+          description: Match
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Delete a match
+      tags: [matches]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: match_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+        "404":
+          description: Match not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/matches/{match_id}/events:
+    get:
+      summary: Get match chat events
+      tags: [matches]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: match_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: last_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatEventOut"
+        "403":
+          description: Not allowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Match not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/matches/feedback:
+    post:
+      summary: Submit match feedback
+      tags: [matches]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackRequest"
+      responses:
+        "200":
+          description: Feedback processed
+
+  /api/matches/feedback-profile/{partner_id}:
+    get:
+      summary: Get feedback profile for partner
+      tags: [matches]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: partner_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileRead"
+        "400":
+          description: No conversation found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/test:
+    get:
+      summary: Test endpoint
+      tags: [test]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+
+  /api/test/2:
+    get:
+      summary: Test endpoint 2
+      tags: [test]
+      responses:
+        "200":
+          description: Returns chat events
+
+  /ws/main:
+    get:
+      summary: WebSocket endpoint
+      tags: [realtime]
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "101":
+          description: Switching Protocols
+        "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
