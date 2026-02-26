@@ -1,7 +1,8 @@
 from pydantic import SecretStr
-from sqlalchemy import inspect
+from sqlalchemy import inspect, select
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from watchfiles import awatch
 
 from backend.config import Config
 from backend.persistence.model.role import Role
@@ -30,80 +31,91 @@ engine = create_async_engine(
 )
 
 async def create_db_and_tables():
+    try:
+
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+
+
+        user = Role(name='user')
+        admin = Role(name='admin')
+
+        # Create default admin
+        default_admin_user = User()
+        default_admin_user.email = 'admin@example.com'
+        default_admin_user.password_hash = default_admin_user.hash_password(SecretStr('Admin2006'))
+        default_admin_user.role_id = 1
+
+        #create demo users
+        #user1 = User()
+        #user1.email = 'ezegyemberneve@gmail.com'
+        #user1.password_hash = user1.hash_password(SecretStr('Admin2006'))
+    #
+        #user2 = User()
+        #user2.email = 'demo@example.com'
+        #user2.password_hash = user2.hash_password(SecretStr('Admin2006'))
 
 
 
+        # Create default genders
+        male = Gender(name='Male')
+        female = Gender(name='Female')
+        other = Gender(name='Other')
+
+        # Create default religions
+        christianity = Religion(name='Christianity')
+        islam = Religion(name='Islam')
+        hinduism = Religion(name='Hinduism')
+        buddhism = Religion(name='Buddhism')
+        judaism = Religion(name='Judaism')
+        atheism = Religion(name='Atheism')
+
+        # Create default languages
+        english = Language(name='English')
+        spanish = Language(name='Spanish')
+        french = Language(name='French')
+        german = Language(name='German')
+        chinese = Language(name='Chinese')
+        arabic = Language(name='Arabic')
+        hindi = Language(name='Hindi')
+        hungarian = Language(name='Hungarian')
+
+        async with AsyncSession(engine) as session:
+            session.add(admin)
+            session.add(default_admin_user)
+            session.add(user)
+            session.add(male)
+            session.add(female)
+            session.add(other)
+            session.add(christianity)
+            session.add(islam)
+            session.add(hinduism)
+            session.add(buddhism)
+            session.add(judaism)
+            session.add(atheism)
+            session.add(english)
+            session.add(spanish)
+            session.add(french)
+            session.add(german)
+            session.add(chinese)
+            session.add(arabic)
+            session.add(hindi)
+            session.add(hungarian)
+            await session.commit()
+
+    except Exception as err:
+        print(err)
+
+async def reset_db_if_needed():
     async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+
+        if (
+                await conn.run_sync(
+                lambda sync_conn: inspect(sync_conn).has_table("users"))
+        ):
+            return
 
 
-    user = Role(name='user')
-    admin = Role(name='admin')
-
-    # Create default admin
-    default_admin_user = User()
-    default_admin_user.email = 'admin@example.com'
-    default_admin_user.password_hash = default_admin_user.hash_password(SecretStr('Admin2006'))
-    default_admin_user.role_id = 1
-
-    #create demo users
-    #user1 = User()
-    #user1.email = 'ezegyemberneve@gmail.com'
-    #user1.password_hash = user1.hash_password(SecretStr('Admin2006'))
-#
-    #user2 = User()
-    #user2.email = 'demo@example.com'
-    #user2.password_hash = user2.hash_password(SecretStr('Admin2006'))
-
-
-
-    # Create default genders
-    male = Gender(name='Male')
-    female = Gender(name='Female')
-    other = Gender(name='Other')
-
-    # Create default religions
-    christianity = Religion(name='Christianity')
-    islam = Religion(name='Islam')
-    hinduism = Religion(name='Hinduism')
-    buddhism = Religion(name='Buddhism')
-    judaism = Religion(name='Judaism')
-    atheism = Religion(name='Atheism')
-
-    # Create default languages
-    english = Language(name='English')
-    spanish = Language(name='Spanish')
-    french = Language(name='French')
-    german = Language(name='German')
-    chinese = Language(name='Chinese')
-    arabic = Language(name='Arabic')
-    hindi = Language(name='Hindi')
-    hungarian = Language(name='Hungarian')
-
-    async with AsyncSession(engine) as session:
-        session.add(admin)
-        session.add(default_admin_user)
-        session.add(user)
-        session.add(male)
-        session.add(female)
-        session.add(other)
-        session.add(christianity)
-        session.add(islam)
-        session.add(hinduism)
-        session.add(buddhism)
-        session.add(judaism)
-        session.add(atheism)
-        session.add(english)
-        session.add(spanish)
-        session.add(french)
-        session.add(german)
-        session.add(chinese)
-        session.add(arabic)
-        session.add(hindi)
-        session.add(hungarian)
-        await session.commit()
-
-async def reset_db():
-    async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
+
     await create_db_and_tables()

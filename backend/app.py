@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from .persistence import  create_db_and_tables
+from .persistence import reset_db_if_needed
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routes import router as api_router
@@ -12,7 +12,7 @@ from fastapi import FastAPI
 async def lifespan(_app: FastAPI):
     from backend.helpers import create_redis, close_redis
     from backend.background.matchmaking import ensure_matchmaking_index
-    await create_db_and_tables()
+    await reset_db_if_needed()
     try:
         r = await create_redis()
         await ensure_matchmaking_index(r)
