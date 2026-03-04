@@ -136,7 +136,7 @@ async def feedback(
 
     # 1. Verify conversation
 
-    conversation = repo.conversation_repo.get_by_both_user_ids(user.id, req.partner_id)
+    conversation = await repo.conversation_repo.get_by_both_user_ids(user.id, req.partner_id)
 
     if not conversation:
         raise HTTPException(status_code=400, detail="No conversation found between users")
@@ -192,7 +192,7 @@ async def feedback(
 async def get_feedback_profile(partner_id: str, repo: repoDep, user: get_and_auth_current_user):
     # Ensure users have had a conversation
 
-    conversation = repo.conversation_repo.get_by_both_user_ids(user.id, partner_id)
+    conversation = await repo.conversation_repo.get_by_both_user_ids(user.id, partner_id)
 
     if not conversation:
         raise HTTPException(status_code=400, detail="No conversation found between users")
