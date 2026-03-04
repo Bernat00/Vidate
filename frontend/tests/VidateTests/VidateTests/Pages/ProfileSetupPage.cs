@@ -1,26 +1,21 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using VidateTests.Models;
-using OpenQA.Selenium.Support.Extensions;
 
 namespace VidateTests.Pages;
 
 public sealed class ProfileSetupPage
 {
     private readonly IWebDriver driver;
-    private readonly Random r;
 
-    public ProfileSetupPage(IWebDriver driver, Random random)
+    public ProfileSetupPage(IWebDriver driver)
     {
         this.driver = driver;
-        r = random;
     }
 
-    public ProfileSetupCase GenerateRandomProfileCase()
-    {
-        new WebDriverWait(driver, TimeSpan.FromSeconds(10))
-            .Until(d => d.FindElement(By.Id("gender_id")));
 
+    public ProfileSetupCase ResolveProfile(ProfileSetupCase profile)
+    {
         var genderOptions = GetSelectOptions("gender_id");
         var religionOptions = GetSelectOptions("religion_id");
         var smokerOptions = GetSelectOptions("self_is_smoker");
@@ -28,34 +23,33 @@ public sealed class ProfileSetupPage
         var prefWantsChildrenOptions = GetSelectOptions("pref_wants_children");
         var prefSmokerOptions = GetSelectOptions("pref_is_smoker");
 
-        var languages = PickRandomSubset(GetButtonLabelsByFor("language_ids"), 1, 3);
-        var preferredGenders = PickRandomSubset(GetButtonLabelsByFor("preferred_gender_ids"), 1, 2);
-        var preferredReligions = PickRandomSubset(GetButtonLabelsByFor("preferred_religion_ids"), 0, 2);
+        var languageOptions = GetButtonLabelsByFor("language_ids");
+        var preferredGenderOptions = GetButtonLabelsByFor("preferred_gender_ids");
+        var preferredReligionOptions = GetButtonLabelsByFor("preferred_religion_ids");
 
-        int? prefAgeMin = null;
-        int? prefAgeMax = null;
-        if (r.Next(2) == 0)
+        var resolvedGender = EnsureOption(profile.Gender, genderOptions, required: true)!;
+        var resolvedReligion = EnsureOption(profile.Religion, religionOptions, required: false);
+        var resolvedSmoker = EnsureOption(profile.SelfIsSmoker, smokerOptions, required: true)!;
+        var resolvedWantsChildren = EnsureOption(profile.SelfWantsChildren, wantsChildrenOptions, required: false);
+        var resolvedPrefWantsChildren = EnsureOption(profile.PrefWantsChildren, prefWantsChildrenOptions, required: false);
+        var resolvedPrefIsSmoker = EnsureOption(profile.PrefIsSmoker, prefSmokerOptions, required: false);
+
+        var resolvedLanguages = EnsureMulti(profile.Languages, languageOptions, required: true);
+        var resolvedPreferredGenders = EnsureMulti(profile.PreferredGenders, preferredGenderOptions, required: true);
+        var resolvedPreferredReligions = EnsureMulti(profile.PreferredReligions, preferredReligionOptions, required: false);
+
+        return profile with
         {
-            prefAgeMin = r.Next(18, 99);
-            prefAgeMax = r.Next(prefAgeMin.Value + 1, 110);
-        }
-
-        return new ProfileSetupCase(
-            RandomString(6),
-            r.Next(0, 2) == 0 ? null : RandomString(4),
-            RandomString(7),
-            RandomBirthDate(),
-            PickRandom(genderOptions),
-            PickRandomOrNull(religionOptions),
-            PickRandom(smokerOptions),
-            prefAgeMin,
-            prefAgeMax,
-            PickRandomOrNull(wantsChildrenOptions),
-            PickRandomOrNull(prefWantsChildrenOptions),
-            PickRandomOrNull(prefSmokerOptions),
-            languages,
-            preferredGenders,
-            preferredReligions);
+            Gender = resolvedGender,
+            Religion = resolvedReligion,
+            SelfIsSmoker = resolvedSmoker,
+            SelfWantsChildren = resolvedWantsChildren,
+            PrefWantsChildren = resolvedPrefWantsChildren,
+            PrefIsSmoker = resolvedPrefIsSmoker,
+            Languages = resolvedLanguages,
+            PreferredGenders = resolvedPreferredGenders,
+            PreferredReligions = resolvedPreferredReligions
+        };
     }
 
     public void FillProfile(ProfileSetupCase profile)
@@ -174,53 +168,32 @@ public sealed class ProfileSetupPage
             .ToList();
     }
 
-    private string[]? PickRandomSubset(IReadOnlyList<string> options, int min, int max)
+    private static string? EnsureOption(string? desired, IReadOnlyList<string> options, bool required)
     {
-        if (options.Count == 0)
+        if (!string.IsNullOrWhiteSpace(desired))
         {
-            return null;
+            var match = options.FirstOrDefault(option => option.Equals(desired, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(match))
+            {
+                return match;
+            }
         }
 
-        var count = r.Next(min, Math.Min(max, options.Count) + 1);
-        if (count == 0)
+        return required && options.Count > 0 ? options[0] : null;
+    }
+
+    private static string[]? EnsureMulti(IEnumerable<string>? desired, IReadOnlyList<string> options, bool required)
+    {
+        var desiredSet = desired?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var resolved = options.Where(option => desiredSet.Contains(option)).ToList();
+
+        if (resolved.Count == 0 && required && options.Count > 0)
         {
-            return null;
+            resolved.Add(options[0]);
         }
 
-        return options.OrderBy(_ => r.Next()).Take(count).ToArray();
+        return resolved.Count > 0 ? resolved.ToArray() : null;
     }
 
-    private string PickRandom(IReadOnlyList<string> options)
-    {
-        if (options.Count == 0)
-        {
-            throw new InvalidOperationException("No options available for selection.");
-        }
-
-        return options[r.Next(options.Count)];
-    }
-
-    private string? PickRandomOrNull(IReadOnlyList<string> options)
-    {
-        if (options.Count == 0 || r.Next(0, 3) == 0)
-        {
-            return null;
-        }
-
-        return PickRandom(options);
-    }
-
-    private string RandomString(int length)
-    {
-        const string chars = "abcdefghijklmnopqrstuvwxyz";
-        return new string(Enumerable.Range(0, length).Select(_ => chars[r.Next(chars.Length)]).ToArray());
-    }
-
-    private string RandomBirthDate()
-    {
-        var year = r.Next(1980, 2005);
-        var month = r.Next(1, 13);
-        var day = r.Next(1, DateTime.DaysInMonth(year, month) + 1);
-        return new DateTime(year, month, day).ToString("yyyy-MM-dd");
-    }
+    
 }

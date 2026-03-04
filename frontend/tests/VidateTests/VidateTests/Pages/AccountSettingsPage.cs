@@ -67,6 +67,8 @@ public sealed class AccountSettingsPage
 
     public void Logout()
     {
+        Thread.Sleep(1000);
         driver.FindElement(By.XPath("//button[contains(.,'Log out')]")).Click();
+
     }
 }
