@@ -1,4 +1,7 @@
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.persistence.model.conversation import Conversation
 
 
 async def _register_and_login(client, email: str, password: str):
@@ -59,6 +62,12 @@ async def _create_conversation_via_match(client, token1: str, token2: str, user2
     await client.post(f"/api/matches/match?userid={user1_id}", headers=headers2)
 
 
+async def _create_conversation_record(persistence, user1_id: str, user2_id: str):
+    async with AsyncSession(persistence.engine) as session:
+        session.add(Conversation(user1_id=user1_id, user2_id=user2_id))
+        await session.commit()
+
+
 @pytest.mark.asyncio
 async def test_match_create_list_and_delete(client):
     token1, user1_id = await _register_and_login(client, "match1@example.com", "Password1")
@@ -96,15 +105,17 @@ async def test_match_create_list_and_delete(client):
 
 
 @pytest.mark.asyncio
-async def test_match_feedback_flow(client):
+async def test_match_feedback_flow(client, persistence):
     token1, user1_id = await _register_and_login(client, "feedback1@example.com", "Password1")
     token2, user2_id = await _register_and_login(client, "feedback2@example.com", "Password1")
 
     await _create_profile(client, token1, "Sam")
     await _create_profile(client, token2, "Jordan")
 
-    # Create a confirmed match between the two users (which also creates conversation)
+    # Keep a confirmed match for realistic state.
     await _create_conversation_via_match(client, token1, token2, user2_id, user1_id)
+    # Feedback endpoint requires an explicit conversation record.
+    await _create_conversation_record(persistence, user1_id, user2_id)
 
     headers1 = {"Authorization": f"Bearer {token1}"}
     headers2 = {"Authorization": f"Bearer {token2}"}
@@ -126,5 +137,44 @@ async def test_match_feedback_flow(client):
     assert res.json()["status"] == "already_matched"
 
 
+@pytest.mark.asyncio
+async def test_match_profile_events_and_feedback_profile(client, persistence):
+    token1, user1_id = await _register_and_login(client, "readmatch1@example.com", "Password1")
+    token2, user2_id = await _register_and_login(client, "readmatch2@example.com", "Password1")
+    token3, _ = await _register_and_login(client, "outsider@example.com", "Password1")
 
+    await _create_profile(client, token1, "Robin")
+    partner_profile = await _create_profile(client, token2, "Casey")
 
+    headers1 = {"Authorization": f"Bearer {token1}"}
+    headers2 = {"Authorization": f"Bearer {token2}"}
+    headers3 = {"Authorization": f"Bearer {token3}"}
+
+    await client.post(f"/api/matches/match?userid={user2_id}", headers=headers1)
+    confirm_res = await client.post(f"/api/matches/match?userid={user1_id}", headers=headers2)
+    assert confirm_res.status_code == 200
+    match_id = confirm_res.json()["id"]
+
+    profile_res = await client.get(f"/api/matches/match-profile/{user2_id}", headers=headers1)
+    assert profile_res.status_code == 200
+    assert profile_res.json()["match_id"] == match_id
+    assert profile_res.json()["profile"]["user_id"] == user2_id
+
+    events_res = await client.get(f"/api/matches/{match_id}/events", headers=headers1)
+    assert events_res.status_code == 200
+    assert isinstance(events_res.json(), list)
+
+    outsider_events = await client.get(f"/api/matches/{match_id}/events", headers=headers3)
+    assert outsider_events.status_code == 403
+
+    await _create_conversation_record(persistence, user1_id, user2_id)
+
+    feedback_profile_res = await client.get(f"/api/matches/feedback-profile/{user2_id}", headers=headers1)
+    assert feedback_profile_res.status_code == 200
+    assert feedback_profile_res.json()["user_id"] == partner_profile["user_id"]
+
+    feedback_profile_without_conversation = await client.get(
+        f"/api/matches/feedback-profile/{user2_id}",
+        headers=headers3,
+    )
+    assert feedback_profile_without_conversation.status_code == 400
