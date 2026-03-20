@@ -1,31 +1,25 @@
 # Testing Gaps and Coverage Status
 
-Last updated: 2026-03-13
+Last updated: 2026-03-20
 
-## What Was Outdated
+## What Changed In This Update
 
-The previous version of this document listed several endpoints as untested that are now covered in the test suite.
-
-Now covered by tests:
-- `POST /api/matches/match`
-- `DELETE /api/matches/match`
-- `GET /api/matches/mine`
-- `POST /api/matches/feedback`
-- `GET /api/matches/{match_id}/events`
-- `GET /api/matches/feedback-profile/{partner_id}`
-- `GET /api/users`
-- `GET /api/users/reports/{user_id}`
-- `POST /api/users/send-reset-email`
-- `POST /api/users/reset-password`
-- `POST /api/auth/register-admin`
-- `GET /api/auth/register-admin-token`
+- Endpoint tests were moved under `backend/tests/integration/`.
+- New unit tests were added under `backend/tests/unit/` for:
+  - auth token helpers (`create_access_token`, `decode_token`, `get_token`)
+  - schema validation (`UserCreate`, `PreferenceCreate`)
+  - helper field copy logic (`copy_non_none_fields`)
+  - password hashing/checking on `User`
+- Current local run status:
+  - `tests/unit`: 13 passed
+  - `tests/integration`: 30 passed
 
 ## Remaining High-Value Gaps
 
 ### 1) WebSocket realtime endpoint
 - `WS /ws/main`
 - Why it still matters: this is a core realtime surface (matchmaking, signaling, chat relay).
-- Current blocker: the test redis double in `backend/tests/conftest.py` does not yet implement pubsub and sorted-set operations used by the websocket flow.
+- Current blocker: the test redis double in `backend/tests/integration/conftest.py` does not yet implement pubsub and sorted-set operations used by websocket flow.
 
 ### 2) Match events depth tests
 - `GET /api/matches/{match_id}/events` currently has basic access/path coverage.
@@ -46,12 +40,12 @@ Now covered by tests:
 
 ## Suggested Next Steps (priority order)
 
-1. Add a lightweight websocket smoke test by extending `DummyRedis` in `backend/tests/conftest.py` with minimal pubsub and sorted-set support.
-2. Add pagination assertions in `backend/tests/test_matches.py` for `last_id`.
-3. Add admin-token negative tests in `backend/tests/test_auth_errors.py`.
-4. Add in-use delete protection tests in `backend/tests/test_lookup_tables.py`.
+1. Add a lightweight websocket smoke test by extending `DummyRedis` in `backend/tests/integration/conftest.py` with minimal pubsub and sorted-set support.
+2. Add pagination assertions in `backend/tests/integration/test_matches.py` for `last_id`.
+3. Add admin-token negative tests in `backend/tests/integration/test_auth_errors.py`.
+4. Add in-use delete protection tests in `backend/tests/integration/test_lookup_tables.py`.
 
 ## Notes
 
-- Endpoint paths in this file now match current route declarations.
+- Endpoint paths in this file match current route declarations.
 - This file tracks meaningful functional gaps, not every possible branch combination.
