@@ -12,29 +12,33 @@ skinparam actor {
 /' Actors '/
 actor "Visitor\n(Unregistered)" as Visitor
 actor "Registered User" as User
+actor "Admin" as Admin
 actor "Email Service" as EmailService
 
 /' Layer 1: Authentication & Account Management '/
 package "Authentication & Account Management" {
-  usecase "Register (email + password)" as UC_Register
-  usecase "Confirm Email" as UC_ConfirmEmail
-  usecase "Login (email + password)" as UC_Login
-  usecase "Stay Logged In" as UC_StayLoggedIn
-  usecase "Reset Password" as UC_ResetPassword
-  usecase "Send Email" as UC_SendEmail
+  usecase "Register\n(email + password)" as UC_Register
+  usecase "Login\n(email + password)" as UC_Login
+  usecase "Request Password Reset" as UC_RequestReset
+  usecase "Reset Password\n(one-time token)" as UC_ResetPassword
+  usecase "Generate Admin\nRegistration Token" as UC_AdminToken
+  usecase "Register Admin\n(with one-time token)" as UC_RegisterAdmin
+  usecase "Send Reset Email" as UC_SendEmail
 
-  UC_Register .> UC_ConfirmEmail : <<include>>
-  UC_Register .> UC_SendEmail : <<include>>
-  UC_ResetPassword .> UC_SendEmail : <<include>>
+  UC_RequestReset .> UC_SendEmail : <<include>>
+  UC_RegisterAdmin .> UC_AdminToken : <<include>>
 }
 
 Visitor --> UC_Register
 Visitor --> UC_Login
+Visitor --> UC_RequestReset
 Visitor --> UC_ResetPassword
 
 User --> UC_Login
-User --> UC_StayLoggedIn
+User --> UC_RequestReset
 User --> UC_ResetPassword
 
+Admin --> UC_AdminToken
+Admin --> UC_RegisterAdmin
 EmailService --> UC_SendEmail
 @enduml

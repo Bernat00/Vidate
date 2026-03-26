@@ -11,22 +11,23 @@ skinparam actor {
 
 /' Actors '/
 actor "Registered User" as User
-actor "Moderator" as Moderator
+actor "Admin" as Admin
 
 /' Layer 5: Safety & Moderation '/
 package "Safety & Moderation" {
-  usecase "Report User\n(during chat/call)" as UC_Report
-  usecase "Block User" as UC_Block
-  usecase "Review Reports" as UC_ReviewReports
-  usecase "Warn / Suspend / Ban User" as UC_ModerationActions
+  usecase "Report User" as UC_Report
+  usecase "Exclude Reported Users\nfrom feed matching" as UC_Exclude
+  usecase "List Reports" as UC_ListReports
+  usecase "Review Reports for User" as UC_ReviewUserReports
+  usecase "Ban / Unban User" as UC_BanToggle
 
-  UC_Report .> UC_ReviewReports : <<include>>
-  UC_ReviewReports .> UC_ModerationActions : <<include>>
+  UC_Report .> UC_Exclude : <<include>>
+  UC_ListReports .> UC_ReviewUserReports : <<include>>
+  UC_ReviewUserReports .> UC_BanToggle : <<include>>
 }
 
 User --> UC_Report
-User --> UC_Block
-
-Moderator --> UC_ReviewReports
-Moderator --> UC_ModerationActions
+Admin --> UC_ListReports
+Admin --> UC_ReviewUserReports
+Admin --> UC_BanToggle
 @enduml

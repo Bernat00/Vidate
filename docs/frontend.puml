@@ -1,126 +1,144 @@
 ﻿@startuml
 
+skinparam packageStyle rectangle
+
 ' ============================
 ' 1. App Shell + Routing
 ' ============================
 
-class App {
+class App <<entrypoint>> {
   +render(): ReactElement
-  -wrapProviders(): JSX
+  +provider order: Toast -> Auth -> WebSocket -> Matches
 }
 
-class ProtectedRoute {
+class ProtectedRoute <<guard>> {
   +children: ReactNode
-  +enforceAuth(): JSX
-  +enforceRoleAndOnboarding(): JSX
+  +rules: auth, role redirect, onboarding redirect
 }
 
-class PublicOnlyRoute {
+class PublicOnlyRoute <<guard>> {
   +children: ReactNode
-  +redirectIfAuthenticated(): JSX
+  +rules: redirect authenticated users
 }
 
 class ProtectedLayout {
   -isKeyboardOpen: bool
   -isAppPage: bool
-  +render(): JSX
-}
-
-class LandingPage
-class LoginPage
-class RegisterPage
-class SetupProfilePage
-class HomePage
-class MyMatchesPage
-class MatchProfilePage
-class ProfilePage
-class ForgotPasswordPage
-class ResetPasswordPage
-class AdminDashboardPage <<admin>>
-
-App --> LandingPage : "/"
-App --> LoginPage : "/login"
-App --> RegisterPage : "/register"
-App --> ForgotPasswordPage : "/forgot-password"
-App --> ResetPasswordPage : "/reset-password"
-App --> SetupProfilePage : "/setup-profile"
-App --> HomePage : "/home"
-App --> MyMatchesPage : "/my-matches"
-App --> MatchProfilePage : "/my-matches/profile/:userId"
-App --> ProfilePage : "/profile"
-App --> AdminDashboardPage : "/admin" (admin)
-
-App --> ProtectedRoute
-App --> PublicOnlyRoute
-ProtectedRoute --> ProtectedLayout
-
-
-' ============================
-' 2. Context Contracts
-' ============================
-
-class AuthContext {
-  +user: UserMe?
-  +loading: bool
-  +refresh(): Promise<void>
-}
-
-class MatchesContext {
-  +matches: MatchItem[]
-  +loading: bool
-  +refreshMatches(): Promise<void>
-}
-
-class ToastContext {
-  +showToast(message: str, status?: ToastStatus): void
-}
-
-class WebSocketContext {
-  +subscribe(type: str, handler): unsubscribe
-  +send(message: WebSocketMessage): void
-  -connect(): void
-}
-
-App *-- ToastContext
-App *-- AuthContext
-App *-- WebSocketContext
-App *-- MatchesContext
-ProtectedRoute ..> AuthContext
-PublicOnlyRoute ..> AuthContext
-
-
-' ============================
-' 3. Integration Boundaries
-' ============================
-
-class ApiClient {
-  +baseURL: str
-  +requestAuthInterceptor(): config
-  +responseAuthInterceptor(): response
-}
-
-class NotificationListener {
-  +listenMatchConfirmed(): void
-  +listenBanEvent(): void
+  +renders: GradientPage + Navbar + Outlet
 }
 
 class MatchesLayout
-class MessageList
-
-AuthContext ..> ApiClient : GET /users/me
-MatchesContext ..> ApiClient : GET /matches/mine
-WebSocketContext ..> ApiClient : token source
-App *-- NotificationListener
-MatchesLayout *-- MessageList
+class NotificationListener
 
 
 ' ============================
-' 4. Component Folders (names only)
+' 2. Route Targets
+' ============================
+
+class LandingPage
+class Login
+class Register
+class ForgotPassword
+class ResetPassword
+class SetupProfile
+class Home
+class MyMatches
+class MatchProfile
+class ProfilePage
+class AdminDashboard <<admin>>
+
+App --> LandingPage : "/"
+App --> Login : "/login"
+App --> Register : "/register"
+App --> ForgotPassword : "/forgot-password"
+App --> ResetPassword : "/reset-password"
+App --> SetupProfile : "/setup-profile"
+App --> Home : "/home"
+App --> MyMatches : "/my-matches"
+App --> MatchProfile : "/my-matches/profile/:userId"
+App --> ProfilePage : "/profile"
+App --> AdminDashboard : "/admin" (admin)
+
+App --> PublicOnlyRoute
+App --> ProtectedRoute
+ProtectedRoute --> ProtectedLayout
+ProtectedLayout --> MatchesLayout
+App *-- NotificationListener
+
+
+' ============================
+' 3. Context Contracts
+' ============================
+
+package "Context Providers" {
+  class AuthProvider {
+    +user: UserMe?
+    +loading: bool
+    +refresh(): Promise<void>
+  }
+
+  class MatchesProvider {
+    +matches: MatchItem[]
+    +loading: bool
+    +refreshMatches(): Promise<void>
+  }
+
+  class ToastProvider {
+    +showToast(message: str, status?: ToastStatus): void
+  }
+
+  class WebSocketProvider {
+    +subscribe(type: str, handler): unsubscribe
+    +send(message: WebSocketMessage): void
+    -connect()/reconnect()
+  }
+}
+
+App *-- ToastProvider
+App *-- AuthProvider
+App *-- WebSocketProvider
+App *-- MatchesProvider
+ProtectedRoute ..> AuthProvider
+PublicOnlyRoute ..> AuthProvider
+MatchesProvider ..> AuthProvider
+NotificationListener ..> WebSocketProvider
+
+
+' ============================
+' 4. Integration Boundaries
+' ============================
+
+package "Integrations" {
+  class "api (frontend/src/api.ts)" as api <<integration>> {
+    +baseURL = window.origin + /api
+    +request interceptor: Bearer token
+    +response interceptor: 401/403 handling
+  }
+
+  class "getWsUrl/wsUrl (webSocketContext.tsx)" as ws_url <<integration>> {
+    +url: /ws/main?token=...
+    +events: match_found, match_confirmed, chat_message, offer/answer/ice/end_call
+    +keepalive: ping
+  }
+}
+
+AuthProvider ..> api : GET /users/me
+MatchesProvider ..> api : GET /matches/mine
+WebSocketProvider ..> ws_url
+WebSocketProvider ..> api : token source
+
+
+' ============================
+' 5. Component Taxonomy
 ' ============================
 
 package auth {
   class AuthCardLayout
   class AuthHeader
+}
+
+package chat {
+  class MessageList
 }
 
 package common {
@@ -151,13 +169,13 @@ package landing {
 }
 
 package layout {
-  class DashboardLayout
-  class ChatColumn
-  class MobileTopBar
-  class SidebarOverlay
-  class Section
-  class GradientPage
   class CenteredLoader
+  class ChatColumn
+  class DashboardLayout
+  class GradientPage
+  class MobileTopBar
+  class Section
+  class SidebarOverlay
 }
 
 package profile {
@@ -170,11 +188,16 @@ package shared {
   class DateField
   class MessageBubble
   class Navbar
-  class Sidebar
+  class PermissionRequest
   class SelectField
+  class Sidebar
   class TextField
   class Toast
-  class PermissionRequest
 }
+
+LandingPage *-- Hero
+LandingPage *-- DeviceMockup
+LandingPage *-- FeatureButton
+MyMatches *-- MessageList
 
 @enduml

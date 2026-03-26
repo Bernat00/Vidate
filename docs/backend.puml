@@ -1,157 +1,279 @@
 @startuml
 
-' ============================
-' 1. Enumerations / Simple Types
-' ============================
-
-enum RoleName {
-  ADMIN
-  USER
-  MODERATOR
-}
-
-enum ChatEventType {
-  MESSAGE
-  CALL
-  VIDEOCALL
-}
+skinparam packageStyle rectangle
 
 ' ============================
-' 2. Core User & Auth
+' 1. App Composition
 ' ============================
 
-class Role {
-  +id: int
-  +name: RoleName
+package "App" {
+  class "app (backend/app.py)" as app <<entrypoint>> {
+    +include_router(api_router)
+    +include_router(realtime_router)
+    +lifespan(): reset_db_if_needed + create_redis + ensure_matchmaking_index
+  }
+
+  class "router (backend/routes/__init__.py)" as api_router <<router>> {
+    +prefix: /api
+  }
+
+  class "router (backend/routes/realtime/endpoints.py)" as realtime_router <<router>> {
+    +prefix: /ws
+  }
 }
 
-class User {
-  +id: int
-  +role_id: int
-  +email: str
-  +password_hash: str
-  +last_login_at: datetime
-  +created_at: datetime
-  +email_verified: bool
-  +is_enabled: bool
+
+' ============================
+' 2. HTTP Routes
+' ============================
+
+package "HTTP Routes" {
+  class "router (backend/routes/auth.py)" as auth_router <<route>> {
+    +POST /api/auth/register
+    +POST /api/auth/register-admin <<admin>>
+    +POST /api/auth/token
+    +GET /api/auth/register-admin-token <<admin>>
+  }
+
+  class "router (backend/routes/user.py)" as user_router <<route>> {
+    +GET /api/users/me
+    +PATCH /api/users/me
+    +GET /api/users <<admin>>
+    +POST /api/users/report
+    +POST /api/users/ban <<admin>>
+    +GET /api/users/reports <<admin>>
+    +GET /api/users/reports/{user_id} <<admin>>
+    +GET /api/users/reported-summary <<admin>>
+    +POST /api/users/send-reset-email
+    +POST /api/users/reset-password
+  }
+
+  class "router (backend/routes/profile.py)" as profile_router <<route>> {
+    +GET /api/profile/mine
+    +PUT /api/profile/mine
+    +GET /api/profile/languages
+    +POST /api/profile/languages <<admin>>
+    +PUT /api/profile/languages <<admin>>
+    +DELETE /api/profile/languages <<admin>>
+    +GET /api/profile/religions
+    +POST /api/profile/religions <<admin>>
+    +PUT /api/profile/religions <<admin>>
+    +DELETE /api/profile/religions <<admin>>
+    +GET /api/profile/genders
+    +POST /api/profile/genders <<admin>>
+    +DELETE /api/profile/genders <<admin>>
+  }
+
+  class "router (backend/routes/preferences.py)" as preferences_router <<route>> {
+    +GET /api/preferences
+    +PUT /api/preferences
+  }
+
+  class "router (backend/routes/matches.py)" as matches_router <<route>> {
+    +GET /api/matches/mine
+    +GET /api/matches/match-profile/{partner_id}
+    +POST /api/matches/match
+    +DELETE /api/matches/match
+    +GET /api/matches/{match_id}/events
+    +POST /api/matches/feedback
+    +GET /api/matches/feedback-profile/{partner_id}
+  }
 }
+
+
+' ============================
+' 3. Realtime + Services
+' ============================
+
+package "Realtime + Services" {
+  class CurrentUserCheckerDependency <<auth>> {
+    +get_token(header|query)
+    +decode_token(jwt)
+    +check_role(optional)
+  }
+
+  class "auth.py token helpers" as auth_helpers <<service>> {
+    +create_access_token(data, expires)
+    +create_one_time_access_token(data, expires)
+    +use_one_time_access_token(token)
+  }
+
+  class "ws_endpoint + ws_to_redis_reader + redis_to_ws_writer" as realtime_endpoints <<gateway>> {
+    +WS /ws/main?token=...
+    +redis_to_ws_writer()
+    +ws_to_redis_reader()
+    +message types: joined_feed,left_feed,offer,answer,ice_candidate,end_call,chat_message,ping
+  }
+
+  class MatchmakingService <<service>> {
+    +ensure_matchmaking_index(redis)
+    +attempt_match_for_user(redis, user_id, repo)
+    -_build_candidates()
+    -_try_claim_pair()
+  }
+}
+
+
+' ============================
+' 4. Persistence
+' ============================
+
+package "Repository Facade" {
+  class Repo <<repo>> {
+    +user_repo
+    +role_repo
+    +profile_repo
+    +preference_repo
+    +match_repo
+    +conversation_repo
+    +chat_event_repo
+    +report_repo
+    +gender_repo/language_repo/religion_repo
+    +save(model)
+    +delete(model)
+  }
+
+  class MatchRepo <<repo>> {
+    +get_by_user_id(user_id)
+    +get_by_both_user_ids(id1,id2)
+    +match(me,to_match)
+  }
+
+  class ProfileRepo <<repo>> {
+    +get_matched_profiles(user_id)
+    +get_matched_profile(user_id,partner_id)
+  }
+
+  class ChatEventRepo <<repo>> {
+    +save(chat_event)
+    +get_paginated_by_match_id(match_id,last_id,limit)
+  }
+}
+
+
+' ============================
+' 5. Domain Entities
+' ============================
+
+package "Domain (SQLModel)" {
+  class Role {
+    +id: int
+    +name: str
+  }
+
+  class User {
+    +id: str
+    +role_id: int
+    +email: str
+    +password_hash: str
+    +disabled: bool
+    +is_onboarded: bool
+  }
+
+  class Profile {
+    +user_id: str
+    +gender_id: int
+    +religion_id: int?
+    +first_name: str
+    +middle_name: str?
+    +last_name: str
+    +birth_date: datetime
+  }
+
+  class Preference {
+    +user_id: str
+    +age_min: int?
+    +age_max: int?
+    +is_smoker: bool?
+    +wants_children: bool?
+  }
+
+  class Match {
+    +id: int
+    +user1_id: str
+    +user2_id: str
+    +timestamp: datetime
+    +confirmed: bool
+  }
+
+  class Conversation {
+    +id: int
+    +user1_id: str
+    +user2_id: str
+    +timestamp: datetime
+  }
+
+  class ChatEvent {
+    +id: int
+    +type: str
+    +match_id: int
+    +originator_id: str
+    +recipient_id: str
+    +content: str?
+    +end_time: datetime?
+  }
+
+  class Report {
+    +id: int
+    +reporter_id: str
+    +user_id: str
+    +reason: str
+  }
+}
+
+
+' ============================
+' 6. Infrastructure
+' ============================
+
+class Redis <<infra>>
+class SQLDatabase <<infra>>
+class SMTP <<infra>>
+
+
+' ============================
+' 7. Dependencies
+' ============================
+
+app --> api_router
+app --> realtime_router
+api_router --> auth_router
+api_router --> user_router
+api_router --> profile_router
+api_router --> preferences_router
+api_router --> matches_router
+realtime_router --> realtime_endpoints
+
+auth_router --> auth_helpers
+auth_router --> CurrentUserCheckerDependency
+user_router --> auth_helpers
+user_router --> CurrentUserCheckerDependency
+realtime_endpoints --> CurrentUserCheckerDependency
+
+auth_router --> Repo
+user_router --> Repo
+profile_router --> Repo
+preferences_router --> Repo
+matches_router --> Repo
+realtime_endpoints --> Repo
+
+realtime_endpoints --> Redis
+MatchmakingService --> Redis
+realtime_endpoints --> MatchmakingService
+user_router --> SMTP
+Repo --> SQLDatabase
+
+Repo --> MatchRepo
+Repo --> ProfileRepo
+Repo --> ChatEventRepo
 
 Role "1" <-- "0..*" User : role
-
-
-' ============================
-' 3. Profile, Preferences, Taxonomy
-' ============================
-
-class Language {
-  +id: int
-  +name: str
-}
-
-class Religion {
-  +id: int
-  +name: str
-}
-
-class Profile {
-  +id: int
-  +user_id: int
-  +gender_id: int
-  +religion_id: int
-  +first_name: str
-  +last_name: str
-  +birth_date: date
-  +location: str
-  +avatar_url: str
-  +is_smoker: bool
-  +wants_children: bool
-}
-
-class Preference {
-  +id: int
-  +user_id: int
-  +min_age: int
-  +max_age: int
-  +preferred_is_smoker: bool
-  +preferred_wants_children: bool
-}
-
-User "1" <-- "1" Profile : profile
+User "1" <-- "0..1" Profile : profile
 User "1" <-- "0..1" Preference : preference
-Religion "1" <-- "0..*" Profile : religion
-' (Gender and Language relations can be added when those tables are defined)
-
-
-' ============================
-' 4. Matching & Discovery
-' ============================
-
-class Match {
-  +id: int
-  +user1_id: int
-  +user2_id: int
-  +timestamp: datetime
-  +confirmed: bool
-}
-
-class VideoFeed {
-  +id: int
-  +User1Id
-  +User2Id
-  +timestamp: datetime
-}
-
-User "1" <-- "0..*" Match : as user1
-User "1" <-- "0..*" Match : as user2
-User "1" <-- "0..*" VideoFeed : viewer
-User "1" <-- "0..*" VideoFeed : viewed
-
-
-' ============================
-' 5. Chat, Messages, Calls
-' ============================
-
-class ChatEvent {
-  +id: int
-  +originator_id: int
-  +recipient_id: int
-  +timestamp: datetime
-  +type: ChatEventType
-}
-
-class Message {
-  +id: int
-  +chat_event_id: int
-  +content: str
-  +is_received: bool
-}
-
-class Call {
-  +id: int
-  +chat_event_id: int
-  +ended_at: datetime
-}
-
-User "1" <-- "0..*" ChatEvent : originator
-User "1" <-- "0..*" ChatEvent : recipient
-ChatEvent "1" <-- "0..1" Message
-ChatEvent "1" <-- "0..1" Call
-
-
-' ============================
-' 6. Moderation / Reports
-' ============================
-
-class Report {
-  +id: int
-  +reporter_id: int     ' ReporteeId (who filed)
-  +suspect_id: int      ' who was reported
-  +reason: str
-  +created_at: datetime
-}
-
-User "1" <-- "0..*" Report : reports_filed
-User "1" <-- "0..*" Report : reports_against
-
+User "1" <-- "0..*" Match : as user1/user2
+User "1" <-- "0..*" Conversation : participant
+Match "1" <-- "0..*" ChatEvent : events
+User "1" <-- "0..*" ChatEvent : originator/recipient
+User "1" <-- "0..*" Report : reporter/reported
 
 @enduml

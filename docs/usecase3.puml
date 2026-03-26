@@ -13,29 +13,25 @@ skinparam actor {
 actor "Registered User" as User
 
 /' Layer 3: Video Dating & Matchmaking '/
-package "Video Dating & Matchmaking" {
-  usecase "Enter Match Queue" as UC_EnterQueue
-  usecase "Matchmaking\n(gender-based, MVP)" as UC_Matchmaking
-  usecase "Wait for Partner" as UC_NoPartner
-  usecase "Start Video Date\n(max 2 min)" as UC_StartVideo
-  usecase "End Call Early\n(scroll to next)" as UC_EarlyEnd
-  usecase "Decide: Like / Dislike" as UC_Decide
-  usecase "View Basic Info During Call\n(name, age, distance)" as UC_ViewBasicDuringCall
+package "Realtime Dating & Matchmaking" {
+  usecase "Join Feed Queue\n(joined_feed)" as UC_JoinFeed
+  usecase "Leave Feed Queue\n(left_feed)" as UC_LeaveFeed
+  usecase "Receive Pairing" as UC_ReceivePairing
+  usecase "Exchange WebRTC Signals\n(offer/answer/ice_candidate/end_call)" as UC_Signal
+  usecase "Start/End Video Date" as UC_VideoDate
+  usecase "Submit Feedback\n(like/dislike)" as UC_Feedback
 
-  UC_EnterQueue .> UC_Matchmaking : <<include>>
-  UC_Matchmaking .> UC_NoPartner : <<extend>>  : "no partner available"
-  UC_Matchmaking .> UC_StartVideo : <<include>> : "when paired"
-  UC_StartVideo .> UC_ViewBasicDuringCall : <<include>>
-  UC_StartVideo .> UC_Decide : <<include>> : "at end"
-  UC_StartVideo .> UC_EarlyEnd : <<extend>> : "user scrolls/ends early"
-  UC_EarlyEnd .> UC_Decide : <<include>>
+  UC_JoinFeed .> UC_ReceivePairing : <<include>>
+  UC_ReceivePairing .> UC_Signal : <<include>>
+  UC_Signal .> UC_VideoDate : <<include>>
+  UC_VideoDate .> UC_Feedback : <<include>>
 }
 
-User --> UC_EnterQueue
-User --> UC_EarlyEnd
-User --> UC_Decide
+User --> UC_JoinFeed
+User --> UC_LeaveFeed
+User --> UC_Feedback
 
-note bottom of UC_StartVideo
+note bottom of UC_VideoDate
   **Video Call Features:**
   - Vertical video stream
   - Maximum 2 minutes duration

@@ -5,6 +5,16 @@ info:
   version: 1.0.0
   description: >
     REST API for the Vidate backend. WebSocket signaling uses /ws/main.
+    Admin-only operations are marked with x-admin-only: true.
+
+tags:
+  - name: auth
+  - name: user
+  - name: profile
+  - name: preferences
+  - name: matches
+  - name: realtime
+  - name: admin
 
 components:
   securitySchemes:
@@ -228,6 +238,27 @@ components:
         name:
           type: string
 
+    LanguageCreate:
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+
+    ReligionCreate:
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+
+    GenderCreate:
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+
     ProfileRead:
       type: object
       properties:
@@ -424,6 +455,55 @@ components:
           format: date-time
           nullable: true
 
+    WebSocketEnvelope:
+      type: object
+      properties:
+        type:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+      required: [type, payload]
+
+    WSJoinedFeedPayload:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: float
+        lon:
+          type: number
+          format: float
+
+    WSChatMessagePayload:
+      type: object
+      properties:
+        match_id:
+          type: integer
+        recipient_id:
+          type: string
+        content:
+          type: string
+      required: [match_id, recipient_id]
+
+    WSPeerSignalPayload:
+      type: object
+      properties:
+        peer_id:
+          type: string
+      required: [peer_id]
+
+    WSMatchConfirmedPayload:
+      type: object
+      properties:
+        peer_id:
+          type: string
+        peer_name:
+          type: string
+        match_id:
+          type: integer
+      required: [peer_id, peer_name, match_id]
+
 paths:
   /api/auth/register:
     post:
@@ -448,7 +528,8 @@ paths:
   /api/auth/register-admin:
     post:
       summary: Register a new admin user
-      tags: [auth]
+      tags: [auth, admin]
+      x-admin-only: true
       parameters:
         - name: token
           in: query
@@ -506,7 +587,8 @@ paths:
   /api/auth/register-admin-token:
     get:
       summary: Generate one-time admin registration token
-      tags: [auth]
+      tags: [auth, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       responses:
@@ -570,7 +652,8 @@ paths:
   /api/users:
     get:
       summary: List all users
-      tags: [user]
+      tags: [user, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       responses:
@@ -620,7 +703,8 @@ paths:
   /api/users/ban:
     post:
       summary: Set user ban status
-      tags: [user]
+      tags: [user, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       requestBody:
@@ -648,7 +732,8 @@ paths:
   /api/users/reports:
     get:
       summary: Get all reports
-      tags: [user]
+      tags: [user, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       responses:
@@ -670,7 +755,8 @@ paths:
   /api/users/reports/{user_id}:
     get:
       summary: Get reports for a user
-      tags: [user]
+      tags: [user, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       parameters:
@@ -698,7 +784,8 @@ paths:
   /api/users/reported-summary:
     get:
       summary: Get reported users summary
-      tags: [user]
+      tags: [user, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       parameters:
@@ -846,7 +933,8 @@ paths:
                   $ref: "#/components/schemas/Language"
     post:
       summary: Create a new language
-      tags: [profile]
+      tags: [profile, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       requestBody:
@@ -854,7 +942,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Language"
+              $ref: "#/components/schemas/LanguageCreate"
       responses:
         "200":
           description: Language created
@@ -864,7 +952,8 @@ paths:
                 $ref: "#/components/schemas/Language"
     delete:
       summary: Delete a language
-      tags: [profile]
+      tags: [profile, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       parameters:
@@ -876,6 +965,12 @@ paths:
       responses:
         "200":
           description: Deleted
+        "400":
+          description: Cannot delete language while referenced by profiles/preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Language not found
           content:
@@ -884,7 +979,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     put:
       summary: Update a language
-      tags: [profile]
+      tags: [profile, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       parameters:
@@ -898,7 +994,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Language"
+              $ref: "#/components/schemas/LanguageCreate"
       responses:
         "200":
           description: Language updated
@@ -924,7 +1020,8 @@ paths:
                   $ref: "#/components/schemas/Religion"
     post:
       summary: Create a new religion
-      tags: [profile]
+      tags: [profile, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       requestBody:
@@ -932,7 +1029,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Religion"
+              $ref: "#/components/schemas/ReligionCreate"
       responses:
         "200":
           description: Religion created
@@ -942,7 +1039,8 @@ paths:
                 $ref: "#/components/schemas/Religion"
     delete:
       summary: Delete a religion
-      tags: [profile]
+      tags: [profile, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       parameters:
@@ -954,6 +1052,12 @@ paths:
       responses:
         "200":
           description: Deleted
+        "400":
+          description: Cannot delete religion while referenced by profiles/preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Religion not found
           content:
@@ -962,7 +1066,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     put:
       summary: Update a religion
-      tags: [profile]
+      tags: [profile, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       parameters:
@@ -976,7 +1081,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Religion"
+              $ref: "#/components/schemas/ReligionCreate"
       responses:
         "200":
           description: Religion updated
@@ -1002,7 +1107,8 @@ paths:
                   $ref: "#/components/schemas/Gender"
     post:
       summary: Create a new gender
-      tags: [profile]
+      tags: [profile, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       requestBody:
@@ -1010,7 +1116,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Gender"
+              $ref: "#/components/schemas/GenderCreate"
       responses:
         "200":
           description: Gender created
@@ -1020,7 +1126,8 @@ paths:
                 $ref: "#/components/schemas/Gender"
     delete:
       summary: Delete a gender
-      tags: [profile]
+      tags: [profile, admin]
+      x-admin-only: true
       security:
         - bearerAuth: []
       parameters:
@@ -1032,6 +1139,12 @@ paths:
       responses:
         "200":
           description: Deleted
+        "400":
+          description: Cannot delete gender while referenced by profiles/preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Gender not found
           content:
@@ -1252,27 +1365,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/test:
-    get:
-      summary: Test endpoint
-      tags: [test]
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Success
-
-  /api/test/2:
-    get:
-      summary: Test endpoint 2
-      tags: [test]
-      responses:
-        "200":
-          description: Returns chat events
-
   /ws/main:
     get:
       summary: WebSocket endpoint
+      description: |
+        WebSocket endpoint for realtime communication including feed queueing, chat, and WebRTC signaling.
+        
+        **Client->Server message types:**
+        - `joined_feed` with payload schema `WSJoinedFeedPayload`
+        - `left_feed` with empty payload `{}`
+        - `chat_message` with payload schema `WSChatMessagePayload`
+        - `offer`, `answer`, `ice_candidate`, `end_call` with payload schema `WSPeerSignalPayload` plus WebRTC fields
+        - `ping` with empty payload `{}`
+        
+        **Server->Client message types:**
+        - `chat_message` where payload follows `ChatEventOut`
+        - `offer`, `answer`, `ice_candidate`, `end_call` proxied to target peer
+        - `match_confirmed` where payload follows `WSMatchConfirmedPayload`
+
+        Chat event `type` is persisted as a plain string; current chat messages use `"message"`.
       tags: [realtime]
       parameters:
         - name: token
