@@ -15,7 +15,7 @@ async def get_repo():
         yield Repo(session)
 
 
-class BasicRepo: #lehet kicsit kaka a nev
+class BasicRepo:
     session: AsyncSession
 
     def __init__(self, session: AsyncSession):
